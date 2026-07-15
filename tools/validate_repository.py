@@ -189,6 +189,76 @@ def check_current_commission_contract(errors: list[str]) -> None:
             errors.append(f"Stale commission state must not remain in runtime registry: {stale}")
 
 
+def validate_quest_dependency_graph(document: Any) -> list[str]:
+    """Return deterministic semantic errors for a quest dependency document.
+
+    JSON Schema validates the shape of the document; this function owns graph
+    invariants that Schema cannot express, and is intentionally side-effect free
+    so tests and future conversion tools can call it directly.
+    """
+    errors: list[str] = []
+    graph: dict[str, list[str]] = {}
+    seen_owners: set[str] = set()
+
+    quests = document.get("quests", []) if isinstance(document, dict) else []
+    for raw_entry in quests:
+        if not isinstance(raw_entry, dict):
+            continue
+        owner = raw_entry.get("quest_id")
+        if not isinstance(owner, str):
+            continue
+        if owner in seen_owners:
+            errors.append(f"Duplicate quest dependency owner: {owner}")
+        else:
+            seen_owners.add(owner)
+            graph[owner] = []
+
+        seen_edges: set[str] = set()
+        for dependency in raw_entry.get("depends_on", []):
+            if not isinstance(dependency, str):
+                continue
+            if dependency in seen_edges:
+                errors.append(f"Quest '{owner}' repeats dependency '{dependency}'")
+                continue
+            seen_edges.add(dependency)
+            if dependency == owner:
+                errors.append(f"Quest dependency self-cycle: {owner}")
+                continue
+            graph.setdefault(owner, []).append(dependency)
+            graph.setdefault(dependency, [])
+
+    visit_state: dict[str, int] = {}
+    active_path: list[str] = []
+    reported_cycles: set[tuple[str, ...]] = set()
+
+    def visit(node: str) -> None:
+        visit_state[node] = 1
+        active_path.append(node)
+        for dependency in graph.get(node, []):
+            state = visit_state.get(dependency, 0)
+            if state == 0:
+                visit(dependency)
+            elif state == 1:
+                start = active_path.index(dependency)
+                cycle = tuple(active_path[start:] + [dependency])
+                if cycle not in reported_cycles:
+                    reported_cycles.add(cycle)
+                    errors.append(f"Quest dependency cycle: {' -> '.join(cycle)}")
+        active_path.pop()
+        visit_state[node] = 2
+
+    for quest_id in graph:
+        if visit_state.get(quest_id, 0) == 0:
+            visit(quest_id)
+    return errors
+
+
+def check_quest_dependencies(errors: list[str]) -> None:
+    path = CONTENT / "quest_dependencies.json"
+    if path.exists():
+        errors.extend(validate_quest_dependency_graph(load_json(path)))
+
+
 def check_offline_runtime(errors: list[str]) -> None:
     for path in (ROOT / "src").rglob("*.gd"):
         text = path.read_text(encoding="utf-8")
@@ -254,6 +324,7 @@ def main() -> int:
     check_no_formal_quests(errors)
     check_story_sources(errors)
     check_current_commission_contract(errors)
+    check_quest_dependencies(errors)
     check_offline_runtime(errors)
     check_agents(errors)
     check_agents_chain_sizes(errors)
@@ -270,6 +341,7 @@ def main() -> int:
     print("- portraits/backgrounds/audio placeholders: ok")
     print("- story source governance: ok")
     print("- current commission contract: ok")
+    print("- quest dependency graph: ok")
     print("- offline runtime scan: ok")
     print("- AGENTS critical rules: ok")
     print("- AGENTS instruction-chain budget: ok")

@@ -7,10 +7,12 @@
   ],
   "properties": {
     "schema_version": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "quests": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "object",
         "required": [
@@ -19,16 +21,64 @@
         ],
         "properties": {
           "quest_id": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
           },
           "depends_on": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]+$"
+            },
+            "uniqueItems": true
           },
           "gate": {
-            "type": "object"
+            "type": "object",
+            "required": [
+              "operator",
+              "conditions"
+            ],
+            "properties": {
+              "operator": {
+                "enum": [
+                  "and",
+                  "or"
+                ]
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "op",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.]+$"
+                    },
+                    "op": {
+                      "enum": [
+                        "eq",
+                        "ne",
+                        "neq",
+                        "gte",
+                        "lte",
+                        "gt",
+                        "lt",
+                        "in",
+                        "not_in"
+                      ]
+                    },
+                    "value": {}
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

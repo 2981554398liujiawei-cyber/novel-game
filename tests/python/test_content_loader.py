@@ -141,6 +141,47 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
                 expected_story_id="TEST_STORY_MINIMAL",
             )
 
+    def test_quest_dependency_cycle_fails_content_loading(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_path = ROOT / "content/tests/fixtures/story_runner/minimal_story.json"
+            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+            quest_paths: list[str] = []
+            quest_ids = ["TEST_DEPENDENCY_A", "TEST_DEPENDENCY_B"]
+            for quest_id in quest_ids:
+                quest = json.loads(json.dumps(fixture))
+                quest["quest_id"] = quest_id
+                relative_path = f"quests/{quest_id.lower()}.json"
+                destination = content_root / relative_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(json.dumps(quest, ensure_ascii=False), encoding="utf-8")
+                quest_paths.append(relative_path)
+
+            dependencies_path = content_root / "quest_dependencies.json"
+            dependencies = {
+                "schema_version": "1.0.0",
+                "quests": [
+                    {"quest_id": quest_ids[0], "depends_on": [quest_ids[1]]},
+                    {"quest_id": quest_ids[1], "depends_on": [quest_ids[0]]},
+                ],
+            }
+            dependencies_path.write_text(json.dumps(dependencies, ensure_ascii=False), encoding="utf-8")
+
+            manifest_path = content_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["content_files"].extend(quest_paths)
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+
+            registry_path = content_root / "states/state_registry.json"
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            fixture_registry = json.loads(
+                (ROOT / "content/tests/fixtures/game_state/state_registry.json").read_text(encoding="utf-8")
+            )
+            registry["states"].extend(fixture_registry["states"])
+            registry_path.write_text(json.dumps(registry, ensure_ascii=False), encoding="utf-8")
+
+            self._run_loader(content_root, "QUEST_DEPENDENCY_CYCLE")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.5.0",
+  "states": [
+    {
+      "key": "test.counter",
+      "type": "integer",
+      "default": 2,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.mode",
+      "type": "string",
+      "default": "idle",
+      "allowed": ["idle", "active", "paused"],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.flag",
+      "type": "boolean",
+      "default": true,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.test.parallel.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": ["not_started", "available", "active", "qualified", "completed", "failed", "suspended"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.parallel.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.parallel.continuation",
+      "type": "string",
+      "default": "",
+      "allowed": ["", "retry_route"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.parallel.commission_a",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.parallel.commission_b",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.parallel.commission_c",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": ["not_started", "available", "active", "qualified", "completed", "failed", "suspended"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.continuation",
+      "type": "string",
+      "default": "",
+      "allowed": ["", "retry_route"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.boolean_progress",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.counter_progress",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.collection_progress",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 2,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.unlocked.combat_result",
+      "type": "string",
+      "default": "",
+      "allowed": ["", "victory", "retreat"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.recovery.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": ["not_started", "available", "active", "qualified", "completed", "failed", "suspended"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.recovery.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.recovery.continuation",
+      "type": "string",
+      "default": "",
+      "allowed": ["", "retry_route", "alternate_route"],
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    },
+    {
+      "key": "quest.test.recovery.goal",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["quest"]
+    }
+  ]
+}

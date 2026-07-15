@@ -99,6 +99,23 @@ func get_story(story_id: String) -> Variant:
     return null
 
 
+func get_quest_definitions() -> Array:
+    var definitions: Array = []
+    for global_id: Variant in global_index.keys():
+        var indexed: Dictionary = global_index[global_id]
+        if str(indexed.get("type", "")) != "quest":
+            continue
+        var data: Variant = indexed.get("data")
+        if data is Dictionary:
+            definitions.append(data.duplicate(true))
+    return definitions
+
+
+func get_quest_dependencies() -> Dictionary:
+    var dependencies: Variant = loaded_files.get("quest_dependencies.json", {})
+    return dependencies.duplicate(true) if dependencies is Dictionary else {}
+
+
 func get_index_size() -> int:
     return global_index.size()
 
@@ -215,15 +232,30 @@ func _validate_references() -> bool:
             "quest":
                 if not _validate_quest_references(data, source):
                     return false
+                for excluded_quest: Variant in data.get("mutual_exclusions", []):
+                    if not _require_global_reference(str(excluded_quest), "quest", source, "mutually exclusive quest"):
+                        return false
 
     var dependencies: Variant = loaded_files.get("quest_dependencies.json")
     if dependencies is Dictionary:
+        var dependency_owners := {}
         for dependency: Variant in dependencies["quests"]:
-            if not _require_global_reference(str(dependency["quest_id"]), "quest", "quest_dependencies.json", "quest dependency owner"):
+            var owner_id := str(dependency["quest_id"])
+            if dependency_owners.has(owner_id):
+                return _set_error("QUEST_DEPENDENCY_DUPLICATE", "Quest dependency owner '%s' is declared more than once" % owner_id, "quest_dependencies.json")
+            dependency_owners[owner_id] = true
+            if not _require_global_reference(owner_id, "quest", "quest_dependencies.json", "quest dependency owner"):
                 return false
+            var seen_dependencies := {}
             for required_quest: Variant in dependency["depends_on"]:
-                if not _require_global_reference(str(required_quest), "quest", "quest_dependencies.json", "quest dependency"):
+                var required_id := str(required_quest)
+                if seen_dependencies.has(required_id):
+                    return _set_error("QUEST_DEPENDENCY_DUPLICATE", "Quest '%s' repeats dependency '%s'" % [owner_id, required_id], "quest_dependencies.json")
+                seen_dependencies[required_id] = true
+                if not _require_global_reference(required_id, "quest", "quest_dependencies.json", "quest dependency"):
                     return false
+        if not _validate_quest_dependency_cycles(dependencies["quests"]):
+            return false
     return true
 
 
@@ -265,6 +297,86 @@ func _validate_quest_references(quest: Dictionary, source: String) -> bool:
                 return false
             if not _validate_state_references(choice.get("effects", []), source):
                 return false
+    if quest.has("runtime") and not _validate_quest_runtime_references(quest["runtime"], source):
+        return false
+    return true
+
+
+func _validate_quest_runtime_references(runtime: Dictionary, source: String) -> bool:
+    for state_key_field: String in ["status_state_key", "reward_granted_state_key"]:
+        var state_key := str(runtime.get(state_key_field, ""))
+        if not state_index.has(state_key):
+            return _set_error("INVALID_CONTENT_REFERENCE", "Unknown QuestManager state key '%s'" % state_key, source)
+    var failure: Dictionary = runtime.get("failure", {})
+    var continuation_key := str(failure.get("continuation_state_key", ""))
+    if not state_index.has(continuation_key):
+        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown QuestManager continuation state key '%s'" % continuation_key, source)
+    var availability: Dictionary = runtime.get("availability", {})
+    for group_name: String in ["all", "any"]:
+        for raw_condition: Variant in availability.get(group_name, []):
+            if not raw_condition is Dictionary:
+                return _set_error("CONTENT_SCHEMA_INVALID", "QuestManager availability condition must be an object", source)
+            var condition: Dictionary = raw_condition
+            if str(condition.get("kind", "")) == "state":
+                var key := str(condition.get("key", ""))
+                if not state_index.has(key):
+                    return _set_error("INVALID_CONTENT_REFERENCE", "Unknown QuestManager condition state key '%s'" % key, source)
+            elif str(condition.get("kind", "")) == "quest":
+                if not _require_global_reference(str(condition.get("quest_id", "")), "quest", source, "QuestManager prerequisite"):
+                    return false
+    for raw_objective: Variant in runtime.get("objectives", []):
+        if not raw_objective is Dictionary:
+            return _set_error("CONTENT_SCHEMA_INVALID", "QuestManager objective must be an object", source)
+        var objective: Dictionary = raw_objective
+        if str(objective.get("type", "")) == "state_condition":
+            var condition: Dictionary = objective.get("condition", {})
+            var condition_key := str(condition.get("key", ""))
+            if not state_index.has(condition_key):
+                return _set_error("INVALID_CONTENT_REFERENCE", "Unknown objective condition state key '%s'" % condition_key, source)
+        else:
+            var progress_key := str(objective.get("progress_state_key", ""))
+            if not state_index.has(progress_key):
+                return _set_error("INVALID_CONTENT_REFERENCE", "Unknown objective progress state key '%s'" % progress_key, source)
+    return true
+
+
+func _validate_quest_dependency_cycles(raw_dependencies: Array) -> bool:
+    var graph := {}
+    for global_id: Variant in global_index.keys():
+        if str(global_index[global_id].get("type", "")) == "quest":
+            graph[str(global_id)] = []
+    for raw_dependency: Variant in raw_dependencies:
+        var dependency: Dictionary = raw_dependency
+        var owner_id := str(dependency.get("quest_id", ""))
+        var edges: Array = []
+        for raw_required: Variant in dependency.get("depends_on", []):
+            var required_id := str(raw_required)
+            if owner_id == required_id:
+                return _set_error("QUEST_DEPENDENCY_CYCLE", "Quest '%s' depends on itself" % owner_id, "quest_dependencies.json")
+            edges.append(required_id)
+        graph[owner_id] = edges
+
+    var indegree := {}
+    for node_id: Variant in graph.keys():
+        indegree[str(node_id)] = 0
+    for node_id: Variant in graph.keys():
+        for target: Variant in graph[node_id]:
+            indegree[str(target)] = int(indegree.get(str(target), 0)) + 1
+    var queue: Array[String] = []
+    for node_id: Variant in indegree.keys():
+        if int(indegree[node_id]) == 0:
+            queue.append(str(node_id))
+    var visited := 0
+    while not queue.is_empty():
+        var node_id: String = queue.pop_front()
+        visited += 1
+        for target: Variant in graph.get(node_id, []):
+            var target_id := str(target)
+            indegree[target_id] = int(indegree[target_id]) - 1
+            if int(indegree[target_id]) == 0:
+                queue.append(target_id)
+    if visited != indegree.size():
+        return _set_error("QUEST_DEPENDENCY_CYCLE", "Quest dependency graph contains a cycle", "quest_dependencies.json")
     return true
 
 
