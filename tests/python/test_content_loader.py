@@ -24,7 +24,13 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
         shutil.copytree(ROOT / "content", destination)
         return destination
 
-    def _run_loader(self, content_root: Path, expected_error: str | None = None) -> str:
+    def _run_loader(
+        self,
+        content_root: Path,
+        expected_error: str | None = None,
+        expected_content_id: str = "NV7_NPC_LANYIN",
+        expected_story_id: str | None = None,
+    ) -> str:
         command = [
             str(self.godot),
             "--headless",
@@ -33,10 +39,12 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             "--",
             "--smoke-test",
             f"--content-root={content_root}",
-            "--expect-content-id=NV7_NPC_LANYIN",
+            f"--expect-content-id={expected_content_id}",
         ]
         if expected_error:
             command.append(f"--expect-content-error={expected_error}")
+        if expected_story_id:
+            command.append(f"--expect-story-id={expected_story_id}")
         completed = subprocess.run(
             command,
             cwd=ROOT,
@@ -54,7 +62,9 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             self.assertIn(f"EXPECTED_CONTENT_ERROR_OK:{expected_error}", output)
         else:
             self.assertIn("CONTENT_LOADER_OK:", output)
-            self.assertIn("CONTENT_ID_QUERY_OK:NV7_NPC_LANYIN", output)
+            self.assertIn(f"CONTENT_ID_QUERY_OK:{expected_content_id}", output)
+            if expected_story_id:
+                self.assertIn(f"STORY_QUERY_OK:{expected_story_id}", output)
             self.assertIn("SMOKE_TEST_OK", output)
         return output
 
@@ -103,6 +113,33 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
 
             path.write_text(original, encoding="utf-8")
             self._run_loader(content_root)
+
+    def test_story_fixture_can_be_loaded_and_queried_through_content_loader(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_path = ROOT / "content/tests/fixtures/story_runner/minimal_story.json"
+            story_path = content_root / "quests/minimal_story.json"
+            story_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(fixture_path, story_path)
+
+            manifest_path = content_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["content_files"].append("quests/minimal_story.json")
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+
+            registry_path = content_root / "states/state_registry.json"
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            fixture_registry = json.loads(
+                (ROOT / "content/tests/fixtures/game_state/state_registry.json").read_text(encoding="utf-8")
+            )
+            registry["states"].extend(fixture_registry["states"])
+            registry_path.write_text(json.dumps(registry, ensure_ascii=False), encoding="utf-8")
+
+            self._run_loader(
+                content_root,
+                expected_content_id="TEST_STORY_MINIMAL",
+                expected_story_id="TEST_STORY_MINIMAL",
+            )
 
 
 if __name__ == "__main__":

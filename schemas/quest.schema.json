@@ -91,11 +91,13 @@
             "enum": [
               "eq",
               "ne",
+              "neq",
               "gte",
               "lte",
               "gt",
               "lt",
-              "in"
+              "in",
+              "not_in"
             ]
           },
           "value": {}
@@ -142,11 +144,13 @@
                 "enum": [
                   "eq",
                   "ne",
+                  "neq",
                   "gte",
                   "lte",
                   "gt",
                   "lt",
-                  "in"
+                  "in",
+                  "not_in"
                 ]
               },
               "value": {}
@@ -277,9 +281,7 @@
                   "enum": [
                     "set",
                     "inc",
-                    "dec",
-                    "min",
-                    "max"
+                    "dec"
                   ]
                 },
                 "value": {}
@@ -305,11 +307,13 @@
                   "enum": [
                     "eq",
                     "ne",
+                    "neq",
                     "gte",
                     "lte",
                     "gt",
                     "lt",
-                    "in"
+                    "in",
+                    "not_in"
                   ]
                 },
                 "value": {}
@@ -406,11 +410,13 @@
                         "enum": [
                           "eq",
                           "ne",
+                          "neq",
                           "gte",
                           "lte",
                           "gt",
                           "lt",
-                          "in"
+                          "in",
+                          "not_in"
                         ]
                       },
                       "value": {}
@@ -436,9 +442,7 @@
                         "enum": [
                           "set",
                           "inc",
-                          "dec",
-                          "min",
-                          "max"
+                          "dec"
                         ]
                       },
                       "value": {}

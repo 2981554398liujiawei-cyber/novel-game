@@ -90,6 +90,15 @@ func get_state_definitions() -> Array:
     return definitions
 
 
+func get_story(story_id: String) -> Variant:
+    if get_type_for_id(story_id) != "quest":
+        return null
+    var story: Variant = get_by_id(story_id)
+    if story is Dictionary:
+        return story.duplicate(true)
+    return null
+
+
 func get_index_size() -> int:
     return global_index.size()
 

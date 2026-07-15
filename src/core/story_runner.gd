@@ -1,0 +1,323 @@
+extends RefCounted
+
+signal story_started(story_id: String, entry_node: String)
+signal story_node_entered(story_id: String, node_id: String, node_type: String)
+signal narrative_presented(presentation: Dictionary)
+signal dialogue_presented(presentation: Dictionary)
+signal choice_presented(presentation: Dictionary)
+signal story_completed(result: Dictionary)
+signal story_error(error: Dictionary)
+
+const SUPPORTED_NODE_TYPES := ["narrative", "dialogue", "choice", "complete"]
+const MAX_AUTOMATIC_TRANSITIONS := 32
+
+var last_error: Dictionary = {}
+
+var _content_loader: RefCounted
+var _game_state: RefCounted
+var _story: Dictionary = {}
+var _nodes: Dictionary = {}
+var _story_id := ""
+var _current_node_id := ""
+var _waiting_for := ""
+var _selectable_choices: Dictionary = {}
+var _completion_result: Dictionary = {}
+var _running := false
+
+
+func initialize(content_loader: RefCounted, game_state: RefCounted) -> bool:
+    last_error = {}
+    if content_loader == null or not content_loader.has_method("get_story"):
+        return _fail("STORY_CONTENT_LOADER_INVALID", "ContentLoader does not provide get_story")
+    if game_state == null or not game_state.has_method("evaluate_condition") or not game_state.has_method("apply_effects"):
+        return _fail("STORY_GAME_STATE_INVALID", "GameState does not provide condition and effect interfaces")
+    _content_loader = content_loader
+    _game_state = game_state
+    return true
+
+
+func start_story(story_id: String, start_node: String = "") -> bool:
+    last_error = {}
+    _clear_runtime()
+    if _content_loader == null or _game_state == null:
+        return _fail("STORY_RUNNER_NOT_INITIALIZED", "StoryRunner has not been initialized")
+
+    var loaded_story: Variant = _content_loader.call("get_story", story_id)
+    if not loaded_story is Dictionary:
+        return _fail("STORY_NOT_FOUND", "ContentLoader could not find story '%s'" % story_id, story_id)
+    _story = loaded_story.duplicate(true)
+    _story_id = story_id
+    if not _build_node_index():
+        return false
+
+    var entry_node := start_node if not start_node.is_empty() else str(_story.get("entry_node", ""))
+    if not _nodes.has(entry_node):
+        return _fail("STORY_NODE_NOT_FOUND", "Story entry node does not exist", entry_node)
+
+    _running = true
+    story_started.emit(_story_id, entry_node)
+    return _enter_node(entry_node, 0)
+
+
+func resume_from_node(story_id: String, node_id: String) -> bool:
+    return start_story(story_id, node_id)
+
+
+func advance() -> bool:
+    last_error = {}
+    if not _require_running():
+        return false
+    if _waiting_for == "choice":
+        return _fail("STORY_INPUT_REQUIRED", "A choice must be selected before advancing", _current_node_id)
+    if _waiting_for not in ["narrative", "dialogue"]:
+        return _fail("STORY_INPUT_INVALID", "The current story node cannot be advanced", _current_node_id)
+    var node: Dictionary = _nodes[_current_node_id]
+    var next_node := str(node.get("next", ""))
+    if next_node.is_empty():
+        return _fail("STORY_NEXT_MISSING", "Story node does not declare a next node", _current_node_id)
+    return _enter_node(next_node, 0)
+
+
+func choose_choice(choice_id: String) -> bool:
+    last_error = {}
+    if not _require_running():
+        return false
+    if _waiting_for != "choice":
+        return _fail("STORY_INPUT_INVALID", "The current node is not waiting for a choice", _current_node_id)
+    if not _selectable_choices.has(choice_id):
+        return _fail("STORY_CHOICE_UNAVAILABLE", "Choice is missing, hidden, or disabled", _current_node_id, choice_id)
+
+    var choice: Dictionary = _selectable_choices[choice_id]
+    var target := _choice_target(choice)
+    if target.is_empty():
+        return _fail("STORY_TARGET_MISSING", "Choice does not declare a target", _current_node_id, choice_id)
+    if not _nodes.has(target):
+        return _fail("STORY_NODE_NOT_FOUND", "Choice jump target does not exist", target, choice_id)
+    if not _apply_effects(choice.get("effects", [])):
+        return false
+    return _enter_node(target, 0)
+
+
+func get_current_position() -> Dictionary:
+    return {
+        "story_id": _story_id,
+        "node_id": _current_node_id,
+        "waiting_for": _waiting_for,
+        "running": _running,
+        "completed": not _completion_result.is_empty(),
+    }
+
+
+func get_completion_result() -> Dictionary:
+    return _completion_result.duplicate(true)
+
+
+func is_running() -> bool:
+    return _running
+
+
+func _build_node_index() -> bool:
+    var raw_nodes: Variant = _story.get("nodes", [])
+    if not raw_nodes is Array:
+        return _fail("STORY_DATA_INVALID", "Story nodes must be an array", _story_id)
+    for raw_node: Variant in raw_nodes:
+        if not raw_node is Dictionary:
+            return _fail("STORY_DATA_INVALID", "Every story node must be an object", _story_id)
+        var node_id := str(raw_node.get("node_id", ""))
+        if node_id.is_empty():
+            return _fail("STORY_DATA_INVALID", "Story node ID cannot be empty", _story_id)
+        if _nodes.has(node_id):
+            return _fail("STORY_DUPLICATE_NODE", "Story contains a duplicate node ID", node_id)
+        _nodes[node_id] = raw_node.duplicate(true)
+    return true
+
+
+func _enter_node(node_id: String, automatic_transitions: int) -> bool:
+    if automatic_transitions > MAX_AUTOMATIC_TRANSITIONS:
+        return _fail("STORY_AUTO_LOOP_DETECTED", "Automatic story transitions exceeded the safety limit", node_id)
+    if not _nodes.has(node_id):
+        return _fail("STORY_NODE_NOT_FOUND", "Story jump target does not exist", node_id)
+
+    var node: Dictionary = _nodes[node_id]
+    var node_type := str(node.get("type", ""))
+    _current_node_id = node_id
+    _waiting_for = ""
+    _selectable_choices.clear()
+    story_node_entered.emit(_story_id, node_id, node_type)
+
+    if node_type not in SUPPORTED_NODE_TYPES:
+        return _fail("STORY_NODE_TYPE_UNSUPPORTED", "Unsupported story node type '%s'" % node_type, node_id)
+
+    var conditions_result := _conditions_met(node.get("conditions", []))
+    if conditions_result < 0:
+        return false
+    if conditions_result == 0:
+        var skip_target := str(node.get("next", ""))
+        if skip_target.is_empty():
+            return _fail("STORY_CONDITION_NO_FALLBACK", "A hidden node has no next target", node_id)
+        return _enter_node(skip_target, automatic_transitions + 1)
+
+    if not _apply_effects(node.get("effects", [])):
+        return false
+
+    match node_type:
+        "narrative":
+            _waiting_for = "narrative"
+            narrative_presented.emit(_presentation_payload(node))
+            return true
+        "dialogue":
+            _waiting_for = "dialogue"
+            dialogue_presented.emit(_presentation_payload(node))
+            return true
+        "choice":
+            return _present_choices(node)
+        "complete":
+            _running = false
+            _completion_result = {
+                "story_id": _story_id,
+                "node_id": node_id,
+                "outcome": str(node.get("outcome", "completed")),
+            }
+            story_completed.emit(_completion_result.duplicate(true))
+            return true
+    return false
+
+
+func _present_choices(node: Dictionary) -> bool:
+    var visible_choices: Array = []
+    var raw_choices: Variant = node.get("choices", [])
+    if not raw_choices is Array:
+        return _fail("STORY_DATA_INVALID", "Choice node choices must be an array", _current_node_id)
+
+    for raw_choice: Variant in raw_choices:
+        if not raw_choice is Dictionary:
+            return _fail("STORY_DATA_INVALID", "Every choice must be an object", _current_node_id)
+        var choice: Dictionary = raw_choice
+        var choice_id := str(choice.get("choice_id", ""))
+        if choice_id.is_empty():
+            return _fail("STORY_DATA_INVALID", "Choice ID cannot be empty", _current_node_id)
+        var conditions_result := _conditions_met(choice.get("conditions", []))
+        if conditions_result < 0:
+            return false
+        var enabled := conditions_result == 1
+        if not enabled and bool(choice.get("hidden_when_locked", false)):
+            continue
+        var presentation := {
+            "choice_id": choice_id,
+            "text": str(choice.get("text", "")) if enabled else str(choice.get("locked_text", choice.get("text", ""))),
+            "enabled": enabled,
+            "intent": str(choice.get("intent", "")),
+            "consequence_summary": str(choice.get("consequence_summary", "")),
+        }
+        visible_choices.append(presentation)
+        if enabled:
+            if _selectable_choices.has(choice_id):
+                return _fail("STORY_DUPLICATE_CHOICE", "Choice node contains a duplicate choice ID", _current_node_id, choice_id)
+            _selectable_choices[choice_id] = choice.duplicate(true)
+
+    if _selectable_choices.is_empty():
+        return _fail("STORY_NO_AVAILABLE_CHOICES", "Choice node has no selectable choices", _current_node_id)
+    _waiting_for = "choice"
+    choice_presented.emit({
+        "story_id": _story_id,
+        "node_id": _current_node_id,
+        "choices": visible_choices,
+    })
+    return true
+
+
+func _conditions_met(raw_conditions: Variant) -> int:
+    if not raw_conditions is Array:
+        _fail("STORY_DATA_INVALID", "Story conditions must be an array", _current_node_id)
+        return -1
+    for raw_condition: Variant in raw_conditions:
+        if not raw_condition is Dictionary:
+            _fail("STORY_DATA_INVALID", "Every story condition must be an object", _current_node_id)
+            return -1
+        var matches: bool = _game_state.call("evaluate_condition", raw_condition)
+        var state_error_value: Variant = _game_state.get("last_error")
+        if state_error_value is Dictionary and not state_error_value.is_empty():
+            _fail("STORY_CONDITION_FAILED", "GameState rejected a story condition", _current_node_id, "", state_error_value)
+            return -1
+        if not matches:
+            return 0
+    return 1
+
+
+func _apply_effects(raw_effects: Variant) -> bool:
+    if not raw_effects is Array:
+        return _fail("STORY_DATA_INVALID", "Story effects must be an array", _current_node_id)
+    if raw_effects.is_empty():
+        return true
+    if not bool(_game_state.call("apply_effects", raw_effects, "story")):
+        var state_error_value: Variant = _game_state.get("last_error")
+        var state_details: Dictionary = {}
+        if state_error_value is Dictionary:
+            state_details = state_error_value
+        return _fail("STORY_EFFECT_FAILED", "GameState rejected story effects", _current_node_id, "", state_details)
+    return true
+
+
+func _presentation_payload(node: Dictionary) -> Dictionary:
+    return {
+        "story_id": _story_id,
+        "node_id": _current_node_id,
+        "text": _display_text(node.get("text", "")),
+        "speaker_id": str(node.get("speaker_id", "")),
+        "expression": str(node.get("expression", "")),
+        "gesture": str(node.get("gesture", "")),
+        "target": str(node.get("target", "")),
+        "portrait_action": str(node.get("portrait_action", "")),
+    }
+
+
+func _display_text(raw_text: Variant) -> String:
+    if raw_text is Array:
+        var lines: PackedStringArray = []
+        for line: Variant in raw_text:
+            lines.append(str(line))
+        return "\n".join(lines)
+    return str(raw_text)
+
+
+func _choice_target(choice: Dictionary) -> String:
+    return str(choice.get("target", choice.get("goto", "")))
+
+
+func _require_running() -> bool:
+    if not _running:
+        return _fail("STORY_NOT_RUNNING", "No story is currently running", _current_node_id)
+    return true
+
+
+func _clear_runtime() -> void:
+    _story = {}
+    _nodes.clear()
+    _story_id = ""
+    _current_node_id = ""
+    _waiting_for = ""
+    _selectable_choices.clear()
+    _completion_result = {}
+    _running = false
+
+
+func _fail(
+    code: String,
+    message: String,
+    node_id: String = "",
+    choice_id: String = "",
+    details: Dictionary = {},
+) -> bool:
+    _running = false
+    _waiting_for = ""
+    last_error = {
+        "code": code,
+        "message": message,
+        "story_id": _story_id,
+        "node_id": node_id,
+        "choice_id": choice_id,
+        "details": details.duplicate(true),
+    }
+    printerr("STORY_ERROR:%s:%s:%s" % [code, node_id, message])
+    story_error.emit(last_error.duplicate(true))
+    return false

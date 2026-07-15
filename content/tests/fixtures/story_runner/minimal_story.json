@@ -1,0 +1,233 @@
+{
+  "schema_version": "1.5.0",
+  "quest_id": "TEST_STORY_MINIMAL",
+  "content_status": "data_ready",
+  "title": "StoryRunner技术测试",
+  "region_id": "TEST_REGION",
+  "category": "encounter",
+  "source_refs": ["synthetic_test_fixture"],
+  "design": {
+    "purpose": "验证最小StoryRunner闭环",
+    "theme": "技术测试",
+    "emotion_curve": "开始-选择-反馈-完成",
+    "source_basis": "synthetic_fixture",
+    "adaptation_notes": "不属于正式剧情",
+    "recommended_level": 1,
+    "duration_minutes": 1,
+    "target_experience": "验证节点执行",
+    "scope": "tests_only",
+    "limitations": "不进入正式manifest"
+  },
+  "prerequisites": [],
+  "mutual_exclusions": [],
+  "trigger": {
+    "method": "test_only",
+    "location_id": "NV7_LOC_SQUARE",
+    "conditions": [],
+    "opening_presentation": {}
+  },
+  "scenes": [
+    {
+      "scene_id": "test_scene",
+      "title": "技术测试场景",
+      "entry_nodes": ["opening"],
+      "exit_nodes": ["finished"],
+      "participant_ids": ["NV7_NPC_LANYIN"],
+      "objective": "完成两条测试分支",
+      "optional_interactions": []
+    }
+  ],
+  "entry_node": "opening",
+  "nodes": [
+    {
+      "node_id": "opening",
+      "type": "narrative",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证开场叙事",
+      "text": ["【技术测试】一段开场叙事。"],
+      "effects": [
+        {"key": "test.note", "op": "set", "value": "story_started"}
+      ],
+      "next": "greeting"
+    },
+    {
+      "node_id": "greeting",
+      "type": "dialogue",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证对白演出字段",
+      "speaker_id": "NV7_NPC_LANYIN",
+      "text": ["这是测试对白，请选择一条技术分支。"],
+      "expression": "neutral",
+      "gesture": "none",
+      "target": "player",
+      "portrait_action": "show",
+      "conditions": [],
+      "effects": [],
+      "next": "decision"
+    },
+    {
+      "node_id": "decision",
+      "type": "choice",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证选择过滤、效果和分支",
+      "choices": [
+        {
+          "choice_id": "choose_a",
+          "text": "选择测试分支A",
+          "intent": "test_a",
+          "protagonist_boundary": "allowed",
+          "visible_risk": "无",
+          "consequence_summary": "修改测试枚举状态",
+          "hidden_consequence": "仅用于自动测试",
+          "goto": "reply_a",
+          "conditions": [],
+          "effects": [
+            {"key": "test.mode", "op": "set", "value": "active"}
+          ]
+        },
+        {
+          "choice_id": "choose_b",
+          "text": "选择测试分支B",
+          "intent": "test_b",
+          "protagonist_boundary": "allowed",
+          "visible_risk": "无",
+          "consequence_summary": "修改测试布尔状态",
+          "hidden_consequence": "仅用于自动测试",
+          "goto": "reply_b",
+          "conditions": [],
+          "effects": [
+            {"key": "test.flag", "op": "set", "value": true}
+          ]
+        },
+        {
+          "choice_id": "locked_choice",
+          "text": "不会显示的测试选项",
+          "locked_text": "条件不足",
+          "intent": "test_locked",
+          "protagonist_boundary": "allowed",
+          "visible_risk": "无",
+          "consequence_summary": "验证条件过滤",
+          "hidden_consequence": "仅用于自动测试",
+          "goto": "reply_a",
+          "conditions": [
+            {"key": "test.counter", "op": "gte", "value": 99}
+          ],
+          "effects": [],
+          "hidden_when_locked": true
+        }
+      ]
+    },
+    {
+      "node_id": "reply_a",
+      "type": "narrative",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "分支A即时回应",
+      "text": ["分支A立即给出了不同回应。"],
+      "next": "merge"
+    },
+    {
+      "node_id": "reply_b",
+      "type": "dialogue",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "分支B即时回应",
+      "speaker_id": "NV7_NPC_LANYIN",
+      "text": ["分支B立即给出了另一条回应。"],
+      "expression": "neutral",
+      "gesture": "none",
+      "target": "player",
+      "portrait_action": "keep",
+      "next": "merge"
+    },
+    {
+      "node_id": "merge",
+      "type": "narrative",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证分支汇流",
+      "text": ["两条技术分支在这里汇流。"],
+      "next": "conditional_a"
+    },
+    {
+      "node_id": "conditional_a",
+      "type": "dialogue",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证分支A条件对白",
+      "speaker_id": "NV7_NPC_LANYIN",
+      "text": ["检测到分支A状态。"],
+      "expression": "neutral",
+      "gesture": "none",
+      "target": "player",
+      "portrait_action": "keep",
+      "conditions": [
+        {"key": "test.mode", "op": "eq", "value": "active"}
+      ],
+      "next": "conditional_b"
+    },
+    {
+      "node_id": "conditional_b",
+      "type": "dialogue",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证分支B条件对白",
+      "speaker_id": "NV7_NPC_LANYIN",
+      "text": ["检测到分支B状态。"],
+      "expression": "neutral",
+      "gesture": "none",
+      "target": "player",
+      "portrait_action": "keep",
+      "conditions": [
+        {"key": "test.flag", "op": "eq", "value": true}
+      ],
+      "next": "finished"
+    },
+    {
+      "node_id": "finished",
+      "type": "complete",
+      "location_id": "NV7_LOC_SQUARE",
+      "scene_id": "test_scene",
+      "purpose": "验证完成结果",
+      "terminal": true,
+      "outcome": "fixture_complete"
+    }
+  ],
+  "mechanics": [{"type": "story_runner_fixture"}],
+  "branch_summary": [{"branch": "a_or_b", "merge": "merge"}],
+  "continuations": [{"result": "fixture_complete"}],
+  "rewards": [{"type": "none"}],
+  "world_changes": [{"scope": "test_states_only"}],
+  "post_quest_feedback": [{"type": "none"}],
+  "implementation": {
+    "runner": "StoryRunner",
+    "ui": "test_presenter",
+    "state": "GameState fixture",
+    "content": "fixture only",
+    "scope": "automated tests"
+  },
+  "allowed_loops": [],
+  "test_cases": [
+    {
+      "test_id": "branch_a",
+      "initial_state": {},
+      "steps": ["start", "advance", "choose_a", "complete"],
+      "expected": ["test.mode=active", "fixture_complete"]
+    },
+    {
+      "test_id": "branch_b",
+      "initial_state": {},
+      "steps": ["start", "advance", "choose_b", "complete"],
+      "expected": ["test.flag=true", "fixture_complete"]
+    },
+    {
+      "test_id": "locked_choice",
+      "initial_state": {},
+      "steps": ["start", "advance", "open_choice"],
+      "expected": ["locked_choice hidden"]
+    }
+  ]
+}

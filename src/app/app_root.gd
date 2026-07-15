@@ -13,6 +13,7 @@ func _ready() -> void:
     var content_root := _argument_value(args, "--content-root=", "res://content")
     var expected_error := _argument_value(args, "--expect-content-error=", "")
     var expected_content_id := _argument_value(args, "--expect-content-id=", "")
+    var expected_story_id := _argument_value(args, "--expect-story-id=", "")
     _content_loader.content_error.connect(_on_content_error)
 
     if not _content_loader.load_content(content_root):
@@ -45,6 +46,12 @@ func _ready() -> void:
             get_tree().quit(1)
             return
         print("CONTENT_ID_QUERY_OK:%s" % expected_content_id)
+    if not expected_story_id.is_empty():
+        if _content_loader.get_story(expected_story_id) == null:
+            printerr("EXPECTED_STORY_NOT_FOUND:%s" % expected_story_id)
+            get_tree().quit(1)
+            return
+        print("STORY_QUERY_OK:%s" % expected_story_id)
     $Center/VBox/Status.text = "内容索引加载完成\n技术骨架已就绪，正式剧情数据尚未导入"
     if "--smoke-test" in args:
         print("CONTENT_LOADER_OK:%d" % _content_loader.get_index_size())
