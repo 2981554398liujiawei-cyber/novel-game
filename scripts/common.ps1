@@ -16,7 +16,10 @@ function Get-PythonCommand {
 
 function Get-GodotCommand {
     if ($env:GODOT_BIN -and (Test-Path $env:GODOT_BIN)) { return $env:GODOT_BIN }
-    foreach ($name in @("godot", "godot4")) {
+    # On Windows, prefer the console build so PowerShell waits for Godot and
+    # receives a reliable process exit code. Fall back to the regular command
+    # for platforms and installations that do not provide godot_console.
+    foreach ($name in @("godot_console", "godot", "godot4")) {
         $cmd = Get-Command $name -ErrorAction SilentlyContinue
         if ($null -ne $cmd) { return $cmd.Source }
     }

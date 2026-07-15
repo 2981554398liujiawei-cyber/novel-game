@@ -26,6 +26,9 @@ REQUIRED_FILES = [
     "content/skills/skills.json",
     "content/combats/combats.json",
     "content/quest_dependencies.json",
+    "schemas/presentation_tags.schema.json",
+    "src/core/content_loader.gd",
+    "src/core/json_schema_validator.gd",
     "scripts/validate.ps1",
     "scripts/test.ps1",
     "scripts/smoke_test.ps1",
@@ -44,6 +47,7 @@ SCHEMA_MAP = {
     "content/skills/skills.json": "skill.schema.json",
     "content/combats/combats.json": "combat.schema.json",
     "content/quest_dependencies.json": "quest_dependency.schema.json",
+    "content/presentation_tags.json": "presentation_tags.schema.json",
     "content/manifest.json": "content_manifest.schema.json",
     "docs/story/source_manifest.json": "story_source_manifest.schema.json",
 }
