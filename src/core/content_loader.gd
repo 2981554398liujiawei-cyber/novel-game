@@ -83,6 +83,13 @@ func get_state_definition(state_key: String) -> Variant:
     return state_index.get(state_key)
 
 
+func get_state_definitions() -> Array:
+    var definitions: Array = []
+    for definition: Variant in state_index.values():
+        definitions.append(definition.duplicate(true))
+    return definitions
+
+
 func get_index_size() -> int:
     return global_index.size()
 

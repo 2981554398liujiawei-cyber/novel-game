@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.5.0",
+  "states": [
+    {
+      "key": "test.counter",
+      "type": "integer",
+      "default": 2,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.mode",
+      "type": "string",
+      "default": "idle",
+      "allowed": ["idle", "active", "paused"],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.flag",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.note",
+      "type": "string",
+      "default": "",
+      "persistent": false,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "test.read_only",
+      "type": "boolean",
+      "default": true,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "read_only": true
+    },
+    {
+      "key": "test.restricted",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 5,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["combat"]
+    }
+  ]
+}

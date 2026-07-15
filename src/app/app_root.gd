@@ -1,8 +1,10 @@
 extends Control
 
 const ContentLoaderClass = preload("res://src/core/content_loader.gd")
+const GameStateClass = preload("res://src/core/game_state.gd")
 
 var _content_loader := ContentLoaderClass.new()
+var _game_state := GameStateClass.new()
 var _content_ready := false
 
 
@@ -29,6 +31,13 @@ func _ready() -> void:
         get_tree().quit(1)
         return
 
+    _game_state.state_error.connect(_on_state_error)
+    if not _game_state.initialize_from_content_loader(_content_loader):
+        _show_game_state_error(_game_state.last_error)
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
     _content_ready = true
     if not expected_content_id.is_empty():
         if not _content_loader.has_id(expected_content_id) or _content_loader.get_by_id(expected_content_id) == null:
@@ -39,6 +48,7 @@ func _ready() -> void:
     $Center/VBox/Status.text = "内容索引加载完成\n技术骨架已就绪，正式剧情数据尚未导入"
     if "--smoke-test" in args:
         print("CONTENT_LOADER_OK:%d" % _content_loader.get_index_size())
+        print("GAME_STATE_OK:%d" % _game_state.get_state_count())
         print("SMOKE_TEST_OK")
         get_tree().quit(0)
 
@@ -50,6 +60,21 @@ func _on_content_error(error: Dictionary) -> void:
         error.get("code", "UNKNOWN_CONTENT_ERROR"),
         error.get("message", "未知内容错误"),
         error.get("path", ""),
+    ]
+
+
+func _on_state_error(error: Dictionary) -> void:
+    if not _content_ready:
+        _show_game_state_error(error)
+
+
+func _show_game_state_error(error: Dictionary) -> void:
+    _content_ready = false
+    $Center/VBox/Title.text = "状态初始化失败"
+    $Center/VBox/Status.text = "%s\n%s\n%s" % [
+        error.get("code", "UNKNOWN_STATE_ERROR"),
+        error.get("message", "未知状态错误"),
+        error.get("key", ""),
     ]
 
 
