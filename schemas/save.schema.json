@@ -1,47 +1,80 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DevelopmentSaveV1",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "schema_version",
     "save_version",
-    "slot_id",
+    "game_version",
+    "development_save",
     "created_at",
-    "current_quest_id",
-    "current_node_id",
+    "updated_at",
+    "slot_id",
+    "playtime_seconds",
+    "current_story_id",
+    "current_story_node_id",
     "game_state",
-    "random_seeds",
-    "inventory",
-    "combat_snapshot"
+    "random_state"
   ],
   "properties": {
     "schema_version": {
-      "type": "string"
+      "const": "1.0.0"
     },
     "save_version": {
-      "type": "integer"
+      "type": "integer",
+      "minimum": 1
     },
-    "slot_id": {
-      "type": "string"
+    "game_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "development_save": {
+      "const": true
     },
     "created_at": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
-    "current_quest_id": {
-      "type": "string"
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
     },
-    "current_node_id": {
-      "type": "string"
+    "slot_id": {
+      "enum": [
+        "manual_1",
+        "manual_2",
+        "manual_3",
+        "auto",
+        "quick"
+      ]
+    },
+    "playtime_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "current_story_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_story_node_id": {
+      "type": "string",
+      "minLength": 1
     },
     "game_state": {
       "type": "object"
     },
-    "random_seeds": {
-      "type": "object"
-    },
-    "inventory": {
-      "type": "array"
-    },
-    "combat_snapshot": {}
-  },
-  "additionalProperties": false
+    "random_state": {
+      "type": "object",
+      "required": [
+        "seed"
+      ],
+      "properties": {
+        "seed": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
 }

@@ -183,27 +183,61 @@ func export_snapshot() -> Dictionary:
     return snapshot
 
 
+func validate_snapshot(snapshot: Dictionary) -> bool:
+    last_error = {}
+    if not _require_initialized():
+        return false
+    return _validate_snapshot_data(snapshot)
+
+
+func create_runtime_checkpoint() -> Dictionary:
+    last_error = {}
+    if not _require_initialized():
+        return {}
+    return _values.duplicate(true)
+
+
+func restore_runtime_checkpoint(checkpoint: Dictionary) -> bool:
+    last_error = {}
+    if not _require_initialized() or not _validate_runtime_checkpoint(checkpoint):
+        return false
+    var staged := {}
+    for raw_key: Variant in _definitions.keys():
+        var key := str(raw_key)
+        staged[key] = _normalize_value(checkpoint[key], _definitions[key])
+    _values = staged
+    return true
+
+
+func emit_changes_from_checkpoint(checkpoint: Dictionary, source: String = "save_restore") -> bool:
+    last_error = {}
+    if not _require_initialized() or not _validate_source(source) or not _validate_runtime_checkpoint(checkpoint):
+        return false
+    var committed_values: Dictionary = _values.duplicate(true)
+    for raw_key: Variant in _definitions.keys():
+        var key := str(raw_key)
+        if checkpoint[key] != committed_values[key]:
+            state_changed.emit(
+                key,
+                _copy_value(checkpoint[key]),
+                _copy_value(committed_values[key]),
+                source,
+            )
+    return true
+
+
 func restore_snapshot(snapshot: Dictionary, source: String = "save_restore") -> bool:
     last_error = {}
     if not _require_initialized() or not _validate_source(source):
         return false
-
-    for raw_key: Variant in snapshot.keys():
-        var key := str(raw_key)
-        if not _require_key(key):
-            return false
-        if not bool(_definitions[key].get("persistent", false)):
-            return _fail("STATE_SNAPSHOT_INVALID", "Snapshot contains non-persistent state", key)
+    if not _validate_snapshot_data(snapshot):
+        return false
 
     var staged := {}
     for raw_key: Variant in _definitions.keys():
         var key := str(raw_key)
         var definition: Dictionary = _definitions[key]
         if bool(definition.get("persistent", false)):
-            if not snapshot.has(key):
-                return _fail("STATE_SNAPSHOT_INVALID", "Snapshot is missing persistent state", key)
-            if not _validate_value(key, snapshot[key]):
-                return false
             if not _can_write(key, source):
                 return false
             staged[key] = _normalize_value(snapshot[key], definition)
@@ -215,6 +249,41 @@ func restore_snapshot(snapshot: Dictionary, source: String = "save_restore") -> 
     for key: Variant in _definitions.keys():
         if previous[key] != _values[key]:
             state_changed.emit(str(key), _copy_value(previous[key]), _copy_value(_values[key]), source)
+    return true
+
+
+func _validate_snapshot_data(snapshot: Dictionary) -> bool:
+    for raw_key: Variant in snapshot.keys():
+        var key := str(raw_key)
+        if not _require_key(key):
+            return false
+        if not bool(_definitions[key].get("persistent", false)):
+            return _fail("STATE_SNAPSHOT_INVALID", "Snapshot contains non-persistent state", key)
+
+    for raw_key: Variant in _definitions.keys():
+        var key := str(raw_key)
+        if not bool(_definitions[key].get("persistent", false)):
+            continue
+        if not snapshot.has(key):
+            return _fail("STATE_SNAPSHOT_INVALID", "Snapshot is missing persistent state", key)
+        if not _validate_value(key, snapshot[key]):
+            return false
+    return true
+
+
+func _validate_runtime_checkpoint(checkpoint: Dictionary) -> bool:
+    if checkpoint.size() != _definitions.size():
+        return _fail("STATE_CHECKPOINT_INVALID", "Runtime checkpoint has the wrong number of states")
+    for raw_key: Variant in checkpoint.keys():
+        var key := str(raw_key)
+        if not _require_key(key):
+            return false
+    for raw_key: Variant in _definitions.keys():
+        var key := str(raw_key)
+        if not checkpoint.has(key):
+            return _fail("STATE_CHECKPOINT_INVALID", "Runtime checkpoint is missing state", key)
+        if not _validate_value(key, checkpoint[key]):
+            return false
     return true
 
 

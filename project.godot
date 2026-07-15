@@ -4,6 +4,9 @@ config_version=5
 
 [application]
 config/name="王者：第七新手村"
+config/version="0.1.0"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="WangZheTextRPG"
 run/main_scene="res://scenes/app/main.tscn"
 config/features=PackedStringArray("4.6")
 

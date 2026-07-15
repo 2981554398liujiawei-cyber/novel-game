@@ -6,6 +6,7 @@ signal narrative_presented(presentation: Dictionary)
 signal dialogue_presented(presentation: Dictionary)
 signal choice_presented(presentation: Dictionary)
 signal story_completed(result: Dictionary)
+signal story_position_restored(position: Dictionary, presentation: Dictionary)
 signal story_error(error: Dictionary)
 
 const SUPPORTED_NODE_TYPES := ["narrative", "dialogue", "choice", "complete"]
@@ -21,6 +22,7 @@ var _story_id := ""
 var _current_node_id := ""
 var _waiting_for := ""
 var _selectable_choices: Dictionary = {}
+var _choice_presentation: Dictionary = {}
 var _completion_result: Dictionary = {}
 var _running := false
 
@@ -61,6 +63,111 @@ func start_story(story_id: String, start_node: String = "") -> bool:
 
 func resume_from_node(story_id: String, node_id: String) -> bool:
     return start_story(story_id, node_id)
+
+
+func is_valid_position(story_id: String, node_id: String) -> bool:
+    if _content_loader == null or story_id.is_empty() or node_id.is_empty():
+        return false
+    var loaded_story: Variant = _content_loader.call("get_story", story_id)
+    if not loaded_story is Dictionary:
+        return false
+    var raw_nodes: Variant = loaded_story.get("nodes", [])
+    if not raw_nodes is Array:
+        return false
+    for raw_node: Variant in raw_nodes:
+        if raw_node is Dictionary and str(raw_node.get("node_id", "")) == node_id:
+            return str(raw_node.get("type", "")) in SUPPORTED_NODE_TYPES
+    return false
+
+
+func restore_position(story_id: String, node_id: String, emit_restored_signal: bool = true) -> bool:
+    last_error = {}
+    var previous := create_runtime_checkpoint()
+    if not is_valid_position(story_id, node_id):
+        _fail("STORY_NODE_NOT_FOUND", "Saved story position does not exist", node_id)
+        var position_error := last_error.duplicate(true)
+        restore_runtime_checkpoint(previous)
+        last_error = position_error
+        return false
+    var loaded_story: Dictionary = _content_loader.call("get_story", story_id)
+    _clear_runtime()
+    _story = loaded_story.duplicate(true)
+    _story_id = story_id
+    if not _build_node_index():
+        var build_error := last_error.duplicate(true)
+        restore_runtime_checkpoint(previous)
+        last_error = build_error
+        return false
+    _running = true
+    if not _restore_exact_node(node_id):
+        var restore_error := last_error.duplicate(true)
+        restore_runtime_checkpoint(previous)
+        last_error = restore_error
+        return false
+    if emit_restored_signal:
+        emit_position_restored()
+    return true
+
+
+func create_runtime_checkpoint() -> Dictionary:
+    return {
+        "story": _story.duplicate(true),
+        "nodes": _nodes.duplicate(true),
+        "story_id": _story_id,
+        "current_node_id": _current_node_id,
+        "waiting_for": _waiting_for,
+        "selectable_choices": _selectable_choices.duplicate(true),
+        "choice_presentation": _choice_presentation.duplicate(true),
+        "completion_result": _completion_result.duplicate(true),
+        "running": _running,
+    }
+
+
+func restore_runtime_checkpoint(checkpoint: Dictionary) -> bool:
+    var required := [
+        "story", "nodes", "story_id", "current_node_id", "waiting_for",
+        "selectable_choices", "choice_presentation", "completion_result", "running",
+    ]
+    for key: String in required:
+        if not checkpoint.has(key):
+            return _checkpoint_fail("Runtime checkpoint is missing '%s'" % key)
+    if (
+        not checkpoint["story"] is Dictionary
+        or not checkpoint["nodes"] is Dictionary
+        or not checkpoint["story_id"] is String
+        or not checkpoint["current_node_id"] is String
+        or not checkpoint["waiting_for"] is String
+        or not checkpoint["selectable_choices"] is Dictionary
+        or not checkpoint["choice_presentation"] is Dictionary
+        or not checkpoint["completion_result"] is Dictionary
+        or not checkpoint["running"] is bool
+    ):
+        return _checkpoint_fail("Runtime checkpoint contains invalid field types")
+    _story = checkpoint["story"].duplicate(true)
+    _nodes = checkpoint["nodes"].duplicate(true)
+    _story_id = checkpoint["story_id"]
+    _current_node_id = checkpoint["current_node_id"]
+    _waiting_for = checkpoint["waiting_for"]
+    _selectable_choices = checkpoint["selectable_choices"].duplicate(true)
+    _choice_presentation = checkpoint["choice_presentation"].duplicate(true)
+    _completion_result = checkpoint["completion_result"].duplicate(true)
+    _running = checkpoint["running"]
+    last_error = {}
+    return true
+
+
+func emit_position_restored() -> void:
+    var presentation: Dictionary = {}
+    if _nodes.has(_current_node_id):
+        var node: Dictionary = _nodes[_current_node_id]
+        match str(node.get("type", "")):
+            "narrative", "dialogue":
+                presentation = _presentation_payload(node)
+            "choice":
+                presentation = _choice_presentation.duplicate(true)
+            "complete":
+                presentation = _completion_result.duplicate(true)
+    story_position_restored.emit(get_current_position(), presentation)
 
 
 func advance() -> bool:
@@ -132,7 +239,7 @@ func _build_node_index() -> bool:
     return true
 
 
-func _enter_node(node_id: String, automatic_transitions: int) -> bool:
+func _enter_node(node_id: String, automatic_transitions: int, apply_entry_effects: bool = true) -> bool:
     if automatic_transitions > MAX_AUTOMATIC_TRANSITIONS:
         return _fail("STORY_AUTO_LOOP_DETECTED", "Automatic story transitions exceeded the safety limit", node_id)
     if not _nodes.has(node_id):
@@ -143,6 +250,7 @@ func _enter_node(node_id: String, automatic_transitions: int) -> bool:
     _current_node_id = node_id
     _waiting_for = ""
     _selectable_choices.clear()
+    _choice_presentation = {}
     story_node_entered.emit(_story_id, node_id, node_type)
 
     if node_type not in SUPPORTED_NODE_TYPES:
@@ -155,9 +263,9 @@ func _enter_node(node_id: String, automatic_transitions: int) -> bool:
         var skip_target := str(node.get("next", ""))
         if skip_target.is_empty():
             return _fail("STORY_CONDITION_NO_FALLBACK", "A hidden node has no next target", node_id)
-        return _enter_node(skip_target, automatic_transitions + 1)
+        return _enter_node(skip_target, automatic_transitions + 1, apply_entry_effects)
 
-    if not _apply_effects(node.get("effects", [])):
+    if apply_entry_effects and not _apply_effects(node.get("effects", [])):
         return false
 
     match node_type:
@@ -183,7 +291,36 @@ func _enter_node(node_id: String, automatic_transitions: int) -> bool:
     return false
 
 
-func _present_choices(node: Dictionary) -> bool:
+func _restore_exact_node(node_id: String) -> bool:
+    var node: Dictionary = _nodes[node_id]
+    var node_type := str(node.get("type", ""))
+    _current_node_id = node_id
+    _waiting_for = ""
+    _selectable_choices.clear()
+    _choice_presentation = {}
+    _completion_result = {}
+
+    match node_type:
+        "narrative":
+            _waiting_for = "narrative"
+            return true
+        "dialogue":
+            _waiting_for = "dialogue"
+            return true
+        "choice":
+            return _present_choices(node, false)
+        "complete":
+            _running = false
+            _completion_result = {
+                "story_id": _story_id,
+                "node_id": node_id,
+                "outcome": str(node.get("outcome", "completed")),
+            }
+            return true
+    return _fail("STORY_NODE_TYPE_UNSUPPORTED", "Unsupported saved story node type '%s'" % node_type, node_id)
+
+
+func _present_choices(node: Dictionary, emit_signal: bool = true) -> bool:
     var visible_choices: Array = []
     var raw_choices: Variant = node.get("choices", [])
     if not raw_choices is Array:
@@ -218,11 +355,13 @@ func _present_choices(node: Dictionary) -> bool:
     if _selectable_choices.is_empty():
         return _fail("STORY_NO_AVAILABLE_CHOICES", "Choice node has no selectable choices", _current_node_id)
     _waiting_for = "choice"
-    choice_presented.emit({
+    _choice_presentation = {
         "story_id": _story_id,
         "node_id": _current_node_id,
         "choices": visible_choices,
-    })
+    }
+    if emit_signal:
+        choice_presented.emit(_choice_presentation.duplicate(true))
     return true
 
 
@@ -297,8 +436,22 @@ func _clear_runtime() -> void:
     _current_node_id = ""
     _waiting_for = ""
     _selectable_choices.clear()
+    _choice_presentation = {}
     _completion_result = {}
     _running = false
+
+
+func _checkpoint_fail(message: String) -> bool:
+    last_error = {
+        "code": "STORY_CHECKPOINT_INVALID",
+        "message": message,
+        "story_id": _story_id,
+        "node_id": _current_node_id,
+        "choice_id": "",
+        "details": {},
+    }
+    printerr("STORY_ERROR:STORY_CHECKPOINT_INVALID:%s:%s" % [_current_node_id, message])
+    return false
 
 
 func _fail(
