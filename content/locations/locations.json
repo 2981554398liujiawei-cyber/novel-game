@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.3.0",
+  "locations": [
+    {
+      "location_id": "NV7_LOC_FIELDS",
+      "name": "北药田与草坡",
+      "background_id": "BG_NV7_FIELDS",
+      "music_id": "MUS_NV7_WILDERNESS",
+      "connections": [
+        "NV7_LOC_SQUARE"
+      ],
+      "unlock_conditions": [
+        {
+          "key": "quest.nv_main_002.completed_commissions",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "location_id": "NV7_LOC_SQUARE",
+      "name": "村庄广场",
+      "background_id": "BG_NV7_SQUARE",
+      "music_id": "MUS_NV7_VILLAGE",
+      "connections": [
+        "NV7_LOC_FIELDS"
+      ],
+      "unlock_conditions": []
+    }
+  ]
+}

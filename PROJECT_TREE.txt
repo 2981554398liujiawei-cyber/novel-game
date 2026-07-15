@@ -1,0 +1,252 @@
+novel-game/
+├─ .github/
+│  └─ workflows/
+│     └─ ci.yml
+├─ assets/
+│  ├─ audio/
+│  │  ├─ music/
+│  │  │  ├─ boss_loop.ogg
+│  │  │  ├─ village_loop.ogg
+│  │  │  └─ wild_loop.ogg
+│  │  └─ sfx/
+│  │     ├─ battle_start.wav
+│  │     ├─ choice_open.wav
+│  │     ├─ guard.wav
+│  │     ├─ hit_heavy.wav
+│  │     ├─ hit_light.wav
+│  │     ├─ load_ok.wav
+│  │     ├─ reward.wav
+│  │     ├─ save_ok.wav
+│  │     ├─ ui_cancel.wav
+│  │     ├─ ui_click.wav
+│  │     ├─ ui_confirm.wav
+│  │     └─ warning.wav
+│  ├─ backgrounds/
+│  │  └─ nv7/
+│  │     ├─ nv7_apothecary.png
+│  │     ├─ nv7_exit_road.png
+│  │     ├─ nv7_fields.png
+│  │     ├─ nv7_smithy.png
+│  │     ├─ nv7_square.png
+│  │     ├─ nv7_tianshu_spring.png
+│  │     ├─ nv7_treasure_cave.png
+│  │     └─ nv7_wolf_trail.png
+│  ├─ portraits/
+│  │  ├─ fallback/
+│  │  │  └─ npc_missing.png
+│  │  ├─ generic/
+│  │  │  ├─ masked_adventurer/
+│  │  │  │  └─ default.png
+│  │  │  ├─ villager_female/
+│  │  │  │  └─ default.png
+│  │  │  └─ villager_male/
+│  │  │     └─ default.png
+│  │  └─ nv7/
+│  │     ├─ fengyun_heihu/
+│  │     │  └─ fengyun_heihu__default.png
+│  │     ├─ fengyun_huanghu/
+│  │     │  └─ fengyun_huanghu__default.png
+│  │     ├─ fengyun_shihu/
+│  │     │  └─ fengyun_shihu__default.png
+│  │     ├─ guchangchuan/
+│  │     │  ├─ guchangchuan__calm.png
+│  │     │  └─ guchangchuan__grave.png
+│  │     ├─ hanshi/
+│  │     │  ├─ hanshi__neutral.png
+│  │     │  └─ hanshi__pleased.png
+│  │     ├─ lanyin/
+│  │     │  ├─ lanyin__neutral.png
+│  │     │  ├─ lanyin__serious.png
+│  │     │  ├─ lanyin__smile.png
+│  │     │  └─ lanyin__soft.png
+│  │     ├─ suzhi/
+│  │     │  ├─ suzhi__calm.png
+│  │     │  └─ suzhi__concerned.png
+│  │     ├─ tianhuolenghun/
+│  │     │  ├─ tianhuolenghun__confident.png
+│  │     │  └─ tianhuolenghun__injured.png
+│  │     └─ wangwu/
+│  │        ├─ wangwu__hearty.png
+│  │        └─ wangwu__serious.png
+│  ├─ ui/
+│  └─ ASSET_MANIFEST.json
+├─ builds/
+│  └─ .gitkeep
+├─ content/
+│  ├─ combats/
+│  │  └─ combats.json
+│  ├─ enemies/
+│  │  └─ enemies.json
+│  ├─ items/
+│  │  └─ items.json
+│  ├─ locations/
+│  │  └─ locations.json
+│  ├─ npcs/
+│  │  └─ npcs.json
+│  ├─ quests/
+│  │  └─ nv7/
+│  │     └─ README.md
+│  ├─ skills/
+│  │  └─ skills.json
+│  ├─ states/
+│  │  └─ state_registry.json
+│  ├─ strings/
+│  ├─ tests/
+│  │  └─ fixtures/
+│  │     └─ README.md
+│  ├─ AGENTS.md
+│  ├─ manifest.json
+│  ├─ presentation_tags.json
+│  └─ quest_dependencies.json
+├─ docs/
+│  ├─ production/
+│  │  ├─ 00_生产启动说明.md
+│  │  ├─ 01_开发环境锁定.md
+│  │  ├─ 02_Git与分支工作流.md
+│  │  ├─ 03_Codex任务卡模板.md
+│  │  ├─ 04_存档开发期兼容策略.md
+│  │  ├─ 05_背景与音频资产规范.md
+│  │  ├─ 06_AGENTS规则分层说明.md
+│  │  ├─ 07_交给Codex前检查清单.md
+│  │  ├─ 08_剧情包接入与冲突清理_v1.5.md
+│  │  └─ 09_仓库落地与剧情原件说明.md
+│  ├─ spec/
+│  │  ├─ 00_项目总则/
+│  │  │  ├─ 00_项目宪章.md
+│  │  │  ├─ 01_开发执行准则.md
+│  │  │  └─ 02_范围与变更控制.md
+│  │  ├─ 01_叙事与改编/
+│  │  │  ├─ 10_世界观与终局契约.md
+│  │  │  ├─ 10A_世界规则与人物认知矩阵.md
+│  │  │  ├─ 11_主角与人物圣经.md
+│  │  │  ├─ 11A_主角可选人格与行为边界.md
+│  │  │  ├─ 12_第七新手村区域圣经.md
+│  │  │  ├─ 13_新手村剧情总纲与任务目录.md
+│  │  │  ├─ 13A_任务依赖图与章节状态矩阵.md
+│  │  │  ├─ 14_暧昧与关系写作规范.md
+│  │  │  ├─ 15_原著清洗与改编依据.md
+│  │  │  ├─ 15A_叙事文风与系统文本规范.md
+│  │  │  ├─ 16_全剧情总纲与因果回收规范.md
+│  │  │  ├─ 17_完整任务剧本与对白数据规范.md
+│  │  │  └─ 18_任务剧本生产模板.md
+│  │  ├─ 02_玩法与UI/
+│  │  │  ├─ 20_核心玩法与数值规则.md
+│  │  │  ├─ 20A_战斗与检定完整规格.md
+│  │  │  ├─ 20B_成长经济与物品规则.md
+│  │  │  ├─ 21_Windows_UI_UX规范.md
+│  │  │  ├─ 21A_战斗UI与功能页线框规范.md
+│  │  │  ├─ 22_存档失败续接与调试规范.md
+│  │  │  └─ 23_对话立绘与演出规范.md
+│  │  ├─ 03_技术与数据/
+│  │  │  ├─ 30_技术架构.md
+│  │  │  ├─ 31_数据与ID规范.md
+│  │  │  ├─ 31A_内容权威源与转换流程.md
+│  │  │  ├─ 32_立绘资源与命名规范.md
+│  │  │  └─ 33_完整数据Schema目录.md
+│  │  ├─ 04_计划与验收/
+│  │  │  ├─ 40_阶段计划与任务分解.md
+│  │  │  ├─ 41_验收边界与测试矩阵.md
+│  │  │  ├─ 42_开发看板与交付清单.md
+│  │  │  ├─ 43_风险与决策记录.md
+│  │  │  ├─ 44_NPC立绘资产清单.md
+│  │  │  ├─ 45_剧情内容验收与DONE定义.md
+│  │  │  └─ 46_Windows运行环境与性能边界.md
+│  │  ├─ 90_审阅附件/
+│  │  │  ├─ 原著章节标题清洗索引.csv
+│  │  │  └─ 清洗异常说明.md
+│  │  ├─ 00_最新开发方案总览_v1.3.md
+│  │  ├─ AGENTS.md
+│  │  └─ 版本变更说明_v1.3.md
+│  ├─ story/
+│  │  ├─ active/
+│  │  │  └─ 00_第七新手村剧情源接入索引.md
+│  │  ├─ raw_sources/
+│  │  │  ├─ active/
+│  │  │  │  └─ .gitkeep
+│  │  │  ├─ reference/
+│  │  │  │  └─ .gitkeep
+│  │  │  ├─ roadmap/
+│  │  │  │  └─ .gitkeep
+│  │  │  └─ README.md
+│  │  ├─ reference/
+│  │  │  ├─ 00_樱花岛区域完整剧本_v0.2_接入状态.md
+│  │  │  └─ 01_天梦大陆开放世界设定集_v0.1_接入状态.md
+│  │  ├─ roadmap/
+│  │  │  └─ 00_全剧情任务树_v0.2_接入状态.md
+│  │  ├─ AGENTS.md
+│  │  ├─ README.md
+│  │  └─ source_manifest.json
+│  ├─ tasks/
+│  │  ├─ 00_任务索引.md
+│  │  ├─ TASK-000_验证生产环境.md
+│  │  ├─ TASK-001_建立工程骨架.md
+│  │  ├─ TASK-002_ContentLoader.md
+│  │  ├─ TASK-003_GameState.md
+│  │  ├─ TASK-004_StoryRunner接口.md
+│  │  ├─ TASK-005_三模式UI骨架.md
+│  │  ├─ TASK-006_SaveManager.md
+│  │  ├─ TASK-007_CombatRunner.md
+│  │  ├─ TASK-008_任务背包关系模块.md
+│  │  ├─ TASK-009_资产加载与回退.md
+│  │  ├─ TASK-010_内容转换工具.md
+│  │  └─ TASK-011_Windows构建闭环.md
+│  └─ wireframes/
+│     ├─ 01_main_menu.png
+│     ├─ 02_exploration.png
+│     ├─ 03_dialogue.png
+│     ├─ 04_combat.png
+│     ├─ 05_function_pages.png
+│     ├─ 06_save_load.png
+│     └─ README.md
+├─ generated/
+│  └─ review/
+│     └─ README.md
+├─ scenes/
+│  ├─ app/
+│  │  └─ main.tscn
+│  └─ ui/
+├─ schemas/
+│  ├─ combat.schema.json
+│  ├─ content_manifest.schema.json
+│  ├─ enemy.schema.json
+│  ├─ item.schema.json
+│  ├─ location.schema.json
+│  ├─ npc.schema.json
+│  ├─ quest.schema.json
+│  ├─ quest_dependency.schema.json
+│  ├─ save.schema.json
+│  ├─ skill.schema.json
+│  ├─ state_registry.schema.json
+│  └─ story_source_manifest.schema.json
+├─ scripts/
+│  ├─ build_windows.ps1
+│  ├─ common.ps1
+│  ├─ setup.ps1
+│  ├─ smoke_test.ps1
+│  ├─ test.ps1
+│  └─ validate.ps1
+├─ src/
+│  ├─ app/
+│  │  └─ app_root.gd
+│  ├─ core/
+│  │  └─ README.md
+│  ├─ gameplay/
+│  │  └─ README.md
+│  ├─ ui/
+│  │  └─ README.md
+│  └─ AGENTS.md
+├─ tests/
+│  ├─ godot/
+│  ├─ python/
+│  │  └─ test_repository.py
+│  └─ AGENTS.md
+├─ tools/
+│  └─ validate_repository.py
+├─ .editorconfig
+├─ .gitattributes
+├─ .gitignore
+├─ AGENTS.md
+├─ export_presets.cfg
+├─ project.godot
+├─ README.md
+└─ requirements-dev.txt

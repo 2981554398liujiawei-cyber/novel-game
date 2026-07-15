@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NPCRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "npcs"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "npc_id",
+          "name",
+          "age",
+          "romance_eligible",
+          "role",
+          "entity_class",
+          "system_visibility",
+          "has_real_world_memory",
+          "can_respawn",
+          "death_policy",
+          "current_chapter_permanent_death",
+          "speech_profile",
+          "portrait_set"
+        ],
+        "properties": {
+          "npc_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 18
+          },
+          "romance_eligible": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string"
+          },
+          "entity_class": {
+            "enum": [
+              "player_npc",
+              "system_npc",
+              "generic_player_npc",
+              "generic_system_npc"
+            ]
+          },
+          "system_visibility": {
+            "enum": [
+              "full",
+              "role_scoped"
+            ]
+          },
+          "has_real_world_memory": {
+            "type": "boolean"
+          },
+          "can_respawn": {
+            "type": "boolean"
+          },
+          "death_policy": {
+            "enum": [
+              "respawn_with_cost",
+              "canonical_fate_only"
+            ]
+          },
+          "current_chapter_permanent_death": {
+            "const": false
+          },
+          "speech_profile": {
+            "type": "object"
+          },
+          "portrait_set": {
+            "type": "object",
+            "required": [
+              "base_path",
+              "default_expression",
+              "expressions",
+              "display"
+            ],
+            "properties": {
+              "base_path": {
+                "type": "string"
+              },
+              "default_expression": {
+                "type": "string"
+              },
+              "expressions": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "display": {
+                "type": "object",
+                "required": [
+                  "scale",
+                  "offset_x",
+                  "offset_y"
+                ],
+                "properties": {
+                  "scale": {
+                    "type": "number"
+                  },
+                  "offset_x": {
+                    "type": "integer"
+                  },
+                  "offset_y": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}

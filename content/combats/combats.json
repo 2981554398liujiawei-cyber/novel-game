@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.3.0",
+  "combats": [
+    {
+      "combat_id": "NV7_COMBAT_RABBIT_GUARDS",
+      "location_id": "NV7_LOC_FIELDS",
+      "enemy_ids": [
+        "NV7_ENEMY_RABBIT_GUARD",
+        "NV7_ENEMY_RABBIT_GUARD"
+      ],
+      "ally_ids": [
+        "NV7_NPC_LANYIN"
+      ],
+      "victory": {
+        "type": "drive_away",
+        "target_count": 2
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "rescue_recovery"
+      },
+      "unique_mechanic": "兔群只攻击挡路目标，胜利以驱散计",
+      "phases": [
+        {
+          "phase_id": "default",
+          "trigger": "combat_start",
+          "ai_profile": "escape_first"
+        }
+      ]
+    },
+    {
+      "combat_id": "NV7_COMBAT_POACHERS",
+      "location_id": "NV7_LOC_FIELDS",
+      "enemy_ids": [
+        "NV7_ENEMY_POACHER",
+        "NV7_ENEMY_POACHER"
+      ],
+      "ally_ids": [
+        "NV7_NPC_LANYIN"
+      ],
+      "victory": {
+        "type": "surrender_below_hp",
+        "threshold_percent": 25
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "rescue_recovery"
+      },
+      "unique_mechanic": "低生命投降且不可继续攻击",
+      "phases": [
+        {
+          "phase_id": "default",
+          "trigger": "combat_start",
+          "ai_profile": "poacher_duo"
+        }
+      ]
+    },
+    {
+      "combat_id": "NV7_COMBAT_DUDU_RABBIT",
+      "location_id": "NV7_LOC_FIELDS",
+      "enemy_ids": [
+        "NV7_BOSS_DUDU_RABBIT"
+      ],
+      "ally_ids": [
+        "NV7_NPC_LANYIN"
+      ],
+      "victory": {
+        "type": "hp_or_spare_choice",
+        "threshold_percent": 20
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "rescue_recovery"
+      },
+      "unique_mechanic": "观察萝卜攻击前摇并决定收手或击杀",
+      "phases": [
+        {
+          "phase_id": "p1",
+          "trigger": "combat_start",
+          "ai_profile": "rabbit_boss_normal"
+        },
+        {
+          "phase_id": "p2",
+          "trigger": "hp_lte_40",
+          "ai_profile": "rabbit_boss_enraged"
+        }
+      ]
+    }
+  ]
+}

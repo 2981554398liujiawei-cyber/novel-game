@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.3.0",
+  "portrait_actions": [
+    "show",
+    "keep",
+    "hide",
+    "replace"
+  ],
+  "cameras": [
+    "portrait_standard",
+    "portrait_close",
+    "scene_wide",
+    "none"
+  ],
+  "deliveries": [
+    "normal",
+    "quiet",
+    "firm",
+    "urgent",
+    "hesitant",
+    "cold",
+    "warm"
+  ],
+  "gestures": [
+    "none",
+    "shield_herb_tray",
+    "show_trap",
+    "point_tracks",
+    "raise_bow",
+    "lower_weapon",
+    "inspect_ground",
+    "step_back",
+    "offer_item",
+    "mark_exit",
+    "accept_ledger",
+    "draw_bow",
+    "watch_tracks",
+    "point_weakness",
+    "gesture_choice",
+    "lower_bow",
+    "fold_arms",
+    "turn_price_board",
+    "arrange_herbs"
+  ],
+  "audio_cues": [
+    "ui_confirm",
+    "choice_open",
+    "quest_update",
+    "reward",
+    "hit",
+    "critical",
+    "hurt",
+    "warning",
+    "boss_phase",
+    "save_ok",
+    "error"
+  ],
+  "background_ids": [
+    "BG_NV7_ALTAR",
+    "BG_NV7_SQUARE",
+    "BG_NV7_FORGE",
+    "BG_NV7_APOTHECARY",
+    "BG_NV7_FIELDS",
+    "BG_NV7_WOLF_PATH",
+    "BG_NV7_CLIFF_CAVE",
+    "BG_NV7_TIANSHU"
+  ],
+  "music_ids": [
+    "MUS_NV7_VILLAGE",
+    "MUS_NV7_WILDERNESS",
+    "MUS_NV7_BOSS"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "skills"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "skill_id",
+          "name",
+          "kind",
+          "target",
+          "cooldown_rounds",
+          "uses_per_battle",
+          "effects",
+          "source"
+        ],
+        "properties": {
+          "skill_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "active",
+              "passive",
+              "companion",
+              "noncombat"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "cooldown_rounds": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uses_per_battle": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

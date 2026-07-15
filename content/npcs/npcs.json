@@ -1,0 +1,385 @@
+{
+  "schema_version": "1.3.0",
+  "npcs": [
+    {
+      "npc_id": "NV7_NPC_LANYIN",
+      "name": "岚音",
+      "age": 22,
+      "romance_eligible": true,
+      "role": "游侠学徒与临时同行者",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/lanyin",
+        "default_expression": "neutral",
+        "expressions": {
+          "neutral": "lanyin__neutral.png",
+          "serious": "lanyin__serious.png",
+          "smile": "lanyin__smile.png",
+          "soft": "lanyin__soft.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_CHIEF",
+      "name": "顾长川",
+      "age": 67,
+      "romance_eligible": false,
+      "role": "村长",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/guchangchuan",
+        "default_expression": "calm",
+        "expressions": {
+          "calm": "guchangchuan__calm.png",
+          "grave": "guchangchuan__grave.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_HANSHI",
+      "name": "韩石",
+      "age": 46,
+      "romance_eligible": false,
+      "role": "铁匠",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/hanshi",
+        "default_expression": "neutral",
+        "expressions": {
+          "neutral": "hanshi__neutral.png",
+          "pleased": "hanshi__pleased.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_SUZHI",
+      "name": "苏芷",
+      "age": 39,
+      "romance_eligible": false,
+      "role": "药师",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/suzhi",
+        "default_expression": "calm",
+        "expressions": {
+          "calm": "suzhi__calm.png",
+          "concerned": "suzhi__concerned.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_WANGWU",
+      "name": "王五",
+      "age": 44,
+      "romance_eligible": false,
+      "role": "猎户与神泉守望者",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/wangwu",
+        "default_expression": "hearty",
+        "expressions": {
+          "hearty": "wangwu__hearty.png",
+          "serious": "wangwu__serious.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_TIANHUOLENGHUN",
+      "name": "天火冷魂",
+      "age": 25,
+      "romance_eligible": false,
+      "role": "法师型冒险者",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/tianhuolenghun",
+        "default_expression": "confident",
+        "expressions": {
+          "confident": "tianhuolenghun__confident.png",
+          "injured": "tianhuolenghun__injured.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "player_npc",
+      "system_visibility": "full",
+      "has_real_world_memory": true,
+      "can_respawn": true,
+      "death_policy": "respawn_with_cost",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_FENGYUN_SHIHU",
+      "name": "风云石虎",
+      "age": 28,
+      "romance_eligible": false,
+      "role": "风云三人组首领",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/fengyun_shihu",
+        "default_expression": "default",
+        "expressions": {
+          "default": "fengyun_shihu__default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "player_npc",
+      "system_visibility": "full",
+      "has_real_world_memory": true,
+      "can_respawn": true,
+      "death_policy": "respawn_with_cost",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_FENGYUN_HEIHU",
+      "name": "风云黑虎",
+      "age": 26,
+      "romance_eligible": false,
+      "role": "风云三人组成员",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/fengyun_heihu",
+        "default_expression": "default",
+        "expressions": {
+          "default": "fengyun_heihu__default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "player_npc",
+      "system_visibility": "full",
+      "has_real_world_memory": true,
+      "can_respawn": true,
+      "death_policy": "respawn_with_cost",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "NV7_NPC_FENGYUN_HUANGHU",
+      "name": "风云黄虎",
+      "age": 23,
+      "romance_eligible": false,
+      "role": "风云三人组成员",
+      "portrait_set": {
+        "base_path": "res://assets/portraits/nv7/fengyun_huanghu",
+        "default_expression": "default",
+        "expressions": {
+          "default": "fengyun_huanghu__default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      },
+      "entity_class": "player_npc",
+      "system_visibility": "full",
+      "has_real_world_memory": true,
+      "can_respawn": true,
+      "death_policy": "respawn_with_cost",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "medium",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "avoids_direct_answer"
+      }
+    },
+    {
+      "npc_id": "GENERIC_VILLAGER_MALE",
+      "name": "无名男村民",
+      "age": 20,
+      "romance_eligible": false,
+      "role": "通用对白角色",
+      "entity_class": "generic_system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "short",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "none"
+      },
+      "portrait_set": {
+        "base_path": "res://assets/portraits/generic/villager_male",
+        "default_expression": "default",
+        "expressions": {
+          "default": "default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      }
+    },
+    {
+      "npc_id": "GENERIC_VILLAGER_FEMALE",
+      "name": "无名女村民",
+      "age": 20,
+      "romance_eligible": false,
+      "role": "通用对白角色",
+      "entity_class": "generic_system_npc",
+      "system_visibility": "role_scoped",
+      "has_real_world_memory": false,
+      "can_respawn": false,
+      "death_policy": "canonical_fate_only",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "short",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "none"
+      },
+      "portrait_set": {
+        "base_path": "res://assets/portraits/generic/villager_female",
+        "default_expression": "default",
+        "expressions": {
+          "default": "default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      }
+    },
+    {
+      "npc_id": "GENERIC_MASKED_ADVENTURER",
+      "name": "蒙面冒险者",
+      "age": 20,
+      "romance_eligible": false,
+      "role": "通用对白角色",
+      "entity_class": "generic_player_npc",
+      "system_visibility": "full",
+      "has_real_world_memory": true,
+      "can_respawn": true,
+      "death_policy": "respawn_with_cost",
+      "current_chapter_permanent_death": false,
+      "speech_profile": {
+        "sentence_length": "short",
+        "formality": "neutral",
+        "stress_change": "shorter_sentences",
+        "lying_tell": "none"
+      },
+      "portrait_set": {
+        "base_path": "res://assets/portraits/generic/masked_adventurer",
+        "default_expression": "default",
+        "expressions": {
+          "default": "default.png"
+        },
+        "display": {
+          "scale": 1.0,
+          "offset_x": 0,
+          "offset_y": 0
+        }
+      }
+    }
+  ]
+}

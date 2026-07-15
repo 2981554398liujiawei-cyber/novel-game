@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnemyRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "enemies"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "enemies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enemy_id",
+          "name",
+          "level",
+          "agility",
+          "max_hp",
+          "attack",
+          "defense",
+          "skill_ids",
+          "ai_profile",
+          "boss"
+        ],
+        "properties": {
+          "enemy_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "type": "integer"
+          },
+          "agility": {
+            "type": "integer"
+          },
+          "max_hp": {
+            "type": "integer"
+          },
+          "attack": {
+            "type": "integer"
+          },
+          "defense": {
+            "type": "integer"
+          },
+          "skill_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ai_profile": {
+            "type": "string"
+          },
+          "boss": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

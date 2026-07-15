@@ -1,0 +1,20 @@
+; Engine configuration file.
+; Production baseline: Godot 4.6.2 Standard.
+config_version=5
+
+[application]
+config/name="王者：第七新手村"
+run/main_scene="res://scenes/app/main.tscn"
+config/features=PackedStringArray("4.6")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.06, 0.06, 0.07, 1)

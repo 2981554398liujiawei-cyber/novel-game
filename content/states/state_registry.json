@@ -1,0 +1,310 @@
+{
+  "schema_version": "1.5.0",
+  "states": [
+    {
+      "key": "quest.nv_main_001.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_003.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_003.outcome",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "protect_ecology",
+        "hunt_for_loot",
+        "expose_poachers"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.time_period",
+      "type": "string",
+      "default": "morning",
+      "allowed": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.rabbit_event_started",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.rabbit_ecology",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "stable",
+        "damaged"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.poacher_exposed",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.herb_price_modifier",
+      "type": "integer",
+      "default": 0,
+      "min": -20,
+      "max": 50,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.lanyin.trust",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.lanyin.affection",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "player.evidence.poacher",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 5,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "inventory.has.rabbit_mask",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "inventory.has.poacher_ledger",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "qualified",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_003",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "quest.nv_main_002.completed_commissions",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_003",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "quest.nv_main_002.commission.hanshi_trial.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "quest.nv_main_002.commission.suzhi_herb_basket.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_003",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "quest.nv_main_002.commission.guchangchuan_boundary_stones.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "active",
+        "completed"
+      ],
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "player.origin_disclosed",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "honest",
+        "withheld",
+        "questioned"
+      ],
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_001"
+      ],
+      "readers": [
+        "NV_MAIN_001",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "player.insight_unlocked",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_002",
+        "NV_MAIN_003",
+        "NV_MAIN_004",
+        "NV_MAIN_005"
+      ]
+    },
+    {
+      "key": "world.nv7.return_channel_seen",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_001"
+      ],
+      "readers": [
+        "NV_MAIN_001",
+        "NV_MAIN_005",
+        "NV_MAIN_008"
+      ]
+    },
+    {
+      "key": "world.nv7.blue_powder_seen",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002",
+        "NV_MAIN_003"
+      ],
+      "readers": [
+        "NV_MAIN_003",
+        "NV_MAIN_004"
+      ]
+    },
+    {
+      "key": "world.nv7.boundary_stone_anomaly",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [
+        "NV_MAIN_002"
+      ],
+      "readers": [
+        "NV_MAIN_006",
+        "NV_MAIN_008"
+      ]
+    }
+  ]
+}

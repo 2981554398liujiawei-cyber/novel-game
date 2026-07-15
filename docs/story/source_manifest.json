@@ -1,0 +1,50 @@
+{
+  "manifest_version": "1.0.0",
+  "active_scope": "nv7",
+  "sources": [
+    {
+      "title": "王者_第七新手村完整剧情母稿_v0.1.md",
+      "bucket": "active",
+      "status": "source_mother_draft",
+      "scope": "NV_MAIN_001-NV_MAIN_008",
+      "authority": "current_story_source",
+      "notes": "当前第七新手村剧情内容源；需逐任务拆成complete_script后才能转运行时JSON。",
+      "expected_repository_path": "docs/story/raw_sources/active/王者_第七新手村完整剧情母稿_v0.1.md",
+      "raw_file_embedded": false,
+      "integration_state": "rules_and_index_integrated"
+    },
+    {
+      "title": "01_全剧情任务树_v0.2.docx",
+      "bucket": "roadmap",
+      "status": "draft_outline",
+      "scope": "future_game",
+      "authority": "future_roadmap_only",
+      "notes": "含旧产品机制与旧设定，只用于后续篇章方向，不覆盖当前规格。",
+      "expected_repository_path": "docs/story/raw_sources/roadmap/01_全剧情任务树_v0.2.docx",
+      "raw_file_embedded": false,
+      "integration_state": "rules_and_index_integrated"
+    },
+    {
+      "title": "02_樱花岛区域完整剧本_v0.2.docx",
+      "bucket": "reference",
+      "status": "future_reference",
+      "scope": "future_sakura_island",
+      "authority": "reference_only",
+      "notes": "当前不实现；其中战棋/开放世界机制需未来按当时产品规格重构。",
+      "expected_repository_path": "docs/story/raw_sources/reference/02_樱花岛区域完整剧本_v0.2.docx",
+      "raw_file_embedded": false,
+      "integration_state": "rules_and_index_integrated"
+    },
+    {
+      "title": "《王者：天梦大陆》开放世界剧本与角色设定集_v0.1.docx",
+      "bucket": "reference",
+      "status": "legacy_reference",
+      "scope": "future_world",
+      "authority": "reference_only",
+      "notes": "旧开放世界设定集，仅保留人物/地点/原著资产参考价值。",
+      "expected_repository_path": "docs/story/raw_sources/reference/《王者：天梦大陆》开放世界剧本与角色设定集_v0.1.docx",
+      "raw_file_embedded": false,
+      "integration_state": "rules_and_index_integrated"
+    }
+  ]
+}

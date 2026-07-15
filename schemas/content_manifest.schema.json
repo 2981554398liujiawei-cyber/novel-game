@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "manifest_version",
+    "content_files",
+    "forbidden_path_fragments",
+    "hash_algorithm"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "manifest_version": {
+      "type": "integer"
+    },
+    "content_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbidden_path_fragments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    }
+  },
+  "additionalProperties": false
+}

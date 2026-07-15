@@ -1,0 +1,11 @@
+{
+  "package_version": "1.5.0",
+  "project": "novel-game",
+  "repository": "2981554398liujiawei-cyber/novel-game",
+  "default_branch": "main",
+  "engine": "Godot 4.6.2 Standard",
+  "platform": "Windows 10/11 x86-64",
+  "current_scope": "第七新手村",
+  "story_integration": "source governance integrated; raw uploaded attachments require physical placement under docs/story/raw_sources",
+  "runtime_story_json_ready": false
+}

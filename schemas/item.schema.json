@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ItemRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item_id",
+          "name",
+          "kind",
+          "quality",
+          "key_item",
+          "stack_limit",
+          "base_price",
+          "equip_slot"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "equipment",
+              "quest",
+              "material",
+              "consumable"
+            ]
+          },
+          "quality": {
+            "enum": [
+              "common",
+              "fine",
+              "gold",
+              "ghost",
+              "artifact"
+            ]
+          },
+          "key_item": {
+            "type": "boolean"
+          },
+          "stack_limit": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "base_price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "equip_slot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

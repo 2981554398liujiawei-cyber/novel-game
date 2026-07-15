@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StorySourceManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_version",
+    "active_scope",
+    "sources"
+  ],
+  "properties": {
+    "manifest_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_scope": {
+      "type": "string",
+      "const": "nv7"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "bucket",
+          "status",
+          "scope",
+          "authority",
+          "notes",
+          "expected_repository_path",
+          "raw_file_embedded",
+          "integration_state"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bucket": {
+            "enum": [
+              "active",
+              "roadmap",
+              "reference"
+            ]
+          },
+          "status": {
+            "enum": [
+              "source_mother_draft",
+              "draft_outline",
+              "future_reference",
+              "legacy_reference"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authority": {
+            "enum": [
+              "current_story_source",
+              "future_roadmap_only",
+              "reference_only"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_repository_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "raw_file_embedded": {
+            "type": "boolean"
+          },
+          "integration_state": {
+            "type": "string",
+            "enum": [
+              "rules_and_index_integrated",
+              "raw_embedded",
+              "fully_imported"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

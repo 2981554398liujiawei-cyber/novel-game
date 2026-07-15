@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.3.0",
+  "items": [
+    {
+      "item_id": "NV7_ITEM_RABBIT_MASK",
+      "name": "嘟嘟兔面罩",
+      "kind": "equipment",
+      "quality": "gold",
+      "key_item": true,
+      "stack_limit": 1,
+      "base_price": 0,
+      "equip_slot": "head"
+    },
+    {
+      "item_id": "NV7_ITEM_POACHER_LEDGER",
+      "name": "捕兽者账本",
+      "kind": "quest",
+      "quality": "common",
+      "key_item": true,
+      "stack_limit": 1,
+      "base_price": 0,
+      "equip_slot": null
+    },
+    {
+      "item_id": "NV7_ITEM_RABBIT_HIDE",
+      "name": "金纹兔皮",
+      "kind": "material",
+      "quality": "fine",
+      "key_item": false,
+      "stack_limit": 99,
+      "base_price": 35,
+      "equip_slot": null
+    }
+  ]
+}

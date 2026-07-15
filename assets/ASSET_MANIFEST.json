@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "placeholder_only": true,
+  "portraits": 21,
+  "backgrounds": 8,
+  "sfx": 12,
+  "music": 3,
+  "notes": "All files are placeholders for path, size, import and UI validation; replace without changing paths when possible."
+}

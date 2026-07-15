@@ -1,0 +1,29 @@
+# Godot generated
+.godot/
+.import/
+
+# Builds
+builds/*
+!builds/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Runtime saves/logs
+user_data/
+logs/
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example

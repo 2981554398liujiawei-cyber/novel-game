@@ -1,0 +1,911 @@
+{
+  "package_version": "1.5.0",
+  "file_count": 181,
+  "files": [
+    {
+      "path": ".editorconfig",
+      "size": 225,
+      "sha256": "fc0cb08f0ea16a4f67b93bf422be0126fe1b4f3cb74162c9be95240f19898d0f"
+    },
+    {
+      "path": ".gitattributes",
+      "size": 104,
+      "sha256": "b37eecfe66846469e85b71355dfd14d5709385759b56dd471765d31929b612df"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "size": 551,
+      "sha256": "30947542296c05e600ccd3211e4a61c95136ebe82fa1a745d01fcc020791ed25"
+    },
+    {
+      "path": ".gitignore",
+      "size": 253,
+      "sha256": "60271b998eaf039393311a8e415dceeeda9e672257538cc64781017edeab9e89"
+    },
+    {
+      "path": "AGENTS.md",
+      "size": 20189,
+      "sha256": "c682af3e29949cab3cba5ec05e21d5d7b7b8e051620491a4ef9eee2530fd92e1"
+    },
+    {
+      "path": "DELIVERY_NOTES.md",
+      "size": 3064,
+      "sha256": "2110d8f248daaa82bafe9fc2e63184c735e2f3ccdc2e2a8bbd152e6c42e3c358"
+    },
+    {
+      "path": "PROJECT_BASELINE.json",
+      "size": 430,
+      "sha256": "0c1d7f5741deeba1a36f876671699737d853bd60ee235f19a847c1cf986be7d1"
+    },
+    {
+      "path": "PROJECT_TREE.txt",
+      "size": 9023,
+      "sha256": "c0cb231e07af63d62a0f83a0513befb3952075dababb016ff224d2c959bc446f"
+    },
+    {
+      "path": "README.md",
+      "size": 2203,
+      "sha256": "9059793e805715116ddf9f301dbeeed502b7e5e6cb2e5534f0b7582e13eb54bd"
+    },
+    {
+      "path": "assets/ASSET_MANIFEST.json",
+      "size": 248,
+      "sha256": "a077b6634d975567c85f4b9d6d0328ca00bce3805a89c8b6c5d05845d7ef8c4a"
+    },
+    {
+      "path": "assets/audio/music/boss_loop.ogg",
+      "size": 17988,
+      "sha256": "603698e714eeb1ff31e99543a3d4078699a35dcaacaf52180bb13a62ffcb261b"
+    },
+    {
+      "path": "assets/audio/music/village_loop.ogg",
+      "size": 18096,
+      "sha256": "def788f011bcfe3b53d4b197120d355307a2b6855d2865a4acc2084e8d71ca0e"
+    },
+    {
+      "path": "assets/audio/music/wild_loop.ogg",
+      "size": 18036,
+      "sha256": "f429841c2411a01c948f675117f6cf17c755cd07fc1291b7753b56fac2089d16"
+    },
+    {
+      "path": "assets/audio/sfx/battle_start.wav",
+      "size": 15920,
+      "sha256": "1b5a3ba2039936caad8803af83e1153cbd63dc4294c4037a9aa407b735f2f19f"
+    },
+    {
+      "path": "assets/audio/sfx/choice_open.wav",
+      "size": 15920,
+      "sha256": "c83b86aa3d485098820e975d863235b95373928d00f44fde53e68f7e245310f7"
+    },
+    {
+      "path": "assets/audio/sfx/guard.wav",
+      "size": 15920,
+      "sha256": "fd2e88e4bde93eca93a3877bdf28c5de8fa4fb4b31932ffd71af4d34949bf066"
+    },
+    {
+      "path": "assets/audio/sfx/hit_heavy.wav",
+      "size": 15920,
+      "sha256": "7f1c977e21d3afaa049a30122bcf6ca1ffa4e41fde0d87dd5fbdcb08f8a996fe"
+    },
+    {
+      "path": "assets/audio/sfx/hit_light.wav",
+      "size": 15920,
+      "sha256": "f2a42412bb8686889c98078cd636e39d298507c86036978dcdc5e758ebd76fb0"
+    },
+    {
+      "path": "assets/audio/sfx/load_ok.wav",
+      "size": 15920,
+      "sha256": "7f03314e9827eec51729d9b441f3e619e5ed4721f9899d4ffb6bd84620109b85"
+    },
+    {
+      "path": "assets/audio/sfx/reward.wav",
+      "size": 15920,
+      "sha256": "b4b2b1b753e59c87885d79683813b3dc36c58e8e953b3147fc2f54eb55cc60bc"
+    },
+    {
+      "path": "assets/audio/sfx/save_ok.wav",
+      "size": 15920,
+      "sha256": "10dacd21bd17479fabe30bf1569d638d5e6795f06b09a95a7841453b7b035848"
+    },
+    {
+      "path": "assets/audio/sfx/ui_cancel.wav",
+      "size": 15920,
+      "sha256": "15231b9bab47a8304a0466f2bef071831c60d38b92e53cf942619d8a8a0b6667"
+    },
+    {
+      "path": "assets/audio/sfx/ui_click.wav",
+      "size": 15920,
+      "sha256": "682f3563c89b59246483bc53bc634f400def1510f6c2c0a135e9634bc4d6215e"
+    },
+    {
+      "path": "assets/audio/sfx/ui_confirm.wav",
+      "size": 15920,
+      "sha256": "0055910944187279540fe00a5bc476982c9ead51a93d25433626c87aa4a7d269"
+    },
+    {
+      "path": "assets/audio/sfx/warning.wav",
+      "size": 15920,
+      "sha256": "fe267ee68f3a6d5f33010bc84b6418987c31e21c63eb56d174c5e766acabd676"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_apothecary.png",
+      "size": 24427,
+      "sha256": "279ab076ab3337652859facfe9b9ad7617bf707978005df686b2baee8d65350b"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_exit_road.png",
+      "size": 24191,
+      "sha256": "78d8ab9bc43c747b0ca083d38ae7fcca7da1bbfb0b985287a92297efad4a9751"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_fields.png",
+      "size": 26812,
+      "sha256": "a9f523a26dc8ea27ca43347fc64787e88c9decebdf4e503d553a636d53f06be7"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_smithy.png",
+      "size": 22958,
+      "sha256": "b37f634d61991195b93b6e1ffc79e4c4e51bcf7a0407840d9b28830fa15c7dd4"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_square.png",
+      "size": 23601,
+      "sha256": "e742d8d18657d4324f2cdf061aae90fc5c5f26766215d4c4c0d0c1a0e2a80fa9"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_tianshu_spring.png",
+      "size": 25760,
+      "sha256": "82e1d7620b25c611cd9ce3677ae0d1a72d2bb3595c2186fe90baacb2230c1bc3"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_treasure_cave.png",
+      "size": 27056,
+      "sha256": "3f9b743d7798bb3765212f3eb6fa5e88f9747d513a212af3833e99855f3b36f5"
+    },
+    {
+      "path": "assets/backgrounds/nv7/nv7_wolf_trail.png",
+      "size": 29149,
+      "sha256": "811ee4951977267dffcb29daba8a51f36e7e650e8148146915bb2740831f2dd0"
+    },
+    {
+      "path": "assets/portraits/fallback/npc_missing.png",
+      "size": 33508,
+      "sha256": "88501bba1a7b21bba1dd230527a10211bbed32e225e52fb827a67417032e433f"
+    },
+    {
+      "path": "assets/portraits/generic/masked_adventurer/default.png",
+      "size": 46740,
+      "sha256": "40680688bdad3ff6ffc047cdc859b82ab02ae526941ec2342c31c38126d1fdee"
+    },
+    {
+      "path": "assets/portraits/generic/villager_female/default.png",
+      "size": 43283,
+      "sha256": "a99d4bedaad8f1be77e19953e70ebb2966a028d0e27859701c9887d96a53d2b2"
+    },
+    {
+      "path": "assets/portraits/generic/villager_male/default.png",
+      "size": 42656,
+      "sha256": "0086430ca90d9bb626765d27da741443d655030cb319073a3add74146221f75f"
+    },
+    {
+      "path": "assets/portraits/nv7/fengyun_heihu/fengyun_heihu__default.png",
+      "size": 43157,
+      "sha256": "57bdf4e31eb746e843c6a96145a84c8dfdb48a198b8084f6711fa1f7a6a52900"
+    },
+    {
+      "path": "assets/portraits/nv7/fengyun_huanghu/fengyun_huanghu__default.png",
+      "size": 43821,
+      "sha256": "aaef3e99ccefbbf40c6d869fa6859970244a0bc41bca8086e42ca728d6b13d3e"
+    },
+    {
+      "path": "assets/portraits/nv7/fengyun_shihu/fengyun_shihu__default.png",
+      "size": 43453,
+      "sha256": "464d0bd7bcfe450ddc3c6df12dd1a87e60571cbf86ceadf72a8b3d9947eb2257"
+    },
+    {
+      "path": "assets/portraits/nv7/guchangchuan/guchangchuan__calm.png",
+      "size": 36348,
+      "sha256": "e4faf3ec753fa4e66f4da87321600b283c9c58846d46bc8bd7ed485fb5e6b9c3"
+    },
+    {
+      "path": "assets/portraits/nv7/guchangchuan/guchangchuan__grave.png",
+      "size": 38164,
+      "sha256": "a7844388262fd52041cc6c487e97d73198324e30e1ef91e2b05b4f8dcb2d2383"
+    },
+    {
+      "path": "assets/portraits/nv7/hanshi/hanshi__neutral.png",
+      "size": 37077,
+      "sha256": "2fd6dbbf6c8d692940ed57e51adc9fca47e38c8004b3bb8ab31d148f019fff44"
+    },
+    {
+      "path": "assets/portraits/nv7/hanshi/hanshi__pleased.png",
+      "size": 38318,
+      "sha256": "cf1302b4011d87083ae53216ee9ed6162501ca74a489e249185299b138e745d6"
+    },
+    {
+      "path": "assets/portraits/nv7/lanyin/lanyin__neutral.png",
+      "size": 37173,
+      "sha256": "59c99a894111cff993b544e8f571fd2620df06264deea6251b75a8ccec213f10"
+    },
+    {
+      "path": "assets/portraits/nv7/lanyin/lanyin__serious.png",
+      "size": 37520,
+      "sha256": "9e9645c94b785910f10155cd4d28de2984c444c7ea95eca7d24f2e209908c800"
+    },
+    {
+      "path": "assets/portraits/nv7/lanyin/lanyin__smile.png",
+      "size": 36693,
+      "sha256": "f709709bedab6ab008ca2572f10bee2ec6536571bb2ccfd1b25dfd3aa96680fb"
+    },
+    {
+      "path": "assets/portraits/nv7/lanyin/lanyin__soft.png",
+      "size": 36511,
+      "sha256": "ce2cb4a9ed469b0e296e7f4182e6c73a69d1ceeec027b2aa91868ca43e0b2821"
+    },
+    {
+      "path": "assets/portraits/nv7/suzhi/suzhi__calm.png",
+      "size": 36962,
+      "sha256": "17959cb151e9d03e5070c1f19479fee43e4fc5e5805267bc7ed9fa883b0a1804"
+    },
+    {
+      "path": "assets/portraits/nv7/suzhi/suzhi__concerned.png",
+      "size": 38598,
+      "sha256": "f630b8b50a4b1a6a573483b997d56b0b9a4287afe30ac1b7f72bf838a66ea2e5"
+    },
+    {
+      "path": "assets/portraits/nv7/tianhuolenghun/tianhuolenghun__confident.png",
+      "size": 45978,
+      "sha256": "8e99f6ba63e05bf5173267227bfbb6fb5a52e4d5b9a8c2783c08a0427b9b9793"
+    },
+    {
+      "path": "assets/portraits/nv7/tianhuolenghun/tianhuolenghun__injured.png",
+      "size": 44470,
+      "sha256": "2b8d2248aec9ef6f3b70a370a8d12a4631d0f8b6ffd7cd225c212eece22d6ac1"
+    },
+    {
+      "path": "assets/portraits/nv7/wangwu/wangwu__hearty.png",
+      "size": 38003,
+      "sha256": "03a97d0b268db5b04066479b1b699d14e4d6ebb35c4d3283bc6fd97d8955df7a"
+    },
+    {
+      "path": "assets/portraits/nv7/wangwu/wangwu__serious.png",
+      "size": 37841,
+      "sha256": "1870bae91897955aa0cc5d30a13267a9b9f8bcfb72e952e046db7b7f0e3866ca"
+    },
+    {
+      "path": "builds/.gitkeep",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "content/AGENTS.md",
+      "size": 1403,
+      "sha256": "68ab759820ba622224b16597ad251e7215dc83198e353daf82c355b2df66dff7"
+    },
+    {
+      "path": "content/combats/combats.json",
+      "size": 2306,
+      "sha256": "12e7325c291d128ce8b87acbfe6051a0472ed6f44e6b578c9d4fde0d8c7f66ac"
+    },
+    {
+      "path": "content/enemies/enemies.json",
+      "size": 841,
+      "sha256": "55289ad67fb3a94730a459d4190fa299cda9fbe10d82ae8e864c51c5d110aacd"
+    },
+    {
+      "path": "content/items/items.json",
+      "size": 756,
+      "sha256": "cf3745d84c2e40501faf1313c137ca2d0e7854134e07ec08812d8ce23a04dc2f"
+    },
+    {
+      "path": "content/locations/locations.json",
+      "size": 685,
+      "sha256": "37c7d014e6f214b5bfefcf9b1cc511994e724193984b08f07528460a4a187d41"
+    },
+    {
+      "path": "content/manifest.json",
+      "size": 463,
+      "sha256": "67a89ebb2635b45dfac962ea9a78a40ae720c21da4d08b815b5265993cef3715"
+    },
+    {
+      "path": "content/npcs/npcs.json",
+      "size": 11329,
+      "sha256": "f7a1fd1102faf10cdc344b54b78e9bdbd27b657f6d06023224d4aab9054176a4"
+    },
+    {
+      "path": "content/presentation_tags.json",
+      "size": 1193,
+      "sha256": "6b7871300b30f9ab924080414c9f71b7fd8782ec61438d9bd575ad226e0975e9"
+    },
+    {
+      "path": "content/quest_dependencies.json",
+      "size": 48,
+      "sha256": "4f23002d73656ae06efcf4c1aee30cd48179d6f4a3d528ff42734df06ad46bff"
+    },
+    {
+      "path": "content/quests/nv7/README.md",
+      "size": 455,
+      "sha256": "b6f38e21b355db95b4e1171d2f226d2376df21c54303627eaadec3eb3f42456a"
+    },
+    {
+      "path": "content/skills/skills.json",
+      "size": 1068,
+      "sha256": "ada22cf3d8e51d098db8a9e32ffc099d1db782cc1a28300b66f3b0ccfd07a91f"
+    },
+    {
+      "path": "content/states/state_registry.json",
+      "size": 6231,
+      "sha256": "b5d1b5688237d14732853825f441f8b5761780c5dc2115957ff762c110e63fcd"
+    },
+    {
+      "path": "content/tests/fixtures/README.md",
+      "size": 177,
+      "sha256": "6d291bb8c8e7a913d13e7ed1634bef75158045787e6aaed5886ae872449f05b1"
+    },
+    {
+      "path": "docs/production/00_生产启动说明.md",
+      "size": 788,
+      "sha256": "5548463a851a2e4381aa844fba90fab64ce5e1a60794ab3388065ed4533a43e2"
+    },
+    {
+      "path": "docs/production/01_开发环境锁定.md",
+      "size": 714,
+      "sha256": "4613a77bb47b0ca9597300c8770108fa925d29093489393da8c36b86bf78f5dd"
+    },
+    {
+      "path": "docs/production/02_Git与分支工作流.md",
+      "size": 603,
+      "sha256": "0bd4fb4b4d7b37edbad36f9e43449daec61ebb73f0fcf50074df62824629b25b"
+    },
+    {
+      "path": "docs/production/03_Codex任务卡模板.md",
+      "size": 677,
+      "sha256": "e2411a14cbab22d3dcbffa359ba086154a81b8f1814fbe3b132ec1ddf0421514"
+    },
+    {
+      "path": "docs/production/04_存档开发期兼容策略.md",
+      "size": 599,
+      "sha256": "7d90a82e84c235f6ac53ab250e36a464662137722685f9c0de5c3734e3cbf179"
+    },
+    {
+      "path": "docs/production/05_背景与音频资产规范.md",
+      "size": 960,
+      "sha256": "8eef020eda2739d92394100a6f575840b5b5abbabef1a2c249b9ad3530660704"
+    },
+    {
+      "path": "docs/production/06_AGENTS规则分层说明.md",
+      "size": 674,
+      "sha256": "e05bb183d0319724b29f19f3f8823cef6e27aa3debc5d91daddac1d67fd03072"
+    },
+    {
+      "path": "docs/production/07_交给Codex前检查清单.md",
+      "size": 1187,
+      "sha256": "13abf6bbde446deed567043edf5ef1ba6f7be4bbb880fa8e9226b727a6a49c01"
+    },
+    {
+      "path": "docs/production/08_剧情包接入与冲突清理_v1.5.md",
+      "size": 1007,
+      "sha256": "97fe6feb5c89b2b54f17670a4f5b975f1e516c365bc5b75c31f25aa7fbe40db4"
+    },
+    {
+      "path": "docs/production/09_仓库落地与剧情原件说明.md",
+      "size": 1663,
+      "sha256": "79a8bf8554d8b1982be57f48251f9f89172455ef5f7956e2c298d62d8311fe0c"
+    },
+    {
+      "path": "docs/spec/00_最新开发方案总览_v1.3.md",
+      "size": 2377,
+      "sha256": "fe897e693e9b32b8dd8621219543c183ef59a858b1502fd71fb811a5d55dd544"
+    },
+    {
+      "path": "docs/spec/00_项目总则/00_项目宪章.md",
+      "size": 2912,
+      "sha256": "2be6d2f3cffc8346b08598104dbabf5f2df4c81ce99f20265c97d612267d82c5"
+    },
+    {
+      "path": "docs/spec/00_项目总则/01_开发执行准则.md",
+      "size": 4289,
+      "sha256": "d264510879c71f41462beb02b04d8e5700c765861613190b31f89ed1202374ba"
+    },
+    {
+      "path": "docs/spec/00_项目总则/02_范围与变更控制.md",
+      "size": 2002,
+      "sha256": "a633f69fc8bba8fe4d97fe54b0dae554f6ed9a16dea2d981f33b2ab6559df0cb"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/10A_世界规则与人物认知矩阵.md",
+      "size": 5045,
+      "sha256": "c7d8d10dca961fe399ac1801f9bdc3d74c2e9724135ea791427d9dbbf4ae11cb"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/10_世界观与终局契约.md",
+      "size": 2405,
+      "sha256": "457fc967120076a95268a434edffd0d1dd16c0e3edec796ed8eb5e48b3198044"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/11A_主角可选人格与行为边界.md",
+      "size": 3039,
+      "sha256": "51eecdfc39c2ee4b33eb854574a60835b50944a5e8eecf2cf83c1617914cff22"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/11_主角与人物圣经.md",
+      "size": 6727,
+      "sha256": "250c5253250761a8272035a351937cbb29708ef4ae8f3e7abc3e0d97aa1d6b83"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/12_第七新手村区域圣经.md",
+      "size": 3052,
+      "sha256": "6303033c54ecbc195c2e6b38208b7e92f3d7393ff675f0659b636ecc8602bcbe"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/13A_任务依赖图与章节状态矩阵.md",
+      "size": 3793,
+      "sha256": "7fc1fcc32c4e45533499351bf0dac6688913a164811d0b049b681a4eca9ee3d2"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/13_新手村剧情总纲与任务目录.md",
+      "size": 8388,
+      "sha256": "e54ee65a86d3a9ecd6cc606ae678da2912142bf5ee604e3407fba71f4cec1441"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/14_暧昧与关系写作规范.md",
+      "size": 2165,
+      "sha256": "c136b4a9956badb788cf34ece1fc65b1552c23dd8b452ef63d82dd7637877668"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/15A_叙事文风与系统文本规范.md",
+      "size": 3180,
+      "sha256": "63bd97fc849b2b024b98ad2702aad69702e1043897d36ff1ff69979935dfac63"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/15_原著清洗与改编依据.md",
+      "size": 2562,
+      "sha256": "b6d658fa4a81b49cddaf36da58e41ca277e4fcf7ed6dbfcea5268f7df333a190"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/16_全剧情总纲与因果回收规范.md",
+      "size": 8832,
+      "sha256": "4c919028ee56ac7b0363eb5126256f97ac0b653f9525274cdad751e3276e036d"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/17_完整任务剧本与对白数据规范.md",
+      "size": 8798,
+      "sha256": "04a5b77f0b648139b25b05209dd69af89ffd74276279d049883a4edfc4316e49"
+    },
+    {
+      "path": "docs/spec/01_叙事与改编/18_任务剧本生产模板.md",
+      "size": 4899,
+      "sha256": "1b5dbd34fcefe60cbc732f595ed28835c2c3541c985a87f928023fe8787a0d03"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/20A_战斗与检定完整规格.md",
+      "size": 5087,
+      "sha256": "2fcc36d9eef844ed6153c9ba87afd1c91f0b040df864b25f59273a308d9b0fc7"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/20B_成长经济与物品规则.md",
+      "size": 3214,
+      "sha256": "544c2a8bb3848ae8740ea92a152b9f0c04cd89aa6519b113bc397e5872a78546"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/20_核心玩法与数值规则.md",
+      "size": 2274,
+      "sha256": "444da4dca1aac564b9bf2638b58d87d9de891e057ce1e75025234a2348ba16bc"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/21A_战斗UI与功能页线框规范.md",
+      "size": 2802,
+      "sha256": "3959177196e118f492e9670d4dd2ce24002c3f76edabf414ad08b84ca0640703"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/21_Windows_UI_UX规范.md",
+      "size": 4174,
+      "sha256": "5c0baf01aa9e3c1aab2666a75925998a449cf69e89a8394420c5384177f0e22f"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/22_存档失败续接与调试规范.md",
+      "size": 1507,
+      "sha256": "133cc8a12933e99e20421b6e5a919d77543c5e27fa0fb9f95d88ed0055d9faae"
+    },
+    {
+      "path": "docs/spec/02_玩法与UI/23_对话立绘与演出规范.md",
+      "size": 2990,
+      "sha256": "656d02633f9512b215d2d472d92365308f0d90f27e62d1dca4a5f30bac91d3aa"
+    },
+    {
+      "path": "docs/spec/03_技术与数据/30_技术架构.md",
+      "size": 3867,
+      "sha256": "3341041e09924d98ef3caeae93d94691b05f9ed1865c479001c1887ebf731641"
+    },
+    {
+      "path": "docs/spec/03_技术与数据/31A_内容权威源与转换流程.md",
+      "size": 2611,
+      "sha256": "55760d002bd5ff46eed37aa713fd0a27763f4321dd9e8b4bb5aa524629ab2dc6"
+    },
+    {
+      "path": "docs/spec/03_技术与数据/31_数据与ID规范.md",
+      "size": 2117,
+      "sha256": "7adc51938743e6dc21962c11422071116aa5312d2b56a8ce79df598ade56c088"
+    },
+    {
+      "path": "docs/spec/03_技术与数据/32_立绘资源与命名规范.md",
+      "size": 2148,
+      "sha256": "70333d45dbf1afb7121c0016c6d939e8e3ccb5ecee97db99d37cc9decf779825"
+    },
+    {
+      "path": "docs/spec/03_技术与数据/33_完整数据Schema目录.md",
+      "size": 2184,
+      "sha256": "7ef2c6f34f16007b417fbf44cec8e759fdfc85470dac20cad5f4ffca7ef1a80f"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/40_阶段计划与任务分解.md",
+      "size": 2412,
+      "sha256": "10eb48879f10222d95cf4838bd5599867d7f876d0b6c632b23657681cefe7639"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/41_验收边界与测试矩阵.md",
+      "size": 2812,
+      "sha256": "638a866f4e4472d743eae861872378bbcdd40772600505b30e03d2c65df168e2"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/42_开发看板与交付清单.md",
+      "size": 1769,
+      "sha256": "18bd2a9f5f4ae4cf49a29ec2e9412b3b4494aeee690d297bd0e7c7501cc03bb9"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/43_风险与决策记录.md",
+      "size": 1598,
+      "sha256": "babe90ffa36932313f5871f5f10de90794f505133b5df7acee89bd3346ab6863"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/44_NPC立绘资产清单.md",
+      "size": 1683,
+      "sha256": "8936fc409afe731544f4c945418486ab75b89e2d0202fe85d8205036acc49753"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/45_剧情内容验收与DONE定义.md",
+      "size": 1656,
+      "sha256": "0c1eb5396a5a4d8abf256f542611795692272f9965da9011a2e31377813acf46"
+    },
+    {
+      "path": "docs/spec/04_计划与验收/46_Windows运行环境与性能边界.md",
+      "size": 1853,
+      "sha256": "54da2122d8a4c11306b0dd7e4b22683e0481a84d2431e945eedd450677f680e2"
+    },
+    {
+      "path": "docs/spec/90_审阅附件/原著章节标题清洗索引.csv",
+      "size": 51942,
+      "sha256": "4916d54acc8cfc77b2e15ce644fae942c01c56d7f3fdbe2553fc4c049409e86d"
+    },
+    {
+      "path": "docs/spec/90_审阅附件/清洗异常说明.md",
+      "size": 601,
+      "sha256": "3b4e36bd92bb693f1b53b74d22f29b2c27e400a8456804f607e8ce480fdde06f"
+    },
+    {
+      "path": "docs/spec/AGENTS.md",
+      "size": 875,
+      "sha256": "f41f1480267cfa56f4be6d84b4bca0274bef412d57bcde2751ba9e929e1dbdc9"
+    },
+    {
+      "path": "docs/spec/版本变更说明_v1.3.md",
+      "size": 811,
+      "sha256": "26c19071485f51c0d96efccfebc31d40aa03aff8415e12a498c16aa1f680af9e"
+    },
+    {
+      "path": "docs/story/AGENTS.md",
+      "size": 1706,
+      "sha256": "f0f0123af0e3ea972277b8020c4fddad9e88c4e6ddb82f31c69a2862da558c91"
+    },
+    {
+      "path": "docs/story/README.md",
+      "size": 1540,
+      "sha256": "a3ab46dedba3f4dcb6da7d32d24a955d855721edcc57fca5b99666309b893298"
+    },
+    {
+      "path": "docs/story/active/00_第七新手村剧情源接入索引.md",
+      "size": 2811,
+      "sha256": "6140fcf751e9c22278d2a3a8e240ae004816c20cd4b3c0c006da91b7083e1a23"
+    },
+    {
+      "path": "docs/story/raw_sources/README.md",
+      "size": 757,
+      "sha256": "b9cba80c1059fda24a2ae8a614c0916867519bfcc62808c7bc1b13aa87367a68"
+    },
+    {
+      "path": "docs/story/raw_sources/active/.gitkeep",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/story/raw_sources/reference/.gitkeep",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/story/raw_sources/roadmap/.gitkeep",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/story/reference/00_樱花岛区域完整剧本_v0.2_接入状态.md",
+      "size": 514,
+      "sha256": "8bd972b3eb7276354c81e824b2d8b6bd47f40a4907fd6661ea72acc1b65ac6ae"
+    },
+    {
+      "path": "docs/story/reference/01_天梦大陆开放世界设定集_v0.1_接入状态.md",
+      "size": 420,
+      "sha256": "ad6823191e310fe78ef97de5d4b5c6de69d7c9996ea10a9c3e1a73b36c1b37e3"
+    },
+    {
+      "path": "docs/story/roadmap/00_全剧情任务树_v0.2_接入状态.md",
+      "size": 1130,
+      "sha256": "4219f466bf05522a48df5167d71a1e90771f35d93f0270ebfe21fdc7814051cc"
+    },
+    {
+      "path": "docs/story/source_manifest.json",
+      "size": 2213,
+      "sha256": "af94337fa8adcae0f330c6569283903b1f88c72554c552345beadd02de67c5f2"
+    },
+    {
+      "path": "docs/tasks/00_任务索引.md",
+      "size": 956,
+      "sha256": "d87eccf5b4c1b544f0e5a29f8e5cb65b94e79d62ab2a15ce55031bbb023e9b22"
+    },
+    {
+      "path": "docs/tasks/TASK-000_验证生产环境.md",
+      "size": 655,
+      "sha256": "2404a0ef8aaf52a0466ed26055a1ae368a1c969b350811067bc6407efee05704"
+    },
+    {
+      "path": "docs/tasks/TASK-001_建立工程骨架.md",
+      "size": 725,
+      "sha256": "6df871eaecd1e382a6b1f34e5664f7e3fc0ceb4d84bfd843798882e8213936dc"
+    },
+    {
+      "path": "docs/tasks/TASK-002_ContentLoader.md",
+      "size": 790,
+      "sha256": "0c25c2c270fe1b6669978f87deeb139d258d9d5b1a3febaf491aea50c8c16865"
+    },
+    {
+      "path": "docs/tasks/TASK-003_GameState.md",
+      "size": 735,
+      "sha256": "a4b71164d72628f3a6706ded47bb9f9c7d75803e97db2d0388951a5b5f11eced"
+    },
+    {
+      "path": "docs/tasks/TASK-004_StoryRunner接口.md",
+      "size": 890,
+      "sha256": "29fb2fc1113dabaa9add327c38a9767af2381326b15bea1b741a5015bbe20be5"
+    },
+    {
+      "path": "docs/tasks/TASK-005_三模式UI骨架.md",
+      "size": 790,
+      "sha256": "7ada071725046d9cf3ae4f2e283161eb3ac925bb26812696c66c511907dd499d"
+    },
+    {
+      "path": "docs/tasks/TASK-006_SaveManager.md",
+      "size": 746,
+      "sha256": "46eb7c0a999878fd35bc2b0093d8fbd3daf81c705169c2c3f12f4be8a85ba45f"
+    },
+    {
+      "path": "docs/tasks/TASK-007_CombatRunner.md",
+      "size": 767,
+      "sha256": "ea11cbad5c76e7db20e2f41a846a9e2ac60fb2cdc63cdc8718db04753e57fed3"
+    },
+    {
+      "path": "docs/tasks/TASK-008_任务背包关系模块.md",
+      "size": 769,
+      "sha256": "f54324dcd8203aba4f7d3f4944151fa86b9de1c1ca0bdec0e6143f055429e484"
+    },
+    {
+      "path": "docs/tasks/TASK-009_资产加载与回退.md",
+      "size": 775,
+      "sha256": "09b4520e2c5e29bd66ddf210bda10628cfd45582df01cf62ffcdad12935a7254"
+    },
+    {
+      "path": "docs/tasks/TASK-010_内容转换工具.md",
+      "size": 803,
+      "sha256": "5dbb1a08e99b4a8b3bf55e3e030299fd5ca06578efe6df9faa390f3f3f7585d3"
+    },
+    {
+      "path": "docs/tasks/TASK-011_Windows构建闭环.md",
+      "size": 799,
+      "sha256": "da9543d22b699c8b54e89a21526338796c17fe85993f06176ec832ec0227cdd1"
+    },
+    {
+      "path": "docs/wireframes/01_main_menu.png",
+      "size": 26230,
+      "sha256": "243c1b205e370fec94ef13c16d8d4ec39178e300c8d88e437c74ad06b2e8f368"
+    },
+    {
+      "path": "docs/wireframes/02_exploration.png",
+      "size": 20431,
+      "sha256": "20c4bed47fd3a4a9216a331b0b550d059498a3b2d681fe74d3dc4649937df51b"
+    },
+    {
+      "path": "docs/wireframes/03_dialogue.png",
+      "size": 29413,
+      "sha256": "e96f6e19077d09717ca37943fd5f502d08c176d768d6621e682421d2a0beba70"
+    },
+    {
+      "path": "docs/wireframes/04_combat.png",
+      "size": 25189,
+      "sha256": "f6af4b8584a5ec488ecf683db54ea2826ea6e92bd778c143360e990750bde47e"
+    },
+    {
+      "path": "docs/wireframes/05_function_pages.png",
+      "size": 20205,
+      "sha256": "7a112e0a9216e8a161238f0fcec9e40f2c2a892173157f4a96c140d32afedce3"
+    },
+    {
+      "path": "docs/wireframes/06_save_load.png",
+      "size": 20914,
+      "sha256": "aefeef3673e3164e0e9ee1ead7690e253c5424bf2edbf8ca6a755f47de622cc3"
+    },
+    {
+      "path": "docs/wireframes/README.md",
+      "size": 272,
+      "sha256": "3b17a470849307b893c9989907b9f358d653f114a680c8219b7994ca3eec3698"
+    },
+    {
+      "path": "export_presets.cfg",
+      "size": 596,
+      "sha256": "4567164abfbf825fc28387ba8e77277dd6f385a15ffcf381e6c4da9f2a6aec6e"
+    },
+    {
+      "path": "generated/review/README.md",
+      "size": 189,
+      "sha256": "0f428ed0ddd505ff483e0f2a6c58ae4c2ef48767c8a476dc8e5929db1938e894"
+    },
+    {
+      "path": "project.godot",
+      "size": 596,
+      "sha256": "5f1895a5f98cc602e16de20bba3fd9a6bbd3e808d407c40cc9b695a833adaf9b"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "size": 19,
+      "sha256": "756cc9e506ae4ee1a6f6c0507088b5cfc0dc8ba350fb2d2d46f1ffa72033adb6"
+    },
+    {
+      "path": "scenes/app/main.tscn",
+      "size": 972,
+      "sha256": "6b70b515ef42a106b1f725473d2ad92d114f150da217d8c8ef2e073d80102acc"
+    },
+    {
+      "path": "schemas/combat.schema.json",
+      "size": 1715,
+      "sha256": "f8a8c45b9ad1f3043d5a27b82a45f91b6322cbf86a84140b4f6797cba146209e"
+    },
+    {
+      "path": "schemas/content_manifest.schema.json",
+      "size": 663,
+      "sha256": "b64a0662e11e085f0c4517576457ad78083bb89ddb71f82e82740c89686c12bc"
+    },
+    {
+      "path": "schemas/enemy.schema.json",
+      "size": 1453,
+      "sha256": "8495ef16e5dfe3f178d47e4b537f4b9e1d0aa3b2534422531c25ef2947ee5874"
+    },
+    {
+      "path": "schemas/item.schema.json",
+      "size": 1560,
+      "sha256": "27467b22f41d2eebe072273bbe00a4a9bc451bd1554f9097172883a6673cdc1a"
+    },
+    {
+      "path": "schemas/location.schema.json",
+      "size": 1868,
+      "sha256": "b726a13c53292c4542d87db4452ea329e0beda61c2ef536220f7a77ab8ccafb5"
+    },
+    {
+      "path": "schemas/npc.schema.json",
+      "size": 3279,
+      "sha256": "feccf001c023be5e2c5cafeb8901d9d93acaed412c7a87c16dd1478dbb077b6e"
+    },
+    {
+      "path": "schemas/quest.schema.json",
+      "size": 14968,
+      "sha256": "b25570528775afdc09e433940a5746f6aea72b28919aaf32ba5782e1e6833fb3"
+    },
+    {
+      "path": "schemas/quest_dependency.schema.json",
+      "size": 760,
+      "sha256": "f1b73e1a5581d313820bbdd6c4274517cc241647facefe78cc606444e3c4ad9b"
+    },
+    {
+      "path": "schemas/save.schema.json",
+      "size": 851,
+      "sha256": "f4dbc5aeb927f1fd419c2130f9e025dc9d5db60dc97e35cd1a1bf55f1f4c9e11"
+    },
+    {
+      "path": "schemas/skill.schema.json",
+      "size": 1514,
+      "sha256": "767cd42dc69c7e1d080c99854602fe97d7e48e77bb4d3f7a794b8cdf06940042"
+    },
+    {
+      "path": "schemas/state_registry.schema.json",
+      "size": 1420,
+      "sha256": "9d89dd1f742ca5ec4ede4dc3ec1fde689321fefa89d7bc1f44466cc81dc82856"
+    },
+    {
+      "path": "schemas/story_source_manifest.schema.json",
+      "size": 2080,
+      "sha256": "44751a3fbce6a3ab09ed2b0ff5278698cb94b9c68e76a382da745ba2eecacca5"
+    },
+    {
+      "path": "scripts/build_windows.ps1",
+      "size": 417,
+      "sha256": "2c0cb7ac10570326247cdb0ae02a31b7d73f8f7ee947c2769a608e547b87f98c"
+    },
+    {
+      "path": "scripts/common.ps1",
+      "size": 873,
+      "sha256": "4a7d5fc4cc5dac38c6ad556a74bd8653713e43e57d813df42a350d9806243a0a"
+    },
+    {
+      "path": "scripts/setup.ps1",
+      "size": 629,
+      "sha256": "b349f8410c5342c599995dcbb0386f9e72d8dadf515551176e3b6fe682d05a47"
+    },
+    {
+      "path": "scripts/smoke_test.ps1",
+      "size": 192,
+      "sha256": "5b7137b5e2ae9d31f073ef127a5d5208346d44550925a1e56da9dcbbf1bb5ca6"
+    },
+    {
+      "path": "scripts/test.ps1",
+      "size": 493,
+      "sha256": "24a199d6589311085e55240cab6d8442b05bf9be7458bdbeecece87522904780"
+    },
+    {
+      "path": "scripts/validate.ps1",
+      "size": 184,
+      "sha256": "1a43e557704c2dd98e8b483f4749e23c37846f0252349432aa5efcdb3a7995e6"
+    },
+    {
+      "path": "src/AGENTS.md",
+      "size": 686,
+      "sha256": "c980b7188743e2e5416cd66ed048dcaefd65d1e8a5817b7742f57765098ca6e1"
+    },
+    {
+      "path": "src/app/app_root.gd",
+      "size": 172,
+      "sha256": "867decc89929e0a00087107ce3ac5c3c1880b38512609ee1ddad85e267c588ed"
+    },
+    {
+      "path": "src/core/README.md",
+      "size": 186,
+      "sha256": "5145f2802cdc62ed1fd0b8d6adba60454d3bf524609d8e7789e57de9929e1985"
+    },
+    {
+      "path": "src/gameplay/README.md",
+      "size": 132,
+      "sha256": "abcb12b6dd921ed3b2bc51da6b10ef36b4f8960e9e2dff20362b34fbe2c3bf6b"
+    },
+    {
+      "path": "src/ui/README.md",
+      "size": 133,
+      "sha256": "de670c8eb4a2a37a2f5cd1b00f9cc9d9f678ffd3a72f3f40f556efeb14e124d8"
+    },
+    {
+      "path": "tests/AGENTS.md",
+      "size": 519,
+      "sha256": "d497e39df2c951f92e0f809cff108bb92bc914799af5682b170b93f36db4c227"
+    },
+    {
+      "path": "tests/python/__pycache__/test_repository.cpython-313.pyc",
+      "size": 5449,
+      "sha256": "5611222d2d8ea74ce87676de86a7352d8369036fe30d448375b4567402d8d6a5"
+    },
+    {
+      "path": "tests/python/test_repository.py",
+      "size": 2654,
+      "sha256": "f31dae4edafb29f3a1bd487389650d13e831f0473e419f23cb19e7984fe0ac66"
+    },
+    {
+      "path": "tools/validate_repository.py",
+      "size": 10982,
+      "sha256": "a7b905a1fd011e754b8662fea3e2292d782c9a328475e9c80c4fa9533057ce49"
+    }
+  ]
+}

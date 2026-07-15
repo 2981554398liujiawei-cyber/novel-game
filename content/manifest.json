@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_version": 1,
+  "hash_algorithm": "sha256",
+  "content_files": [
+    "states/state_registry.json",
+    "npcs/npcs.json",
+    "locations/locations.json",
+    "items/items.json",
+    "enemies/enemies.json",
+    "skills/skills.json",
+    "combats/combats.json",
+    "presentation_tags.json",
+    "quest_dependencies.json"
+  ],
+  "forbidden_path_fragments": [
+    "tests/fixtures",
+    "content/tests",
+    "fixtures/"
+  ]
+}

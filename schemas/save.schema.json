@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "save_version",
+    "slot_id",
+    "created_at",
+    "current_quest_id",
+    "current_node_id",
+    "game_state",
+    "random_seeds",
+    "inventory",
+    "combat_snapshot"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "save_version": {
+      "type": "integer"
+    },
+    "slot_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "current_quest_id": {
+      "type": "string"
+    },
+    "current_node_id": {
+      "type": "string"
+    },
+    "game_state": {
+      "type": "object"
+    },
+    "random_seeds": {
+      "type": "object"
+    },
+    "inventory": {
+      "type": "array"
+    },
+    "combat_snapshot": {}
+  },
+  "additionalProperties": false
+}

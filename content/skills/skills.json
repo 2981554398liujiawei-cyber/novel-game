@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.3.0",
+  "skills": [
+    {
+      "skill_id": "NV7_SKILL_SLASH",
+      "name": "砍击",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 1,
+      "uses_per_battle": null,
+      "effects": [
+        {
+          "effect": "damage",
+          "power": 1.25
+        }
+      ],
+      "source": "initial"
+    },
+    {
+      "skill_id": "NV7_SKILL_INSIGHT",
+      "name": "洞察",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": 3,
+      "effects": [
+        {
+          "effect": "reveal_mechanic",
+          "power": 1
+        }
+      ],
+      "source": "NV_MAIN_001"
+    },
+    {
+      "skill_id": "NV7_SKILL_LANYIN_MARK",
+      "name": "岚音标记",
+      "kind": "companion",
+      "target": "enemy_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": null,
+      "effects": [
+        {
+          "effect": "apply_status",
+          "status_id": "marked",
+          "duration": 2
+        }
+      ],
+      "source": "NV_MAIN_003"
+    }
+  ]
+}
