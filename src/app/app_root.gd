@@ -1,14 +1,20 @@
 extends Control
 
 const ContentLoaderClass = preload("res://src/core/content_loader.gd")
+const CombatRunnerClass = preload("res://src/core/combat_runner.gd")
 const GameStateClass = preload("res://src/core/game_state.gd")
 const InventoryManagerClass = preload("res://src/core/inventory_manager.gd")
 const QuestManagerClass = preload("res://src/core/quest_manager.gd")
+const SaveManagerClass = preload("res://src/core/save_manager.gd")
+const StoryRunnerClass = preload("res://src/core/story_runner.gd")
 
 var _content_loader := ContentLoaderClass.new()
+var _combat_runner := CombatRunnerClass.new()
 var _game_state := GameStateClass.new()
 var _inventory_manager := InventoryManagerClass.new()
 var _quest_manager := QuestManagerClass.new()
+var _save_manager := SaveManagerClass.new()
+var _story_runner := StoryRunnerClass.new()
 var _content_ready := false
 
 
@@ -57,6 +63,39 @@ func _ready() -> void:
             get_tree().quit(1)
         return
 
+    if not _story_runner.initialize(_content_loader, _game_state, _quest_manager):
+        _show_service_error("剧情执行器初始化失败", _story_runner.last_error, "node_id")
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
+    if not _save_manager.initialize(
+        _content_loader,
+        _game_state,
+        _story_runner,
+        "user://saves",
+        "user://backups",
+        "",
+        Callable(),
+        _inventory_manager,
+    ):
+        _show_service_error("存档系统初始化失败", _save_manager.last_result, "slot_id")
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
+    _combat_runner.combat_error.connect(_on_combat_error)
+    if not _combat_runner.initialize(_content_loader, _game_state, _inventory_manager):
+        _show_combat_error(_combat_runner.last_error)
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+    if not _combat_runner.bind_save_manager(_save_manager):
+        _show_combat_error(_combat_runner.last_error)
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
     _content_ready = true
     if not expected_content_id.is_empty():
         if not _content_loader.has_id(expected_content_id) or _content_loader.get_by_id(expected_content_id) == null:
@@ -76,6 +115,7 @@ func _ready() -> void:
         print("GAME_STATE_OK:%d" % _game_state.get_state_count())
         print("INVENTORY_MANAGER_OK:%d" % _inventory_manager.get_capacity())
         print("QUEST_MANAGER_OK:%d" % _quest_manager.list_quests().get("quests", []).size())
+        print("COMBAT_RUNNER_OK")
         print("SMOKE_TEST_OK")
         get_tree().quit(0)
 
@@ -132,6 +172,31 @@ func _show_quest_error(error: Dictionary) -> void:
         error.get("code", "UNKNOWN_QUEST_ERROR"),
         error.get("message", "未知任务系统错误"),
         error.get("quest_id", ""),
+    ]
+
+
+func _show_service_error(title: String, error: Dictionary, subject_field: String) -> void:
+    _content_ready = false
+    $Center/VBox/Title.text = title
+    $Center/VBox/Status.text = "%s\n%s\n%s" % [
+        error.get("code", "UNKNOWN_SERVICE_ERROR"),
+        error.get("message", "未知初始化错误"),
+        error.get(subject_field, ""),
+    ]
+
+
+func _on_combat_error(error: Dictionary) -> void:
+    if not _content_ready:
+        _show_combat_error(error)
+
+
+func _show_combat_error(error: Dictionary) -> void:
+    _content_ready = false
+    $Center/VBox/Title.text = "战斗系统初始化失败"
+    $Center/VBox/Status.text = "%s\n%s\n%s" % [
+        error.get("code", "UNKNOWN_COMBAT_ERROR"),
+        error.get("message", "未知战斗系统错误"),
+        error.get("subject_id", ""),
     ]
 
 

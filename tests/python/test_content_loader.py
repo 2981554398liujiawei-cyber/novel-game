@@ -101,6 +101,67 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
             self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
 
+    def test_combat_runtime_fixture_loads_through_content_loader(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_root = ROOT / "content/tests/fixtures/combat_runner"
+            combats = json.loads((fixture_root / "combats.json").read_text(encoding="utf-8"))
+            enemies = json.loads((fixture_root / "enemies.json").read_text(encoding="utf-8"))
+            skills = json.loads((fixture_root / "skills.json").read_text(encoding="utf-8"))
+            for combat in combats["combats"]:
+                combat["location_id"] = "NV7_LOC_FIELDS"
+                combat["ally_ids"] = []
+
+            state_path = content_root / "states/state_registry.json"
+            states = json.loads(state_path.read_text(encoding="utf-8"))
+            states["states"].append(
+                {
+                    "key": "test.combat.counter",
+                    "type": "integer",
+                    "default": 0,
+                    "min": 0,
+                    "max": 10,
+                    "persistent": True,
+                    "writers": [],
+                    "readers": [],
+                    "write_sources": ["combat"],
+                }
+            )
+            state_path.write_text(json.dumps(states, ensure_ascii=False), encoding="utf-8")
+            (content_root / "combats/combats.json").write_text(
+                json.dumps(combats, ensure_ascii=False), encoding="utf-8"
+            )
+            (content_root / "enemies/enemies.json").write_text(
+                json.dumps(enemies, ensure_ascii=False), encoding="utf-8"
+            )
+            (content_root / "skills/skills.json").write_text(
+                json.dumps(skills, ensure_ascii=False), encoding="utf-8"
+            )
+
+            self._run_loader(content_root, expected_content_id="TEST_COMBAT_BASIC")
+
+    def test_combat_runtime_unknown_status_reference_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_root = ROOT / "content/tests/fixtures/combat_runner"
+            combats = json.loads((fixture_root / "combats.json").read_text(encoding="utf-8"))
+            enemies = json.loads((fixture_root / "enemies.json").read_text(encoding="utf-8"))
+            skills = json.loads((fixture_root / "skills.json").read_text(encoding="utf-8"))
+            for combat in combats["combats"]:
+                combat["location_id"] = "NV7_LOC_FIELDS"
+                combat["ally_ids"] = []
+            skills["skills"][1]["effects"][1]["status_id"] = "missing_status"
+            (content_root / "combats/combats.json").write_text(
+                json.dumps(combats, ensure_ascii=False), encoding="utf-8"
+            )
+            (content_root / "enemies/enemies.json").write_text(
+                json.dumps(enemies, ensure_ascii=False), encoding="utf-8"
+            )
+            (content_root / "skills/skills.json").write_text(
+                json.dumps(skills, ensure_ascii=False), encoding="utf-8"
+            )
+            self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
+
     def test_inventory_state_without_write_permission_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)

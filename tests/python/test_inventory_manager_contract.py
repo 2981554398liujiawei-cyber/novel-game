@@ -111,6 +111,8 @@ class InventoryManagerContractTests(unittest.TestCase):
             for effect in item["runtime"]["use_effects"]:
                 self.assertIn(effect["key"], state_by_key)
                 self.assertEqual(["inventory"], state_by_key[effect["key"]].get("write_sources"))
+        battle_tonic = self.fixture_by_id["TEST_ITEM_BATTLE_TONIC"]["runtime"]
+        self.assertEqual([{"effect": "heal", "value": 15}], battle_tonic["combat_effects"])
 
     def test_parallel_quest_item_bundle_matches_quest_schema_and_references_fixture(self):
         quest_validator = Draft202012Validator(self.quest_schema)
@@ -157,6 +159,9 @@ class InventoryManagerContractTests(unittest.TestCase):
         invalid_by_id = {item["item_id"]: item for item in invalid["items"]}
         invalid_by_id["TEST_ITEM_FIELD_TONIC"]["runtime"]["max_stack"] = 21
         invalid_by_id["TEST_ITEM_TWO_HANDED_SWORD"]["runtime"]["occupies_slots"] = ["weapon", "head"]
+        invalid_by_id["TEST_ITEM_TWO_HANDED_SWORD"]["runtime"]["combat_effects"] = [
+            {"effect": "heal", "value": 1}
+        ]
         critical = invalid_by_id["TEST_ITEM_CRITICAL_REWARD"]["runtime"]
         critical["sellable"] = True
         critical["overflow_policy"] = "reject"
@@ -164,6 +169,7 @@ class InventoryManagerContractTests(unittest.TestCase):
         errors = validate_item_registry(invalid, self.fixture_states)
         self.assertTrue(any("consumable max_stack exceeds 20" in error for error in errors))
         self.assertTrue(any("multi-slot equipment" in error for error in errors))
+        self.assertTrue(any("only consumables may declare combat effects" in error for error in errors))
         self.assertTrue(any("cannot be sold or discarded" in error for error in errors))
         self.assertTrue(any("must overflow to custody" in error for error in errors))
         self.assertTrue(any("unknown ownership state" in error for error in errors))

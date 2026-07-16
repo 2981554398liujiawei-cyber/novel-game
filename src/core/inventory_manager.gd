@@ -599,6 +599,7 @@ func _normalize_definition(raw_definition: Dictionary) -> Dictionary:
         "occupies_slots": runtime.get("occupies_slots", inferred_slots),
         "stat_modifiers": runtime.get("stat_modifiers", []),
         "use_effects": runtime.get("use_effects", []),
+        "combat_effects": runtime.get("combat_effects", []),
         "use_context": runtime.get("use_context", "both"),
         "ownership_state_key": str(runtime.get("ownership_state_key", "")),
         "source": raw_definition.duplicate(true),
@@ -611,6 +612,7 @@ func _normalize_definition(raw_definition: Dictionary) -> Dictionary:
     definition["occupies_slots"] = definition["occupies_slots"].duplicate(true)
     definition["stat_modifiers"] = definition["stat_modifiers"].duplicate(true)
     definition["use_effects"] = definition["use_effects"].duplicate(true)
+    definition["combat_effects"] = definition["combat_effects"].duplicate(true)
     return definition
 
 
@@ -688,6 +690,24 @@ func _validate_definition(definition: Dictionary) -> bool:
             return _definition_fail("Use effect references unknown GameState key '%s'" % key, item_id)
         if not _state_allows_inventory_write(key):
             return _definition_fail("Use effect state '%s' does not allow inventory writes" % key, item_id)
+    if not definition.get("combat_effects") is Array:
+        return _definition_fail("combat_effects must be an array", item_id)
+    if item_type != "consumable" and not definition["combat_effects"].is_empty():
+        return _definition_fail("Only consumables may declare combat effects", item_id)
+    for raw_combat_effect: Variant in definition["combat_effects"]:
+        if not raw_combat_effect is Dictionary:
+            return _definition_fail("Every combat effect must be an object", item_id)
+        var combat_effect_type := str(raw_combat_effect.get("effect", ""))
+        if combat_effect_type not in ["heal", "apply_status", "remove_status"]:
+            return _definition_fail("Combat effect type is not supported", item_id)
+        if combat_effect_type == "heal" and (
+            not _is_number(raw_combat_effect.get("value")) or float(raw_combat_effect["value"]) < 0.0
+        ):
+            return _definition_fail("Combat heal effect requires a non-negative value", item_id)
+        if combat_effect_type in ["apply_status", "remove_status"] and str(
+            raw_combat_effect.get("status_id", "")
+        ).is_empty():
+            return _definition_fail("Combat status effect requires status_id", item_id)
     if str(definition.get("use_context", "")) not in USE_CONTEXTS:
         return _definition_fail("Item use_context is invalid", item_id)
     var ownership_key := str(definition.get("ownership_state_key", ""))

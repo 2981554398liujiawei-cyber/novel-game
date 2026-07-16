@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -189,6 +190,7 @@ def validate_item_registry(document: Any, state_registry: Any | None = None) -> 
         equipment_slot = runtime.get("equipment_slot")
         compatible_slots = runtime.get("compatible_slots", [])
         occupies_slots = runtime.get("occupies_slots", [])
+        combat_effects = runtime.get("combat_effects", [])
 
         expected_kind = {
             "consumable": "consumable",
@@ -212,6 +214,8 @@ def validate_item_registry(document: Any, state_registry: Any | None = None) -> 
             errors.append(f"Item '{item_id}' consumable max_stack exceeds 20")
         if runtime_type == "material" and isinstance(max_stack, int) and max_stack > 99:
             errors.append(f"Item '{item_id}' material max_stack exceeds 99")
+        if runtime_type != "consumable" and isinstance(combat_effects, list) and combat_effects:
+            errors.append(f"Item '{item_id}' only consumables may declare combat effects")
 
         if runtime_type == "equipment":
             if raw_item.get("stack_limit") != 1:
@@ -423,6 +427,368 @@ def validate_quest_dependency_graph(document: Any) -> list[str]:
     return errors
 
 
+def validate_combat_registries(
+    combat_document: Any,
+    enemy_document: Any,
+    skill_document: Any,
+) -> list[str]:
+    """Validate cross-registry CombatRunner invariants without side effects.
+
+    Legacy 1.3 registries deliberately remain valid when they omit ``runtime``.
+    Once a combat registry declares the optional runtime contract, every runtime
+    reference is checked here because JSON Schema cannot express cross-file IDs.
+    """
+
+    errors: list[str] = []
+    combats = combat_document.get("combats", []) if isinstance(combat_document, dict) else []
+    enemies = enemy_document.get("enemies", []) if isinstance(enemy_document, dict) else []
+    skills = skill_document.get("skills", []) if isinstance(skill_document, dict) else []
+    combat_runtime = combat_document.get("runtime") if isinstance(combat_document, dict) else None
+
+    def index_entries(entries: Any, id_field: str, label: str) -> dict[str, dict[str, Any]]:
+        indexed: dict[str, dict[str, Any]] = {}
+        if not isinstance(entries, list):
+            return indexed
+        for raw_entry in entries:
+            if not isinstance(raw_entry, dict):
+                continue
+            entry_id = raw_entry.get(id_field)
+            if not isinstance(entry_id, str):
+                continue
+            if entry_id in indexed:
+                errors.append(f"Duplicate {label} ID: {entry_id}")
+                continue
+            indexed[entry_id] = raw_entry
+        return indexed
+
+    skill_by_id = index_entries(skills, "skill_id", "skill")
+    enemy_by_id = index_entries(enemies, "enemy_id", "enemy")
+    index_entries(combats, "combat_id", "combat")
+
+    status_by_id: dict[str, dict[str, Any]] = {}
+    if isinstance(combat_runtime, dict):
+        status_by_id = index_entries(
+            combat_runtime.get("status_definitions", []),
+            "status_id",
+            "combat status",
+        )
+        rules = combat_runtime.get("rules", {})
+        if isinstance(rules, dict):
+            if rules.get("initiative_random_min", 0) > rules.get("initiative_random_max", 0):
+                errors.append("Combat initiative random minimum exceeds maximum")
+            if rules.get("damage_variance_min", 0) > rules.get("damage_variance_max", 0):
+                errors.append("Combat damage variance minimum exceeds maximum")
+            if rules.get("retreat_min_chance", 0) > rules.get("retreat_max_chance", 0):
+                errors.append("Combat retreat minimum chance exceeds maximum")
+            guard_status_id = rules.get("guard_status_id")
+            if guard_status_id not in status_by_id:
+                errors.append(f"Combat rules reference unknown guard status: {guard_status_id}")
+
+        for status_id, status in status_by_id.items():
+            stack_policy = status.get("stack_policy")
+            max_stacks = status.get("max_stacks")
+            if stack_policy in {"replace", "refresh"} and max_stacks != 1:
+                errors.append(f"Combat status '{status_id}' must use max_stacks=1 for {stack_policy}")
+            if stack_policy == "stack" and isinstance(max_stacks, int) and max_stacks < 2:
+                errors.append(f"Combat status '{status_id}' stack policy requires max_stacks >= 2")
+            behavior = status.get("behavior")
+            if behavior == "periodic_effect" and not isinstance(status.get("tick_effect"), dict):
+                errors.append(f"Combat status '{status_id}' periodic behavior requires tick_effect")
+            if behavior == "skip_action" and status.get("block_action") is not True:
+                errors.append(f"Combat status '{status_id}' skip_action behavior must block actions")
+            if behavior == "damage_reduction" and "direct_damage_reduction" not in status:
+                errors.append(f"Combat status '{status_id}' damage reduction requires a reduction value")
+            if behavior == "stat_modifier" and not status.get("stat_modifiers"):
+                errors.append(f"Combat status '{status_id}' stat modifier requires at least one modifier")
+
+    def validate_status_conditions(owner: str, conditions: Any) -> None:
+        if not isinstance(conditions, list):
+            return
+        for condition in conditions:
+            if not isinstance(condition, dict):
+                continue
+            if condition.get("type") == "status" and status_by_id:
+                status_id = condition.get("status_id")
+                if status_id not in status_by_id:
+                    errors.append(f"{owner} references unknown status: {status_id}")
+            if condition.get("type") == "hp_threshold":
+                value = condition.get("value")
+                if not isinstance(value, (int, float)) or not 0 <= value <= 1:
+                    errors.append(f"{owner} has invalid HP threshold: {value}")
+
+    def validate_skill_list(owner: str, raw_ids: Any) -> set[str]:
+        if not isinstance(raw_ids, list):
+            return set()
+        if len(raw_ids) > 4:
+            errors.append(f"{owner} equips more than four skills")
+        seen: set[str] = set()
+        for raw_skill_id in raw_ids:
+            if not isinstance(raw_skill_id, str):
+                continue
+            if raw_skill_id in seen:
+                errors.append(f"{owner} repeats skill: {raw_skill_id}")
+            seen.add(raw_skill_id)
+            if raw_skill_id not in skill_by_id:
+                errors.append(f"{owner} references unknown skill: {raw_skill_id}")
+        return seen
+
+    def validate_ai_actions(
+        owner: str,
+        actions: Any,
+        allowed_skills: set[str],
+        require_tendencies: bool = False,
+    ) -> set[str]:
+        if not isinstance(actions, list):
+            return set()
+        action_ids: set[str] = set()
+        total_weight = 0.0
+        tendency_totals = {"offensive": 0.0, "defensive": 0.0, "support": 0.0}
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            action_id = action.get("action_id")
+            if isinstance(action_id, str):
+                if action_id in action_ids:
+                    errors.append(f"{owner} repeats AI action ID: {action_id}")
+                action_ids.add(action_id)
+            weight = action.get("weight", 0)
+            if not isinstance(weight, (int, float)) or weight < 0:
+                errors.append(f"{owner} AI action '{action_id}' has invalid weight: {weight}")
+                weight = 0
+            total_weight += float(weight)
+            action_type = action.get("action_type")
+            skill_id = action.get("skill_id")
+            if action_type == "skill":
+                if skill_id not in skill_by_id:
+                    errors.append(f"{owner} AI action '{action_id}' references unknown skill: {skill_id}")
+                elif skill_id not in allowed_skills:
+                    errors.append(f"{owner} AI action '{action_id}' uses an unequipped skill: {skill_id}")
+            elif skill_id is not None:
+                errors.append(f"{owner} non-skill AI action '{action_id}' must not declare skill_id")
+            conditions = action.get("conditions", [])
+            if action.get("mode") == "conditional_action" and not conditions:
+                errors.append(f"{owner} conditional AI action '{action_id}' requires a condition")
+            validate_status_conditions(f"{owner} AI action '{action_id}'", conditions)
+            if require_tendencies:
+                tendencies = action.get("tendency_weights", {})
+                for tendency in tendency_totals:
+                    multiplier = tendencies.get(tendency, 0) if isinstance(tendencies, dict) else 0
+                    if not isinstance(multiplier, (int, float)) or multiplier < 0:
+                        errors.append(
+                            f"{owner} AI action '{action_id}' has invalid {tendency} tendency weight"
+                        )
+                        multiplier = 0
+                    tendency_totals[tendency] += float(weight) * float(multiplier)
+        if actions and total_weight <= 0:
+            errors.append(f"{owner} AI actions have no positive total weight")
+        if require_tendencies:
+            for tendency, total in tendency_totals.items():
+                if total <= 0:
+                    errors.append(f"{owner} has no usable AI action for {tendency} tendency")
+        return action_ids
+
+    for skill_id, skill in skill_by_id.items():
+        for effect in skill.get("effects", []):
+            if not isinstance(effect, dict) or not status_by_id:
+                continue
+            if effect.get("effect") in {"apply_status", "remove_status"}:
+                status_id = effect.get("status_id")
+                if status_id not in status_by_id:
+                    errors.append(f"Skill '{skill_id}' references unknown status: {status_id}")
+        runtime = skill.get("runtime")
+        if isinstance(runtime, dict):
+            validate_status_conditions(f"Skill '{skill_id}'", runtime.get("conditions", []))
+
+    enemy_action_ids: dict[str, set[str]] = {}
+    for enemy_id, enemy in enemy_by_id.items():
+        allowed_skills = validate_skill_list(f"Enemy '{enemy_id}'", enemy.get("skill_ids", []))
+        runtime = enemy.get("runtime")
+        if not isinstance(runtime, dict):
+            continue
+        enemy_action_ids[enemy_id] = validate_ai_actions(
+            f"Enemy '{enemy_id}'",
+            runtime.get("ai_actions", []),
+            allowed_skills,
+        )
+        if status_by_id:
+            for status_id in runtime.get("status_immunities", []):
+                if status_id not in status_by_id:
+                    errors.append(f"Enemy '{enemy_id}' is immune to unknown status: {status_id}")
+
+    for combat in combats if isinstance(combats, list) else []:
+        if not isinstance(combat, dict):
+            continue
+        combat_id = combat.get("combat_id", "<unknown>")
+        for enemy_id in combat.get("enemy_ids", []):
+            if enemy_id not in enemy_by_id:
+                errors.append(f"Combat '{combat_id}' references unknown enemy: {enemy_id}")
+        runtime = combat.get("runtime")
+        if not isinstance(runtime, dict):
+            continue
+        if not isinstance(combat_runtime, dict):
+            errors.append(f"Combat '{combat_id}' has runtime data without a runtime registry")
+
+        player = runtime.get("player_unit", {})
+        player_id = player.get("unit_id") if isinstance(player, dict) else None
+        unit_ids: set[str] = set()
+        if isinstance(player_id, str):
+            unit_ids.add(player_id)
+        validate_skill_list(f"Combat '{combat_id}' player", player.get("skill_ids", []))
+
+        for companion in runtime.get("companion_units", []):
+            if not isinstance(companion, dict):
+                continue
+            unit_id = companion.get("unit_id")
+            if unit_id in unit_ids:
+                errors.append(f"Combat '{combat_id}' repeats unit ID: {unit_id}")
+            if isinstance(unit_id, str):
+                unit_ids.add(unit_id)
+            companion_skills = validate_skill_list(
+                f"Combat '{combat_id}' companion '{unit_id}'",
+                companion.get("skill_ids", []),
+            )
+            validate_ai_actions(
+                f"Combat '{combat_id}' companion '{unit_id}'",
+                companion.get("ai_actions", []),
+                companion_skills,
+                require_tendencies=True,
+            )
+
+        runtime_enemy_counts: Counter[str] = Counter()
+        enemy_id_by_unit: dict[str, str] = {}
+        for instance in runtime.get("enemy_instances", []):
+            if not isinstance(instance, dict):
+                continue
+            unit_id = instance.get("unit_id")
+            enemy_id = instance.get("enemy_id")
+            if unit_id in unit_ids:
+                errors.append(f"Combat '{combat_id}' repeats unit ID: {unit_id}")
+            if isinstance(unit_id, str):
+                unit_ids.add(unit_id)
+            if enemy_id not in enemy_by_id:
+                errors.append(f"Combat '{combat_id}' instance '{unit_id}' references unknown enemy: {enemy_id}")
+            elif isinstance(unit_id, str) and isinstance(enemy_id, str):
+                enemy_id_by_unit[unit_id] = enemy_id
+                runtime_enemy_counts[enemy_id] += 1
+        if Counter(combat.get("enemy_ids", [])) != runtime_enemy_counts:
+            errors.append(f"Combat '{combat_id}' runtime enemy instances do not match enemy_ids")
+
+        phases = runtime.get("phases", [])
+        phase_ids: set[str] = set()
+        hp_thresholds: list[float] = []
+        has_start_phase = False
+        for phase in phases:
+            if not isinstance(phase, dict):
+                continue
+            phase_id = phase.get("phase_id")
+            if phase_id in phase_ids:
+                errors.append(f"Combat '{combat_id}' repeats phase ID: {phase_id}")
+            if isinstance(phase_id, str):
+                phase_ids.add(phase_id)
+            target_unit_id = phase.get("target_unit_id")
+            if target_unit_id not in unit_ids:
+                errors.append(f"Combat '{combat_id}' phase '{phase_id}' references unknown unit: {target_unit_id}")
+            validate_skill_list(
+                f"Combat '{combat_id}' phase '{phase_id}'",
+                phase.get("skill_ids", []),
+            )
+            trigger = phase.get("trigger", {})
+            if isinstance(trigger, dict):
+                trigger_type = trigger.get("type")
+                if trigger_type == "combat_start":
+                    if has_start_phase:
+                        errors.append(f"Combat '{combat_id}' declares more than one combat_start phase")
+                    has_start_phase = True
+                if trigger_type in {"hp_threshold", "status"} and trigger.get("unit_id") not in unit_ids:
+                    errors.append(
+                        f"Combat '{combat_id}' phase '{phase_id}' trigger references unknown unit: "
+                        f"{trigger.get('unit_id')}"
+                    )
+                if trigger_type == "hp_threshold":
+                    value = trigger.get("value")
+                    if not isinstance(value, (int, float)) or not 0 <= value <= 1:
+                        errors.append(f"Combat '{combat_id}' phase '{phase_id}' has invalid HP threshold: {value}")
+                    else:
+                        hp_thresholds.append(float(value))
+                if trigger_type == "status" and status_by_id and trigger.get("status_id") not in status_by_id:
+                    errors.append(
+                        f"Combat '{combat_id}' phase '{phase_id}' references unknown status: "
+                        f"{trigger.get('status_id')}"
+                    )
+            target_enemy_id = enemy_id_by_unit.get(str(target_unit_id))
+            known_actions = enemy_action_ids.get(target_enemy_id, set())
+            for action_id in phase.get("ai_weight_modifiers", {}):
+                if known_actions and action_id not in known_actions:
+                    errors.append(
+                        f"Combat '{combat_id}' phase '{phase_id}' references unknown AI action: {action_id}"
+                    )
+        if not has_start_phase:
+            errors.append(f"Combat '{combat_id}' runtime phases require one combat_start phase")
+        if any(left <= right for left, right in zip(hp_thresholds, hp_thresholds[1:])):
+            errors.append(f"Combat '{combat_id}' HP phase thresholds must descend without duplicates")
+
+        contains_boss = any(enemy_by_id.get(enemy_id, {}).get("boss") is True for enemy_id in runtime_enemy_counts)
+        if contains_boss and not 2 <= len(phases) <= 3:
+            errors.append(f"Combat '{combat_id}' boss runtime must declare two or three phases")
+
+        inspect_ids: set[str] = set()
+        for inspect_rule in runtime.get("inspect_rules", []):
+            if not isinstance(inspect_rule, dict):
+                continue
+            inspect_id = inspect_rule.get("inspect_id")
+            if inspect_id in inspect_ids:
+                errors.append(f"Combat '{combat_id}' repeats inspect ID: {inspect_id}")
+            if isinstance(inspect_id, str):
+                inspect_ids.add(inspect_id)
+            if inspect_rule.get("target_unit_id") not in unit_ids:
+                errors.append(
+                    f"Combat '{combat_id}' inspect '{inspect_id}' references unknown unit: "
+                    f"{inspect_rule.get('target_unit_id')}"
+                )
+            if inspect_rule.get("seeded") is True and inspect_rule.get("difficulty", 0) <= 0:
+                errors.append(f"Combat '{combat_id}' seeded inspect '{inspect_id}' requires difficulty > 0")
+            for condition in inspect_rule.get("conditions", []):
+                if not isinstance(condition, dict):
+                    continue
+                if condition.get("type") == "status" and status_by_id and condition.get("status_id") not in status_by_id:
+                    errors.append(
+                        f"Combat '{combat_id}' inspect '{inspect_id}' references unknown status: "
+                        f"{condition.get('status_id')}"
+                    )
+                if condition.get("type") == "phase" and condition.get("phase_id") not in phase_ids:
+                    errors.append(
+                        f"Combat '{combat_id}' inspect '{inspect_id}' references unknown phase: "
+                        f"{condition.get('phase_id')}"
+                    )
+
+        retreat = runtime.get("retreat", {})
+        if isinstance(retreat, dict):
+            allowed = retreat.get("allowed") is True
+            mode = retreat.get("mode")
+            if allowed and mode == "disabled":
+                errors.append(f"Combat '{combat_id}' allows retreat but uses disabled mode")
+            if not allowed and mode != "disabled":
+                errors.append(f"Combat '{combat_id}' disables retreat but uses active mode '{mode}'")
+            if allowed and not retreat.get("continuation_tag"):
+                errors.append(f"Combat '{combat_id}' allowed retreat requires continuation_tag")
+
+    return errors
+
+
+def check_combat_registries(errors: list[str]) -> None:
+    combat_path = CONTENT / "combats/combats.json"
+    enemy_path = CONTENT / "enemies/enemies.json"
+    skill_path = CONTENT / "skills/skills.json"
+    if combat_path.exists() and enemy_path.exists() and skill_path.exists():
+        errors.extend(
+            validate_combat_registries(
+                load_json(combat_path),
+                load_json(enemy_path),
+                load_json(skill_path),
+            )
+        )
+
+
 def check_quest_dependencies(errors: list[str]) -> None:
     path = CONTENT / "quest_dependencies.json"
     if path.exists():
@@ -490,6 +856,7 @@ def main() -> int:
     check_manifest(errors)
     check_states(errors)
     check_items(errors)
+    check_combat_registries(errors)
     check_portraits(errors)
     check_asset_counts(errors)
     check_no_formal_quests(errors)
@@ -513,6 +880,7 @@ def main() -> int:
     print("- story source governance: ok")
     print("- current commission contract: ok")
     print("- item runtime semantics: ok")
+    print("- combat registry semantics: ok")
     print("- quest dependency graph: ok")
     print("- offline runtime scan: ok")
     print("- AGENTS critical rules: ok")

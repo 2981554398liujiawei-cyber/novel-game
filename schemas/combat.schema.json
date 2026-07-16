@@ -3,14 +3,117 @@
   "title": "CombatRegistry",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "combats"
-  ],
+  "required": ["schema_version", "combats"],
   "properties": {
     "schema_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rules", "status_definitions"],
+      "properties": {
+        "rules": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "initiative_random_min",
+            "initiative_random_max",
+            "damage_variance_min",
+            "damage_variance_max",
+            "defense_multiplier",
+            "minimum_damage",
+            "critical_multiplier",
+            "guard_status_id",
+            "max_rounds",
+            "tie_breaker",
+            "retreat_base_chance",
+            "retreat_agility_factor",
+            "retreat_boss_penalty",
+            "retreat_min_chance",
+            "retreat_max_chance"
+          ],
+          "properties": {
+            "initiative_random_min": {"type": "integer", "minimum": 0},
+            "initiative_random_max": {"type": "integer", "minimum": 0},
+            "damage_variance_min": {"type": "number", "minimum": 0},
+            "damage_variance_max": {"type": "number", "minimum": 0},
+            "defense_multiplier": {"type": "number", "minimum": 0},
+            "minimum_damage": {"type": "integer", "minimum": 1},
+            "critical_multiplier": {"type": "number", "minimum": 1},
+            "guard_status_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "max_rounds": {"type": "integer", "minimum": 1},
+            "tie_breaker": {"const": "player_then_stable_id"},
+            "retreat_base_chance": {"type": "number", "minimum": 0, "maximum": 1},
+            "retreat_agility_factor": {"type": "number", "minimum": 0},
+            "retreat_boss_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+            "retreat_min_chance": {"type": "number", "minimum": 0, "maximum": 1},
+            "retreat_max_chance": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "status_definitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status_id",
+              "behavior",
+              "default_duration",
+              "duration_tick",
+              "stack_policy",
+              "max_stacks",
+              "block_action",
+              "stat_modifiers",
+              "expiry"
+            ],
+            "properties": {
+              "status_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "behavior": {
+                "enum": ["periodic_effect", "skip_action", "damage_reduction", "stat_modifier"]
+              },
+              "default_duration": {"type": "integer", "minimum": 1},
+              "duration_tick": {"enum": ["round_start", "round_end", "action_start"]},
+              "stack_policy": {"enum": ["replace", "refresh", "stack"]},
+              "max_stacks": {"type": "integer", "minimum": 1},
+              "block_action": {"type": "boolean"},
+              "tick_effect": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["effect", "mode", "value"],
+                "properties": {
+                  "effect": {"enum": ["damage", "heal"]},
+                  "mode": {"enum": ["flat", "max_hp_ratio"]},
+                  "value": {"type": "number", "minimum": 0}
+                }
+              },
+              "stat_modifiers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["stat", "operation", "value"],
+                  "properties": {
+                    "stat": {"enum": ["attack", "defense", "agility"]},
+                    "operation": {"enum": ["flat", "add_percent"]},
+                    "value": {"type": "number"}
+                  }
+                }
+              },
+              "direct_damage_reduction": {"type": "number", "minimum": 0, "maximum": 1},
+              "expiry": {"enum": ["duration", "next_action"]}
+            }
+          }
+        }
+      }
     },
     "combats": {
       "type": "array",
@@ -30,46 +133,405 @@
         ],
         "properties": {
           "combat_id": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
           },
-          "location_id": {
-            "type": "string"
-          },
+          "location_id": {"type": "string"},
           "enemy_ids": {
             "type": "array",
             "minItems": 1,
-            "items": {
-              "type": "string"
-            }
+            "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
           },
           "ally_ids": {
             "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "items": {"type": "string"}
           },
-          "victory": {
-            "type": "object"
-          },
-          "defeat": {
-            "type": "object"
-          },
+          "victory": {"type": "object"},
+          "defeat": {"type": "object"},
           "retreat": {
             "type": "object",
-            "required": [
-              "allowed",
-              "continuation_id"
-            ]
+            "required": ["allowed", "continuation_id"]
           },
-          "unique_mechanic": {
-            "type": "string"
-          },
+          "unique_mechanic": {"type": "string"},
           "phases": {
             "type": "array",
             "minItems": 1,
             "maxItems": 3,
             "items": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["phase_id", "trigger", "ai_profile"],
+              "properties": {
+                "phase_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                "trigger": {"type": "string", "minLength": 1},
+                "ai_profile": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+              }
+            }
+          },
+          "runtime": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "player_unit",
+              "companion_units",
+              "enemy_instances",
+              "retreat",
+              "inspect_rules",
+              "result_rules",
+              "phases"
+            ],
+            "properties": {
+              "player_unit": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unit_id",
+                  "name",
+                  "role",
+                  "level",
+                  "max_hp",
+                  "attack",
+                  "defense",
+                  "agility",
+                  "skill_ids",
+                  "use_equipment_modifiers"
+                ],
+                "properties": {
+                  "unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                  "name": {"type": "string", "minLength": 1},
+                  "role": {"const": "player"},
+                  "level": {"type": "integer", "minimum": 1},
+                  "max_hp": {"type": "integer", "minimum": 1},
+                  "attack": {"type": "integer", "minimum": 0},
+                  "defense": {"type": "integer", "minimum": 0},
+                  "agility": {"type": "integer", "minimum": 0},
+                  "skill_ids": {
+                    "type": "array",
+                    "maxItems": 4,
+                    "uniqueItems": true,
+                    "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
+                  },
+                  "use_equipment_modifiers": {"type": "boolean"}
+                }
+              },
+              "companion_units": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "unit_id",
+                    "name",
+                    "role",
+                    "level",
+                    "max_hp",
+                    "attack",
+                    "defense",
+                    "agility",
+                    "skill_ids",
+                    "ai_actions"
+                  ],
+                  "properties": {
+                    "unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                    "name": {"type": "string", "minLength": 1},
+                    "role": {"const": "companion"},
+                    "level": {"type": "integer", "minimum": 1},
+                    "max_hp": {"type": "integer", "minimum": 1},
+                    "attack": {"type": "integer", "minimum": 0},
+                    "defense": {"type": "integer", "minimum": 0},
+                    "agility": {"type": "integer", "minimum": 0},
+                    "skill_ids": {
+                      "type": "array",
+                      "maxItems": 4,
+                      "uniqueItems": true,
+                      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
+                    },
+                    "ai_actions": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "action_id",
+                          "mode",
+                          "action_type",
+                          "weight",
+                          "conditions",
+                          "target_priority",
+                          "tendency_weights"
+                        ],
+                        "properties": {
+                          "action_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                          "mode": {"enum": ["weighted_action", "conditional_action"]},
+                          "action_type": {"enum": ["attack", "defend", "skill", "inspect"]},
+                          "weight": {"type": "number", "minimum": 0},
+                          "skill_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                          "conditions": {
+                            "type": "array",
+                            "items": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["type", "subject", "op", "value"],
+                                  "properties": {
+                                    "type": {"const": "hp_threshold"},
+                                    "subject": {"enum": ["self", "target", "player", "companion"]},
+                                    "op": {"enum": ["lt", "lte", "gt", "gte"]},
+                                    "value": {"type": "number", "minimum": 0, "maximum": 1}
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["type", "subject", "status_id", "present"],
+                                  "properties": {
+                                    "type": {"const": "status"},
+                                    "subject": {"enum": ["self", "target", "player", "companion"]},
+                                    "status_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                                    "present": {"type": "boolean"}
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["type", "expected"],
+                                  "properties": {
+                                    "type": {"const": "target_guarding"},
+                                    "expected": {"type": "boolean"}
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "target_priority": {
+                            "enum": ["self", "player", "companion", "lowest_hp", "highest_hp", "highest_attack", "random_opponent"]
+                          },
+                          "tendency_weights": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["offensive", "defensive", "support"],
+                            "properties": {
+                              "offensive": {"type": "number", "minimum": 0},
+                              "defensive": {"type": "number", "minimum": 0},
+                              "support": {"type": "number", "minimum": 0}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "enemy_instances": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["unit_id", "enemy_id"],
+                  "properties": {
+                    "unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                    "enemy_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
+                  }
+                }
+              },
+              "retreat": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["allowed", "mode", "chance_modifier", "continuation_tag"],
+                "properties": {
+                  "allowed": {"type": "boolean"},
+                  "mode": {"enum": ["formula", "guaranteed", "disabled"]},
+                  "chance_modifier": {"type": "number", "minimum": -1, "maximum": 1},
+                  "continuation_tag": {"type": "string"}
+                }
+              },
+              "inspect_rules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "inspect_id",
+                    "target_unit_id",
+                    "conditions",
+                    "outcome",
+                    "reveal",
+                    "seeded",
+                    "difficulty"
+                  ],
+                  "properties": {
+                    "inspect_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "target_unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                    "conditions": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "stat", "op", "value"],
+                            "properties": {
+                              "type": {"const": "actor_stat"},
+                              "stat": {"enum": ["attack", "defense", "agility", "insight"]},
+                              "op": {"enum": ["lt", "lte", "gt", "gte", "eq"]},
+                              "value": {"type": "number"}
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "target_unit_id", "status_id", "present"],
+                            "properties": {
+                              "type": {"const": "status"},
+                              "target_unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                              "status_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                              "present": {"type": "boolean"}
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "phase_id"],
+                            "properties": {
+                              "type": {"const": "phase"},
+                              "phase_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "outcome": {"enum": ["success", "partial_success", "no_new_findings"]},
+                    "reveal": {"type": "string", "minLength": 1},
+                    "seeded": {"type": "boolean"},
+                    "difficulty": {"type": "integer", "minimum": 0}
+                  }
+                }
+              },
+              "result_rules": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["victory", "defeat"],
+                "properties": {
+                  "victory": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["result_type", "continuation_tag"],
+                    "properties": {
+                      "result_type": {"const": "victory"},
+                      "continuation_tag": {"type": "string", "minLength": 1}
+                    }
+                  },
+                  "defeat": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["result_type", "continuation_tag"],
+                    "properties": {
+                      "result_type": {"const": "defeat"},
+                      "continuation_tag": {"type": "string", "minLength": 1}
+                    }
+                  },
+                  "partial_success": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["result_type", "continuation_tag", "condition"],
+                    "properties": {
+                      "result_type": {"const": "partial_success"},
+                      "continuation_tag": {"type": "string", "minLength": 1},
+                      "condition": {"const": "turn_limit"}
+                    }
+                  }
+                }
+              },
+              "phases": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "phase_id",
+                    "target_unit_id",
+                    "trigger",
+                    "skill_ids",
+                    "stat_modifiers",
+                    "ai_weight_modifiers",
+                    "event_tag"
+                  ],
+                  "properties": {
+                    "phase_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "target_unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                    "trigger": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["type"],
+                          "properties": {"type": {"const": "combat_start"}}
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["type", "unit_id", "op", "value"],
+                          "properties": {
+                            "type": {"const": "hp_threshold"},
+                            "unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                            "op": {"enum": ["lt", "lte", "gt", "gte"]},
+                            "value": {"type": "number", "minimum": 0, "maximum": 1}
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["type", "unit_id", "status_id", "present"],
+                          "properties": {
+                            "type": {"const": "status"},
+                            "unit_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+                            "status_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                            "present": {"type": "boolean"}
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["type", "event_tag"],
+                          "properties": {
+                            "type": {"const": "event"},
+                            "event_tag": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+                          }
+                        }
+                      ]
+                    },
+                    "skill_ids": {
+                      "type": "array",
+                      "maxItems": 4,
+                      "uniqueItems": true,
+                      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
+                    },
+                    "stat_modifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["stat", "operation", "value"],
+                        "properties": {
+                          "stat": {"enum": ["attack", "defense", "agility"]},
+                          "operation": {"enum": ["flat", "add_percent"]},
+                          "value": {"type": "number"}
+                        }
+                      }
+                    },
+                    "ai_weight_modifiers": {
+                      "type": "object",
+                      "additionalProperties": {"type": "number", "minimum": 0}
+                    },
+                    "event_tag": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+                  }
+                }
+              }
             }
           }
         }

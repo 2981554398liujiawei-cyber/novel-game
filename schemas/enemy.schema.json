@@ -3,10 +3,7 @@
   "title": "EnemyRegistry",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "enemies"
-  ],
+  "required": ["schema_version", "enemies"],
   "properties": {
     "schema_version": {
       "type": "string",
@@ -31,37 +28,177 @@
         ],
         "properties": {
           "enemy_id": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
           },
-          "name": {
-            "type": "string"
-          },
-          "level": {
-            "type": "integer"
-          },
-          "agility": {
-            "type": "integer"
-          },
-          "max_hp": {
-            "type": "integer"
-          },
-          "attack": {
-            "type": "integer"
-          },
-          "defense": {
-            "type": "integer"
-          },
+          "name": {"type": "string", "minLength": 1},
+          "level": {"type": "integer", "minimum": 1},
+          "agility": {"type": "integer", "minimum": 0},
+          "max_hp": {"type": "integer", "minimum": 1},
+          "attack": {"type": "integer", "minimum": 0},
+          "defense": {"type": "integer", "minimum": 0},
           "skill_ids": {
             "type": "array",
+            "maxItems": 4,
+            "uniqueItems": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]+$"
             }
           },
           "ai_profile": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
           },
-          "boss": {
-            "type": "boolean"
+          "boss": {"type": "boolean"},
+          "runtime": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ai_actions", "status_immunities", "inspect"],
+            "properties": {
+              "ai_actions": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "action_id",
+                    "mode",
+                    "action_type",
+                    "weight",
+                    "conditions",
+                    "target_priority"
+                  ],
+                  "properties": {
+                    "action_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "mode": {
+                      "enum": ["weighted_action", "conditional_action"]
+                    },
+                    "action_type": {
+                      "enum": ["attack", "defend", "skill", "inspect"]
+                    },
+                    "weight": {"type": "number", "minimum": 0},
+                    "skill_id": {
+                      "type": "string",
+                      "pattern": "^[A-Z][A-Z0-9_]+$"
+                    },
+                    "conditions": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "subject", "op", "value"],
+                            "properties": {
+                              "type": {"const": "hp_threshold"},
+                              "subject": {"enum": ["self", "target", "player", "companion"]},
+                              "op": {"enum": ["lt", "lte", "gt", "gte"]},
+                              "value": {"type": "number", "minimum": 0, "maximum": 1}
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "subject", "status_id", "present"],
+                            "properties": {
+                              "type": {"const": "status"},
+                              "subject": {"enum": ["self", "target", "player", "companion"]},
+                              "status_id": {
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "present": {"type": "boolean"}
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "phase_id"],
+                            "properties": {
+                              "type": {"const": "phase"},
+                              "phase_id": {
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "expected"],
+                            "properties": {
+                              "type": {"const": "target_guarding"},
+                              "expected": {"type": "boolean"}
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "expected"],
+                            "properties": {
+                              "type": {"const": "companion_alive"},
+                              "expected": {"type": "boolean"}
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "target_priority": {
+                      "enum": [
+                        "self",
+                        "player",
+                        "companion",
+                        "lowest_hp",
+                        "highest_hp",
+                        "highest_attack",
+                        "random_opponent"
+                      ]
+                    },
+                    "tendency_weights": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["offensive", "defensive", "support"],
+                      "properties": {
+                        "offensive": {"type": "number", "minimum": 0},
+                        "defensive": {"type": "number", "minimum": 0},
+                        "support": {"type": "number", "minimum": 0}
+                      }
+                    }
+                  }
+                }
+              },
+              "status_immunities": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                }
+              },
+              "inspect": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["public_info", "weakness_tags", "mechanic_tags"],
+                "properties": {
+                  "public_info": {"type": "string"},
+                  "weakness_tags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+                  },
+                  "mechanic_tags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+                  }
+                }
+              }
+            }
           }
         }
       }
