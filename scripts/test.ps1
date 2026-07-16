@@ -28,6 +28,8 @@ try {
     $relationshipManagerExitCode = $LASTEXITCODE
     $saveManagerOutput = & $godot --headless --path $repo --script "res://tests/godot/test_save_manager.gd" 2>&1
     $saveManagerExitCode = $LASTEXITCODE
+    $playableUiOutput = & $godot --headless --path $repo --scene "res://tests/godot/test_playable_ui_shell.tscn" --quit-after 2 2>&1
+    $playableUiExitCode = $LASTEXITCODE
     $ErrorActionPreference = $previousErrorActionPreference
     $gameStateOutput | Write-Output
     $storyRunnerOutput | Write-Output
@@ -37,6 +39,7 @@ try {
     $combatRunnerOutput | Write-Output
     $relationshipManagerOutput | Write-Output
     $saveManagerOutput | Write-Output
+    $playableUiOutput | Write-Output
     if ($gameStateExitCode -ne 0 -or ($gameStateOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($storyRunnerExitCode -ne 0 -or ($storyRunnerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($questManagerExitCode -ne 0 -or ($questManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
@@ -45,6 +48,7 @@ try {
     if ($combatRunnerExitCode -ne 0 -or ($combatRunnerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($relationshipManagerExitCode -ne 0 -or ($relationshipManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($saveManagerExitCode -ne 0 -or ($saveManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
+    if ($playableUiExitCode -ne 0 -or ($playableUiOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     & $godot --headless --path $repo --scene "res://tests/godot/story_runner_fixture_demo.tscn" --quit-after 1
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } catch {

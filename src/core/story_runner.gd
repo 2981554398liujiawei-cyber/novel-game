@@ -5,11 +5,13 @@ signal story_node_entered(story_id: String, node_id: String, node_type: String)
 signal narrative_presented(presentation: Dictionary)
 signal dialogue_presented(presentation: Dictionary)
 signal choice_presented(presentation: Dictionary)
+signal combat_requested(request: Dictionary)
+signal reward_requested(request: Dictionary)
 signal story_completed(result: Dictionary)
 signal story_position_restored(position: Dictionary, presentation: Dictionary)
 signal story_error(error: Dictionary)
 
-const SUPPORTED_NODE_TYPES := ["narrative", "dialogue", "choice", "complete"]
+const SUPPORTED_NODE_TYPES := ["narrative", "dialogue", "choice", "combat", "reward", "complete"]
 const MAX_AUTOMATIC_TRANSITIONS := 32
 
 var last_error: Dictionary = {}
@@ -177,6 +179,8 @@ func emit_position_restored() -> void:
                 presentation = _presentation_payload(node)
             "choice":
                 presentation = _choice_presentation.duplicate(true)
+            "combat", "reward":
+                presentation = _presentation_payload(node)
             "complete":
                 presentation = _completion_result.duplicate(true)
     story_position_restored.emit(get_current_position(), presentation)
@@ -214,6 +218,25 @@ func choose_choice(choice_id: String) -> bool:
         return _fail("STORY_NODE_NOT_FOUND", "Choice jump target does not exist", target, choice_id)
     if not _apply_effects(choice.get("effects", [])):
         return false
+    return _enter_node(target, 0)
+
+
+func resolve_external_node(result_type: String = "success") -> bool:
+    last_error = {}
+    if not _require_running():
+        return false
+    if _waiting_for not in ["combat", "reward"]:
+        return _fail("STORY_INPUT_INVALID", "The current node is not waiting for an external result", _current_node_id)
+    var node: Dictionary = _nodes[_current_node_id]
+    var target := ""
+    if _waiting_for == "combat":
+        target = str(node.get("next_on_win", "")) if result_type == "victory" else str(node.get("next_on_loss", ""))
+    else:
+        if result_type not in ["success", "completed"]:
+            return _fail("STORY_EXTERNAL_RESULT_INVALID", "Reward node requires a successful result", _current_node_id)
+        target = str(node.get("next", ""))
+    if target.is_empty():
+        return _fail("STORY_NEXT_MISSING", "External story node does not declare a continuation", _current_node_id)
     return _enter_node(target, 0)
 
 
@@ -349,6 +372,14 @@ func _enter_node(node_id: String, automatic_transitions: int, apply_entry_effect
             return true
         "choice":
             return _present_choices(node)
+        "combat":
+            _waiting_for = "combat"
+            combat_requested.emit(_presentation_payload(node))
+            return true
+        "reward":
+            _waiting_for = "reward"
+            reward_requested.emit(_presentation_payload(node))
+            return true
         "complete":
             _running = false
             _completion_result = {
@@ -379,6 +410,12 @@ func _restore_exact_node(node_id: String) -> bool:
             return true
         "choice":
             return _present_choices(node, false)
+        "combat":
+            _waiting_for = "combat"
+            return true
+        "reward":
+            _waiting_for = "reward"
+            return true
         "complete":
             _running = false
             _completion_result = {
@@ -471,12 +508,16 @@ func _presentation_payload(node: Dictionary) -> Dictionary:
     return {
         "story_id": _story_id,
         "node_id": _current_node_id,
+        "node_type": str(node.get("type", "")),
+        "location_id": str(node.get("location_id", "")),
         "text": _display_text(node.get("text", "")),
         "speaker_id": str(node.get("speaker_id", "")),
         "expression": str(node.get("expression", "")),
         "gesture": str(node.get("gesture", "")),
         "target": str(node.get("target", "")),
         "portrait_action": str(node.get("portrait_action", "")),
+        "combat_ref": str(node.get("combat_ref", "")),
+        "reward_item_ids": node.get("reward_item_ids", []).duplicate(true),
     }
 
 

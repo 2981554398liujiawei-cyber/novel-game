@@ -64,6 +64,7 @@ func _ready() -> void:
         if "--smoke-test" in args:
             get_tree().quit(1)
         return
+    _quest_manager.quest_reward_ready.connect(_inventory_manager.apply_quest_reward)
 
     _relationship_manager.relationship_error.connect(_on_relationship_error)
     if not _relationship_manager.initialize(_content_loader, _game_state):
@@ -118,6 +119,29 @@ func _ready() -> void:
         return
 
     _content_ready = true
+    $Center.visible = false
+    var services := {
+        "content_loader": _content_loader,
+        "game_state": _game_state,
+        "story_runner": _story_runner,
+        "quest_manager": _quest_manager,
+        "inventory_manager": _inventory_manager,
+        "relationship_manager": _relationship_manager,
+        "combat_runner": _combat_runner,
+        "save_manager": _save_manager,
+    }
+    var ui_binding: Dictionary = $MainUI.bind_services(services)
+    if not bool(ui_binding.get("ok", false)):
+        _show_service_error("UI initialization failed", ui_binding, "code")
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+    $DebugConsole.configure(
+        services,
+        OS.is_debug_build(),
+        "--debug-tools" in args,
+        not OS.is_debug_build(),
+    )
     if not expected_content_id.is_empty():
         if not _content_loader.has_id(expected_content_id) or _content_loader.get_by_id(expected_content_id) == null:
             printerr("EXPECTED_CONTENT_ID_NOT_FOUND:%s" % expected_content_id)
