@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryIntermediateRepresentation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ir_version", "tool_version", "source", "baseline", "ownership", "quest", "metrics", "canonical_sha256"],
+  "properties": {
+    "ir_version": {"type": "string", "const": "1.0.0"},
+    "tool_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_visible_text_chars", "min_nodes", "min_dialogue_nodes", "min_choice_nodes", "min_terminal_nodes", "required_node_ids"],
+      "properties": {
+        "min_visible_text_chars": {"type": "integer", "minimum": 0},
+        "min_nodes": {"type": "integer", "minimum": 1},
+        "min_dialogue_nodes": {"type": "integer", "minimum": 0},
+        "min_choice_nodes": {"type": "integer", "minimum": 0},
+        "min_terminal_nodes": {"type": "integer", "minimum": 1},
+        "required_node_ids": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "uniqueItems": true}
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conditions", "effects", "quest_actions", "item_rewards", "combat_id", "relationship_actions", "expression", "gesture", "portrait_action", "camera", "delivery"],
+      "properties": {
+        "conditions": {"const": "GameState"},
+        "effects": {"const": "GameState"},
+        "quest_actions": {"const": "QuestManager"},
+        "item_rewards": {"const": "InventoryManager"},
+        "combat_id": {"const": "CombatRunner"},
+        "relationship_actions": {"const": "RelationshipManager"},
+        "expression": {"const": "MainUI"},
+        "gesture": {"const": "MainUI"},
+        "portrait_action": {"const": "MainUI"},
+        "camera": {"const": "MainUI"},
+        "delivery": {"const": "MainUI"}
+      }
+    },
+    "quest": {
+      "type": "object",
+      "required": [
+        "schema_version", "quest_id", "content_status", "title", "region_id", "category",
+        "design", "prerequisites", "mutual_exclusions", "trigger", "scenes", "entry_node",
+        "nodes", "mechanics", "branch_summary", "continuations", "rewards", "world_changes",
+        "post_quest_feedback", "implementation", "allowed_loops", "test_cases"
+      ],
+      "properties": {
+        "quest_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "content_status": {"enum": ["complete_script", "data_ready"]},
+        "scenes": {"type": "array", "minItems": 1},
+        "entry_node": {"type": "string", "minLength": 1},
+        "nodes": {"type": "array", "minItems": 1},
+        "continuations": {"type": "array", "minItems": 1},
+        "post_quest_feedback": {"type": "array", "minItems": 1},
+        "test_cases": {"type": "array", "minItems": 3}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["visible_text_chars", "node_count", "dialogue_count", "choice_count", "terminal_count", "node_types"],
+      "properties": {
+        "visible_text_chars": {"type": "integer", "minimum": 0},
+        "node_count": {"type": "integer", "minimum": 1},
+        "dialogue_count": {"type": "integer", "minimum": 0},
+        "choice_count": {"type": "integer", "minimum": 0},
+        "terminal_count": {"type": "integer", "minimum": 0},
+        "node_types": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "canonical_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

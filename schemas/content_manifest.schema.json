@@ -5,6 +5,7 @@
     "schema_version",
     "manifest_version",
     "content_files",
+    "planned_content",
     "forbidden_path_fragments",
     "hash_algorithm"
   ],
@@ -17,12 +18,35 @@
     },
     "content_files": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "string"
       }
     },
+    "planned_content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["content_id", "region_id", "status", "path"],
+        "properties": {
+          "content_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "region_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "status": {"enum": ["not_loaded", "data_ready", "implemented", "verified"]},
+          "path": {"type": ["string", "null"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "not_loaded"}}},
+            "then": {"properties": {"path": {"type": "null"}}},
+            "else": {"properties": {"path": {"type": "string", "pattern": "^quests/.+\\.json$"}}}
+          }
+        ]
+      }
+    },
     "forbidden_path_fragments": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "string"
       }

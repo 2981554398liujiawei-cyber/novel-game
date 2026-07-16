@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ForeshadowingRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "entries"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["foreshadowing_id", "title", "first_appearance", "reinforcement_nodes", "misdirection_nodes", "reveal_node", "payoff_node", "status"],
+        "properties": {
+          "foreshadowing_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "title": {"type": "string", "minLength": 1},
+          "first_appearance": {"type": ["string", "null"]},
+          "reinforcement_nodes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "misdirection_nodes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "reveal_node": {"type": ["string", "null"]},
+          "payoff_node": {"type": ["string", "null"]},
+          "status": {"enum": ["reserved", "seeded", "reinforced", "revealed", "paid_off", "retired"]}
+        }
+      }
+    }
+  }
+}

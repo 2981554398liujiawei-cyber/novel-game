@@ -1,0 +1,23 @@
+{
+  "manifest_version": "1.0.0",
+  "packages": [
+    {
+      "package_id": "nv7_r1_1_v1.4.1",
+      "file": "docs/story/raw_sources/incoming/王者_新手村返修_R1.1_v1.4.1.zip",
+      "scope": "NV7_R1_1",
+      "intake_status": "preflight_failed",
+      "authority": "incoming_unapproved",
+      "sha256": "684cb468a2ad385a74f4a20234cb581a0ab4fa2670a01b3572a1f183be3d289b",
+      "preflight_report": "docs/story/preflight/nv7_r1_1_preflight.json"
+    },
+    {
+      "package_id": "nv7_r2_v1.4",
+      "file": "docs/story/raw_sources/incoming/王者_新手村剧情_R2_v1.4.zip",
+      "scope": "NV7_R2",
+      "intake_status": "preflight_failed",
+      "authority": "incoming_unapproved",
+      "sha256": "35a86b3e6161b0e35678be0baf54156cf4d3a360fecaba075e936be0bf20f1c6",
+      "preflight_report": "docs/story/preflight/nv7_r2_preflight.json"
+    }
+  ]
+}

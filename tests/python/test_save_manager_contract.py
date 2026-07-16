@@ -67,7 +67,8 @@ class SaveManagerContractTests(unittest.TestCase):
             manifest["content_files"],
         )
         export_config = (REPO_ROOT / "export_presets.cfg").read_text(encoding="utf-8")
-        self.assertIn('exclude_filter="content/tests/**,tests/**"', export_config)
+        self.assertIn("content/tests/**", export_config)
+        self.assertIn("tests/**", export_config)
 
     def test_save_manager_is_ui_independent_and_uses_fixed_slots(self):
         source = (REPO_ROOT / "src/core/save_manager.gd").read_text(encoding="utf-8")

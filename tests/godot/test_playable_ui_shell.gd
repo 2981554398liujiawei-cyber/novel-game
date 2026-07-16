@@ -97,7 +97,7 @@ var _combat_action_types: Array[String] = []
 func _ready() -> void:
     _base_root = OS.get_temp_dir().path_join("playable_ui_shell_%d" % OS.get_process_id()).path_join("中文 用户")
     _remove_tree(_base_root)
-    _run()
+    await _run()
 
 
 func _run() -> void:
@@ -122,6 +122,17 @@ func _run() -> void:
 
     _case("narrative is presented")
     _expect("Synthetic technical narrative" in str(ui.get_ui_snapshot().get("text", "")), "narrative text was not shown")
+
+    _case("typewriter input reveals text before advancing and locks reentry")
+    ui.call("_apply_settings", {"font_size": 22, "typewriter_enabled": true, "text_speed": 1.0, "autoplay": false, "master_volume": 1.0, "music_volume": 0.8, "sfx_volume": 0.8})
+    ui.call("_render_text", {"text": "Synthetic typewriter protection text.", "location_id": ""}, false)
+    var before_reveal: Dictionary = context["story"].get_current_position()
+    var reveal_result: Dictionary = ui.submit_player_advance()
+    var duplicate_input: Dictionary = ui.submit_player_advance()
+    _expect(reveal_result.get("code") == "UI_TEXT_REVEALED" and ui.get_ui_snapshot().get("text_complete", false), "first input did not reveal the current text")
+    _expect(duplicate_input.get("code") == "UI_INPUT_LOCKED", "same-frame repeated input was not locked")
+    _expect(context["story"].get_current_position() == before_reveal, "revealing text advanced the story")
+    ui.call("_release_player_input")
 
     _case("dialogue presents speaker and portrait")
     _expect(ui.advance_story().get("ok", false), "could not advance to dialogue")
@@ -226,7 +237,50 @@ func _run() -> void:
     _expect(ui.validate_layout(Vector2i(1920, 1080), 22).get("ok", false), "1080p layout contract failed")
 
     _case("32px font remains operable")
+    ui.call("_apply_settings", {"font_size": 32, "typewriter_enabled": false, "text_speed": 30.0, "autoplay": false, "master_volume": 1.0, "music_volume": 0.8, "sfx_volume": 0.8})
+    var main_text: RichTextLabel = ui.find_child("MainText", true, false)
     _expect(ui.validate_layout(Vector2i(1280, 720), 32).get("font_operable", false), "32px font layout contract failed")
+    _expect(main_text.get_theme_font_size("normal_font_size") == 32, "32px setting was not applied to the real main text control")
+
+    _case("five long choices scroll wrap and preserve visual locked slots")
+    var synthetic_choices: Array = []
+    for choice_index: int in range(5):
+        synthetic_choices.append({
+            "choice_id": "synthetic_%d" % choice_index,
+            "text": "这是用于验证中文长选项自动换行与滚动区域稳定性的技术文本，第%d项不会被截断。" % (choice_index + 1),
+            "enabled": choice_index != 0,
+        })
+    ui.call("_on_choice_presented", {"choices": synthetic_choices})
+    await get_tree().process_frame
+    await get_tree().process_frame
+    var choice_scroll: ScrollContainer = ui.find_child("ChoiceScroll", true, false)
+    var choice_box: VBoxContainer = ui.find_child("Choices", true, false)
+    var choice_snapshot: Dictionary = ui.get_ui_snapshot()
+    _expect(choice_scroll != null and choice_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "long choices do not have a vertical scroll contract")
+    _expect(choice_box.get_child_count() == 5, "five choices were not rendered")
+    _expect((choice_box.get_child(0) as Button).disabled and "暂不可选" in (choice_box.get_child(0) as Button).text, "visible locked choice lacks an understandable prompt")
+    _expect((choice_box.get_child(4) as Button).autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "long choice wrapping is disabled")
+    _expect((choice_box.get_child(4) as Button).get_theme_font_size("font_size") == 32, "32px setting was not applied to dynamically created choices")
+    _expect(choice_snapshot.get("choice_slots", []).size() == 5 and choice_snapshot.get("choices", []).size() == 4, "visual choice positions were collapsed onto selectable choices")
+    var viewport_rect := Rect2(Vector2.ZERO, Vector2(1280, 720))
+    _expect(main_text.get_global_rect().size.x > 100.0 and main_text.get_global_rect().size.y > 40.0, "32px text lost its operable reading area")
+    _expect(viewport_rect.encloses(choice_scroll.get_global_rect()), "choice scroll area left the 720p viewport")
+    _expect(not main_text.get_global_rect().intersects(choice_scroll.get_global_rect()), "long choices overlap the main text")
+    _expect(choice_scroll.get_v_scroll_bar().max_value > choice_scroll.get_v_scroll_bar().page, "five long 32px choices do not produce a usable scroll range")
+
+    _case("history is structured bounded and contains choices and system notices")
+    var history_before_cap: Array = ui.get_ui_snapshot().get("history", [])
+    _expect(history_before_cap.any(func(entry: Dictionary): return entry.get("category") == "choice"), "selected player choice was not recorded")
+    _expect(history_before_cap.any(func(entry: Dictionary): return entry.get("category") == "system"), "important system notice was not recorded")
+    for history_index: int in range(205):
+        ui.present_system_message("Synthetic bounded history %d" % history_index)
+    var bounded_history: Array = ui.get_ui_snapshot().get("history", [])
+    _expect(bounded_history.size() == 200, "history capacity was not bounded")
+    _expect(str(bounded_history.back().get("text", "")).ends_with("204"), "history did not retain the newest entry")
+
+    _case("player error summary hides internal detail")
+    var friendly_error: Dictionary = ui.call("_feedback", false, "SAVE_BLOCKED_COMBAT", "res://internal/file.json state.secret.key")
+    _expect("internal" not in str(friendly_error.get("message", "")) and "state.secret.key" not in str(friendly_error.get("message", "")), "player error exposed internal detail")
 
     _case("settings persist outside progress saves")
     var settings := SettingsManagerClass.new()

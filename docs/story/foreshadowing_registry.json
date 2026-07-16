@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "entries": [
+    {"foreshadowing_id":"RETURN_CHANNEL","title":"返回通道","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"EXTERNAL_AUTHORITY","title":"外部权威","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"PLAYERS_TRAPPED","title":"玩家受困","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"WORLD_REALITY","title":"世界真实性","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"LIVE_CREATURE_PURCHASE","title":"活体购买","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"SILVER_BLACK_SYSTEM_MATERIAL","title":"银黑系统材料","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"GREED_RING","title":"贪婪之戒","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"},
+    {"foreshadowing_id":"LANYIN_CHARACTER_ARC","title":"岚音人物弧光","first_appearance":null,"reinforcement_nodes":[],"misdirection_nodes":[],"reveal_node":null,"payoff_node":null,"status":"reserved"}
+  ]
+}
