@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.5.0",
+  "quest_id": "TEST_UI_TECHNICAL_SLICE",
+  "content_status": "data_ready",
+  "title": "Playable UI shell technical slice",
+  "region_id": "TEST_REGION",
+  "category": "encounter",
+  "source_refs": ["synthetic_test_fixture"],
+  "design": {
+    "purpose": "Verify the playable UI shell integration",
+    "theme": "synthetic",
+    "emotion_curve": "narrative-choice-combat-reward-complete",
+    "source_basis": "fixture",
+    "adaptation_notes": "Tests only; contains no formal story prose",
+    "recommended_level": 1,
+    "duration_minutes": 1,
+    "target_experience": "deterministic integration",
+    "scope": "tests_only",
+    "limitations": "never load from the formal manifest"
+  },
+  "prerequisites": [],
+  "mutual_exclusions": [],
+  "trigger": {
+    "method": "test_only",
+    "location_id": "TEST_UI_LOCATION",
+    "conditions": [],
+    "opening_presentation": {}
+  },
+  "scenes": [
+    {
+      "scene_id": "technical_slice",
+      "title": "Synthetic UI integration scene",
+      "entry_nodes": ["opening"],
+      "exit_nodes": ["finished"],
+      "participant_ids": ["TEST_UI_NPC"],
+      "objective": "Exercise every playable shell connection",
+      "optional_interactions": []
+    }
+  ],
+  "entry_node": "opening",
+  "nodes": [
+    {
+      "node_id": "opening",
+      "type": "narrative",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Technical narrative presentation",
+      "text": ["Synthetic technical narrative."],
+      "effects": [{"key": "test.note", "op": "set", "value": "ui_started"}],
+      "next": "greeting"
+    },
+    {
+      "node_id": "greeting",
+      "type": "dialogue",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Technical portrait presentation",
+      "speaker_id": "TEST_UI_NPC",
+      "text": ["Synthetic technical dialogue."],
+      "expression": "smile",
+      "gesture": "none",
+      "target": "player",
+      "portrait_action": "show",
+      "conditions": [],
+      "effects": [],
+      "next": "decision"
+    },
+    {
+      "node_id": "decision",
+      "type": "choice",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Technical choice submission",
+      "choices": [
+        {
+          "choice_id": "continue_test",
+          "text": "Continue technical flow",
+          "intent": "continue",
+          "protagonist_boundary": "allowed",
+          "visible_risk": "none",
+          "consequence_summary": "Enter the technical combat fixture",
+          "hidden_consequence": "tests only",
+          "goto": "combat_gate",
+          "conditions": [],
+          "effects": [{"key": "test.flag", "op": "set", "value": true}]
+        },
+        {
+          "choice_id": "locked_test",
+          "text": "Unavailable technical choice",
+          "locked_text": "Condition not met",
+          "intent": "locked",
+          "protagonist_boundary": "allowed",
+          "visible_risk": "none",
+          "consequence_summary": "Verify filtering",
+          "hidden_consequence": "tests only",
+          "goto": "combat_gate",
+          "conditions": [{"key": "test.counter", "op": "gte", "value": 99}],
+          "effects": [],
+          "hidden_when_locked": true
+        }
+      ]
+    },
+    {
+      "node_id": "combat_gate",
+      "type": "combat",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Delegate combat to CombatRunner",
+      "combat_ref": "TEST_COMBAT_BOSS",
+      "next_on_win": "reward_gate",
+      "next_on_loss": "finished"
+    },
+    {
+      "node_id": "reward_gate",
+      "type": "reward",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Delegate item grant to InventoryManager",
+      "reward_item_ids": ["TEST_ITEM_MATERIAL_BUNDLE"],
+      "next": "finished"
+    },
+    {
+      "node_id": "finished",
+      "type": "complete",
+      "location_id": "TEST_UI_LOCATION",
+      "scene_id": "technical_slice",
+      "purpose": "Finish the technical slice",
+      "terminal": true,
+      "outcome": "technical_slice_complete"
+    }
+  ],
+  "mechanics": [{"type": "playable_ui_shell_fixture"}],
+  "branch_summary": [{"branch": "technical", "merge": "finished"}],
+  "continuations": [{"result": "technical_slice_complete"}],
+  "rewards": [{"type": "signal_only", "reward_id": "technical_reward"}],
+  "world_changes": [{"scope": "test_states_only"}],
+  "post_quest_feedback": [{"type": "none"}],
+  "implementation": {
+    "runner": "StoryRunner",
+    "ui": "MainUI",
+    "state": "GameState fixture",
+    "content": "fixture only",
+    "scope": "automated tests"
+  },
+  "allowed_loops": [],
+  "test_cases": [
+    {
+      "test_id": "vertical_slice",
+      "initial_state": {},
+      "steps": ["new_game", "narrative", "dialogue", "choice", "combat", "reward", "save_load", "complete"],
+      "expected": ["technical_slice_complete"]
+    },
+    {
+      "test_id": "combat_bridge",
+      "initial_state": {},
+      "steps": ["start_combat", "resolve_victory"],
+      "expected": ["reward_gate"]
+    },
+    {
+      "test_id": "reward_bridge",
+      "initial_state": {},
+      "steps": ["grant_fixture_item", "resolve_reward"],
+      "expected": ["finished"]
+    }
+  ]
+}
