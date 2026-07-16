@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.4.0",
+  "enemies": [
+    {
+      "enemy_id": "TEST_ENEMY_DUMMY",
+      "name": "Synthetic training dummy",
+      "level": 1,
+      "agility": 5,
+      "max_hp": 32,
+      "attack": 7,
+      "defense": 2,
+      "skill_ids": ["TEST_SKILL_POWER_STRIKE"],
+      "ai_profile": "test_basic",
+      "boss": false,
+      "runtime": {
+        "ai_actions": [
+          {
+            "action_id": "basic_attack",
+            "mode": "weighted_action",
+            "action_type": "attack",
+            "weight": 8,
+            "conditions": [],
+            "target_priority": "player"
+          },
+          {
+            "action_id": "power_strike",
+            "mode": "weighted_action",
+            "action_type": "skill",
+            "weight": 2,
+            "skill_id": "TEST_SKILL_POWER_STRIKE",
+            "conditions": [],
+            "target_priority": "player"
+          }
+        ],
+        "status_immunities": [],
+        "inspect": {
+          "public_info": "Synthetic baseline enemy",
+          "weakness_tags": ["low_defense"],
+          "mechanic_tags": []
+        }
+      }
+    },
+    {
+      "enemy_id": "TEST_ENEMY_BRUTE",
+      "name": "Synthetic conditional brute",
+      "level": 3,
+      "agility": 7,
+      "max_hp": 90,
+      "attack": 18,
+      "defense": 7,
+      "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_STUN_BLOW"],
+      "ai_profile": "test_conditional",
+      "boss": false,
+      "runtime": {
+        "ai_actions": [
+          {
+            "action_id": "brute_attack",
+            "mode": "weighted_action",
+            "action_type": "attack",
+            "weight": 6,
+            "conditions": [],
+            "target_priority": "lowest_hp"
+          },
+          {
+            "action_id": "brute_stun",
+            "mode": "conditional_action",
+            "action_type": "skill",
+            "weight": 5,
+            "skill_id": "TEST_SKILL_STUN_BLOW",
+            "conditions": [
+              {"type": "hp_threshold", "subject": "self", "op": "lte", "value": 0.5}
+            ],
+            "target_priority": "player"
+          },
+          {
+            "action_id": "brute_guard",
+            "mode": "conditional_action",
+            "action_type": "defend",
+            "weight": 3,
+            "conditions": [
+              {"type": "target_guarding", "expected": true}
+            ],
+            "target_priority": "self"
+          }
+        ],
+        "status_immunities": [],
+        "inspect": {
+          "public_info": "Synthetic high-attack enemy",
+          "weakness_tags": ["slow_recovery"],
+          "mechanic_tags": ["hp_threshold_action"]
+        }
+      }
+    },
+    {
+      "enemy_id": "TEST_ENEMY_BOSS",
+      "name": "Synthetic phase boss",
+      "level": 5,
+      "agility": 10,
+      "max_hp": 180,
+      "attack": 20,
+      "defense": 9,
+      "skill_ids": [
+        "TEST_SKILL_POWER_STRIKE",
+        "TEST_SKILL_POISON_EDGE",
+        "TEST_SKILL_STUN_BLOW",
+        "TEST_SKILL_GUARD_STANCE"
+      ],
+      "ai_profile": "test_boss",
+      "boss": true,
+      "runtime": {
+        "ai_actions": [
+          {
+            "action_id": "boss_attack",
+            "mode": "weighted_action",
+            "action_type": "attack",
+            "weight": 5,
+            "conditions": [],
+            "target_priority": "lowest_hp"
+          },
+          {
+            "action_id": "boss_poison",
+            "mode": "weighted_action",
+            "action_type": "skill",
+            "weight": 3,
+            "skill_id": "TEST_SKILL_POISON_EDGE",
+            "conditions": [
+              {"type": "status", "subject": "target", "status_id": "poison", "present": false}
+            ],
+            "target_priority": "player"
+          },
+          {
+            "action_id": "boss_stun",
+            "mode": "conditional_action",
+            "action_type": "skill",
+            "weight": 4,
+            "skill_id": "TEST_SKILL_STUN_BLOW",
+            "conditions": [
+              {"type": "hp_threshold", "subject": "self", "op": "lte", "value": 0.65}
+            ],
+            "target_priority": "highest_attack"
+          },
+          {
+            "action_id": "boss_guard",
+            "mode": "conditional_action",
+            "action_type": "skill",
+            "weight": 3,
+            "skill_id": "TEST_SKILL_GUARD_STANCE",
+            "conditions": [
+              {"type": "hp_threshold", "subject": "self", "op": "lte", "value": 0.35}
+            ],
+            "target_priority": "self"
+          }
+        ],
+        "status_immunities": ["stun"],
+        "inspect": {
+          "public_info": "Synthetic boss with three phases",
+          "weakness_tags": ["inspect_before_burst"],
+          "mechanic_tags": ["phase_shift"]
+        }
+      }
+    }
+  ]
+}

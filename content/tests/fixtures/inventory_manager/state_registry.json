@@ -20,6 +20,17 @@
       "writers": [],
       "readers": [],
       "write_sources": ["inventory"]
+    },
+    {
+      "key": "test.combat.counter",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["combat"]
     }
   ]
 }

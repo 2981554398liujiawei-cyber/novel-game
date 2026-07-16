@@ -3,10 +3,7 @@
   "title": "SkillRegistry",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "skills"
-  ],
+  "required": ["schema_version", "skills"],
   "properties": {
     "schema_version": {
       "type": "string",
@@ -29,41 +26,181 @@
         ],
         "properties": {
           "skill_id": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "kind": {
-            "enum": [
-              "active",
-              "passive",
-              "companion",
-              "noncombat"
-            ]
+            "enum": ["active", "passive", "companion", "noncombat"]
           },
           "target": {
-            "type": "string"
+            "enum": [
+              "self",
+              "enemy_single",
+              "enemy_all",
+              "ally_single",
+              "ally_all",
+              "any_single"
+            ]
           },
           "cooldown_rounds": {
             "type": "integer",
             "minimum": 0
           },
           "uses_per_battle": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "minimum": 1
           },
           "effects": {
             "type": "array",
             "items": {
-              "type": "object"
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "power"],
+                  "properties": {
+                    "effect": {"const": "damage"},
+                    "power": {"type": "number", "minimum": 0},
+                    "damage_type": {"enum": ["direct", "periodic"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "power"],
+                  "properties": {
+                    "effect": {"const": "heal"},
+                    "power": {"type": "number", "minimum": 0}
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "status_id", "duration"],
+                  "properties": {
+                    "effect": {"const": "apply_status"},
+                    "status_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "duration": {"type": "integer", "minimum": 1},
+                    "stacks": {"type": "integer", "minimum": 1},
+                    "chance": {"type": "number", "minimum": 0, "maximum": 1}
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "status_id"],
+                  "properties": {
+                    "effect": {"const": "remove_status"},
+                    "status_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "reveal"],
+                  "properties": {
+                    "effect": {"const": "reveal"},
+                    "reveal": {"type": "string", "minLength": 1}
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "power"],
+                  "properties": {
+                    "effect": {"const": "reveal_mechanic"},
+                    "power": {"type": "number", "minimum": 0}
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["effect", "key", "op", "value"],
+                  "properties": {
+                    "effect": {"const": "state_effect"},
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.]+$"
+                    },
+                    "op": {"enum": ["set", "inc", "dec"]},
+                    "value": {}
+                  }
+                }
+              ]
             }
           },
           "source": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
+          },
+          "runtime": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["conditions", "ai_tags"],
+            "properties": {
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["type", "subject", "op", "value"],
+                      "properties": {
+                        "type": {"const": "hp_threshold"},
+                        "subject": {"enum": ["actor", "target"]},
+                        "op": {"enum": ["lt", "lte", "gt", "gte"]},
+                        "value": {"type": "number", "minimum": 0, "maximum": 1}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["type", "subject", "status_id", "present"],
+                      "properties": {
+                        "type": {"const": "status"},
+                        "subject": {"enum": ["actor", "target"]},
+                        "status_id": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        },
+                        "present": {"type": "boolean"}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["type", "phase_id"],
+                      "properties": {
+                        "type": {"const": "phase"},
+                        "phase_id": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "ai_tags": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                }
+              }
+            }
           }
         }
       }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "items": [
     {
       "item_id": "TEST_ITEM_FIELD_TONIC",
@@ -26,6 +26,9 @@
         "stat_modifiers": [],
         "use_effects": [
           {"key": "test.inventory.health", "op": "inc", "value": 2}
+        ],
+        "combat_effects": [
+          {"effect": "heal", "value": 15}
         ],
         "use_context": "field_only"
       }
@@ -55,6 +58,9 @@
         "stat_modifiers": [],
         "use_effects": [
           {"key": "test.inventory.battle_buff", "op": "set", "value": true}
+        ],
+        "combat_effects": [
+          {"effect": "heal", "value": 15}
         ],
         "use_context": "battle_only"
       }

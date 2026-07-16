@@ -1,0 +1,467 @@
+{
+  "schema_version": "1.4.0",
+  "runtime": {
+    "rules": {
+      "initiative_random_min": 0,
+      "initiative_random_max": 3,
+      "damage_variance_min": 0.85,
+      "damage_variance_max": 1.15,
+      "defense_multiplier": 0.6,
+      "minimum_damage": 1,
+      "critical_multiplier": 1.5,
+      "guard_status_id": "guard",
+      "max_rounds": 100,
+      "tie_breaker": "player_then_stable_id",
+      "retreat_base_chance": 0.5,
+      "retreat_agility_factor": 0.05,
+      "retreat_boss_penalty": 0.25,
+      "retreat_min_chance": 0.1,
+      "retreat_max_chance": 0.9
+    },
+    "status_definitions": [
+      {
+        "status_id": "poison",
+        "behavior": "periodic_effect",
+        "default_duration": 2,
+        "duration_tick": "round_end",
+        "stack_policy": "stack",
+        "max_stacks": 2,
+        "block_action": false,
+        "tick_effect": {"effect": "damage", "mode": "max_hp_ratio", "value": 0.05},
+        "stat_modifiers": [],
+        "expiry": "duration"
+      },
+      {
+        "status_id": "stun",
+        "behavior": "skip_action",
+        "default_duration": 1,
+        "duration_tick": "action_start",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": true,
+        "stat_modifiers": [],
+        "expiry": "next_action"
+      },
+      {
+        "status_id": "guard",
+        "behavior": "damage_reduction",
+        "default_duration": 1,
+        "duration_tick": "action_start",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": false,
+        "stat_modifiers": [],
+        "direct_damage_reduction": 0.4,
+        "expiry": "next_action"
+      },
+      {
+        "status_id": "attack_up",
+        "behavior": "stat_modifier",
+        "default_duration": 2,
+        "duration_tick": "round_end",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": false,
+        "stat_modifiers": [
+          {"stat": "attack", "operation": "add_percent", "value": 0.2}
+        ],
+        "expiry": "duration"
+      },
+      {
+        "status_id": "defense_down",
+        "behavior": "stat_modifier",
+        "default_duration": 2,
+        "duration_tick": "round_end",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": false,
+        "stat_modifiers": [
+          {"stat": "defense", "operation": "add_percent", "value": -0.25}
+        ],
+        "expiry": "duration"
+      }
+    ]
+  },
+  "combats": [
+    {
+      "combat_id": "TEST_COMBAT_BASIC",
+      "location_id": "TEST_LOCATION_ARENA",
+      "enemy_ids": ["TEST_ENEMY_DUMMY"],
+      "ally_ids": ["TEST_COMPANION_SYNTH"],
+      "victory": {"type": "all_enemies_defeated"},
+      "defeat": {"type": "player_down"},
+      "retreat": {"allowed": true, "continuation_id": "test_basic_retreat"},
+      "unique_mechanic": "",
+      "phases": [
+        {"phase_id": "default", "trigger": "combat_start", "ai_profile": "test_basic"}
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "TEST_UNIT_PLAYER",
+          "name": "Synthetic player",
+          "role": "player",
+          "level": 3,
+          "max_hp": 100,
+          "attack": 22,
+          "defense": 8,
+          "agility": 12,
+          "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_POISON_EDGE", "TEST_SKILL_SCAN"],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "TEST_UNIT_COMPANION",
+            "name": "Synthetic companion",
+            "role": "companion",
+            "level": 3,
+            "max_hp": 80,
+            "attack": 15,
+            "defense": 7,
+            "agility": 10,
+            "skill_ids": ["TEST_SKILL_RECOVER", "TEST_SKILL_RALLY", "TEST_SKILL_BREAK_ARMOR"],
+            "ai_actions": [
+              {
+                "action_id": "companion_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 4,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {"offensive": 2.0, "defensive": 0.7, "support": 0.5}
+              },
+              {
+                "action_id": "companion_heal",
+                "mode": "conditional_action",
+                "action_type": "skill",
+                "weight": 4,
+                "skill_id": "TEST_SKILL_RECOVER",
+                "conditions": [
+                  {"type": "hp_threshold", "subject": "player", "op": "lte", "value": 0.6}
+                ],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {"offensive": 0.3, "defensive": 1.8, "support": 2.0}
+              },
+              {
+                "action_id": "companion_debuff",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "TEST_SKILL_BREAK_ARMOR",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {"offensive": 1.2, "defensive": 0.5, "support": 1.8}
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {"unit_id": "TEST_UNIT_DUMMY_A", "enemy_id": "TEST_ENEMY_DUMMY"}
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "test_basic_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "basic_public_info",
+            "target_unit_id": "TEST_UNIT_DUMMY_A",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "synthetic_low_defense",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {"result_type": "victory", "continuation_tag": "test_basic_victory"},
+          "defeat": {"result_type": "defeat", "continuation_tag": "test_basic_defeat"}
+        },
+        "phases": [
+          {
+            "phase_id": "default",
+            "target_unit_id": "TEST_UNIT_DUMMY_A",
+            "trigger": {"type": "combat_start"},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE"],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "basic_started"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "TEST_COMBAT_SOLO",
+      "location_id": "TEST_LOCATION_ARENA",
+      "enemy_ids": ["TEST_ENEMY_BRUTE"],
+      "ally_ids": [],
+      "victory": {"type": "all_enemies_defeated"},
+      "defeat": {"type": "player_down"},
+      "retreat": {"allowed": false, "continuation_id": ""},
+      "unique_mechanic": "",
+      "phases": [
+        {"phase_id": "default", "trigger": "combat_start", "ai_profile": "test_conditional"}
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "TEST_UNIT_SOLO_PLAYER",
+          "name": "Synthetic solo player",
+          "role": "player",
+          "level": 2,
+          "max_hp": 72,
+          "attack": 15,
+          "defense": 5,
+          "agility": 7,
+          "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_STUN_BLOW"],
+          "use_equipment_modifiers": false
+        },
+        "companion_units": [],
+        "enemy_instances": [
+          {"unit_id": "TEST_UNIT_BRUTE_A", "enemy_id": "TEST_ENEMY_BRUTE"}
+        ],
+        "retreat": {
+          "allowed": false,
+          "mode": "disabled",
+          "chance_modifier": 0.0,
+          "continuation_tag": ""
+        },
+        "inspect_rules": [],
+        "result_rules": {
+          "victory": {"result_type": "victory", "continuation_tag": "test_solo_victory"},
+          "defeat": {"result_type": "defeat", "continuation_tag": "test_solo_defeat"}
+        },
+        "phases": [
+          {
+            "phase_id": "default",
+            "target_unit_id": "TEST_UNIT_BRUTE_A",
+            "trigger": {"type": "combat_start"},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_STUN_BLOW"],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "solo_started"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "TEST_COMBAT_BOSS",
+      "location_id": "TEST_LOCATION_ARENA",
+      "enemy_ids": ["TEST_ENEMY_BOSS"],
+      "ally_ids": ["TEST_COMPANION_SYNTH"],
+      "victory": {"type": "all_enemies_defeated"},
+      "defeat": {"type": "player_down"},
+      "retreat": {"allowed": true, "continuation_id": "test_boss_retreat"},
+      "unique_mechanic": "synthetic_phase_shift",
+      "phases": [
+        {"phase_id": "opening", "trigger": "combat_start", "ai_profile": "test_boss"},
+        {"phase_id": "pressure", "trigger": "hp_lte_65", "ai_profile": "test_boss"},
+        {"phase_id": "exposed", "trigger": "status_defense_down", "ai_profile": "test_boss"}
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "TEST_UNIT_BOSS_PLAYER",
+          "name": "Synthetic boss player",
+          "role": "player",
+          "level": 5,
+          "max_hp": 130,
+          "attack": 24,
+          "defense": 11,
+          "agility": 10,
+          "skill_ids": [
+            "TEST_SKILL_POWER_STRIKE",
+            "TEST_SKILL_STUN_BLOW",
+            "TEST_SKILL_BREAK_ARMOR",
+            "TEST_SKILL_SCAN"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "TEST_UNIT_BOSS_COMPANION",
+            "name": "Synthetic boss companion",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 100,
+            "attack": 18,
+            "defense": 10,
+            "agility": 11,
+            "skill_ids": ["TEST_SKILL_RECOVER", "TEST_SKILL_RALLY", "TEST_SKILL_BREAK_ARMOR"],
+            "ai_actions": [
+              {
+                "action_id": "boss_companion_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 3,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {"offensive": 2.0, "defensive": 0.5, "support": 0.5}
+              },
+              {
+                "action_id": "boss_companion_heal",
+                "mode": "conditional_action",
+                "action_type": "skill",
+                "weight": 4,
+                "skill_id": "TEST_SKILL_RECOVER",
+                "conditions": [
+                  {"type": "hp_threshold", "subject": "player", "op": "lte", "value": 0.6}
+                ],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {"offensive": 0.2, "defensive": 2.0, "support": 2.0}
+              },
+              {
+                "action_id": "boss_companion_break",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "TEST_SKILL_BREAK_ARMOR",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {"offensive": 1.3, "defensive": 0.5, "support": 1.8}
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {"unit_id": "TEST_UNIT_BOSS_A", "enemy_id": "TEST_ENEMY_BOSS"}
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": -0.1,
+          "continuation_tag": "test_boss_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "boss_seeded_mechanic",
+            "target_unit_id": "TEST_UNIT_BOSS_A",
+            "conditions": [
+              {"type": "actor_stat", "stat": "insight", "op": "gte", "value": 2}
+            ],
+            "outcome": "partial_success",
+            "reveal": "synthetic_phase_warning",
+            "seeded": true,
+            "difficulty": 20
+          }
+        ],
+        "result_rules": {
+          "victory": {"result_type": "victory", "continuation_tag": "test_boss_victory"},
+          "defeat": {"result_type": "defeat", "continuation_tag": "test_boss_defeat"}
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "TEST_UNIT_BOSS_A",
+            "trigger": {"type": "combat_start"},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_POISON_EDGE"],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {"boss_attack": 1.0, "boss_poison": 1.0},
+            "event_tag": "boss_opening"
+          },
+          {
+            "phase_id": "pressure",
+            "target_unit_id": "TEST_UNIT_BOSS_A",
+            "trigger": {"type": "hp_threshold", "unit_id": "TEST_UNIT_BOSS_A", "op": "lte", "value": 0.65},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_POISON_EDGE", "TEST_SKILL_STUN_BLOW"],
+            "stat_modifiers": [
+              {"stat": "attack", "operation": "add_percent", "value": 0.1}
+            ],
+            "ai_weight_modifiers": {"boss_attack": 0.8, "boss_stun": 1.7},
+            "event_tag": "boss_pressure"
+          },
+          {
+            "phase_id": "exposed",
+            "target_unit_id": "TEST_UNIT_BOSS_A",
+            "trigger": {"type": "status", "unit_id": "TEST_UNIT_BOSS_A", "status_id": "defense_down", "present": true},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_STUN_BLOW", "TEST_SKILL_GUARD_STANCE"],
+            "stat_modifiers": [
+              {"stat": "agility", "operation": "flat", "value": 2}
+            ],
+            "ai_weight_modifiers": {"boss_guard": 2.0, "boss_stun": 1.4},
+            "event_tag": "boss_exposed"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "TEST_COMBAT_PARTIAL",
+      "location_id": "TEST_LOCATION_ARENA",
+      "enemy_ids": ["TEST_ENEMY_DUMMY"],
+      "ally_ids": [],
+      "victory": {"type": "all_enemies_defeated"},
+      "defeat": {"type": "player_down"},
+      "retreat": {"allowed": true, "continuation_id": "test_partial_retreat"},
+      "unique_mechanic": "",
+      "phases": [
+        {"phase_id": "opening", "trigger": "combat_start", "ai_profile": "test_basic"},
+        {"phase_id": "event_shift", "trigger": "event_test_clock", "ai_profile": "test_basic"}
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "TEST_UNIT_PARTIAL_PLAYER",
+          "name": "Synthetic partial player",
+          "role": "player",
+          "level": 2,
+          "max_hp": 80,
+          "attack": 14,
+          "defense": 6,
+          "agility": 8,
+          "skill_ids": ["TEST_SKILL_POWER_STRIKE", "TEST_SKILL_SCAN"],
+          "use_equipment_modifiers": false
+        },
+        "companion_units": [],
+        "enemy_instances": [
+          {"unit_id": "TEST_UNIT_PARTIAL_DUMMY", "enemy_id": "TEST_ENEMY_DUMMY"}
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "guaranteed",
+          "chance_modifier": 0.0,
+          "continuation_tag": "test_partial_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "partial_repeat",
+            "target_unit_id": "TEST_UNIT_PARTIAL_DUMMY",
+            "conditions": [],
+            "outcome": "no_new_findings",
+            "reveal": "synthetic_already_known",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {"result_type": "victory", "continuation_tag": "test_partial_victory"},
+          "defeat": {"result_type": "defeat", "continuation_tag": "test_partial_defeat"},
+          "partial_success": {
+            "result_type": "partial_success",
+            "continuation_tag": "test_partial_success",
+            "condition": "turn_limit"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "TEST_UNIT_PARTIAL_DUMMY",
+            "trigger": {"type": "combat_start"},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE"],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "partial_started"
+          },
+          {
+            "phase_id": "event_shift",
+            "target_unit_id": "TEST_UNIT_PARTIAL_DUMMY",
+            "trigger": {"type": "event", "event_tag": "test_clock"},
+            "skill_ids": ["TEST_SKILL_POWER_STRIKE"],
+            "stat_modifiers": [
+              {"stat": "defense", "operation": "flat", "value": -1}
+            ],
+            "ai_weight_modifiers": {"basic_attack": 1.5},
+            "event_tag": "partial_event_shift"
+          }
+        ]
+      }
+    }
+  ]
+}

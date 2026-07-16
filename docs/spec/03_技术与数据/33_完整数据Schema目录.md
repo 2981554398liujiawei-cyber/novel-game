@@ -26,7 +26,9 @@
 
 `quest.schema.json`的`runtime`为向后兼容的可选区块：旧任务数据可继续只作为StoryRunner节点数据使用；需要QuestManager管理时，必须显式声明生命周期状态键、奖励幂等键、前置条件组、目标、完成方式和失败续接策略。所有引用键都必须先登记到状态注册表，管理器不得由任务ID临时拼接或创建状态键。
 
-`item.schema.json`的`runtime`同样是向后兼容的可选区块。旧字段由InventoryManager规范化读取；新增或更新的可运行物品应完整声明该区块。Schema负责形状和枚举，语义校验器另外检查堆叠上限、关键物品保护、装备槽组合、双手占槽、状态引用及`inventory`写权限、持有标记隔离和任务奖励物品引用。任务奖励类型只允许`signal_only`或`items`，未知类型不得被静默忽略。测试物品只放在fixtures中，正式manifest不得引用。
+`item.schema.json`的`runtime`同样是向后兼容的可选区块。旧字段由InventoryManager规范化读取；新增或更新的可运行物品应完整声明该区块。Schema负责形状和枚举，语义校验器另外检查堆叠上限、关键物品保护、装备槽组合、双手占槽、状态引用及`inventory`写权限、持有标记隔离和任务奖励物品引用。可选`combat_effects`只描述本场治疗、施加状态和移除状态，由CombatRunner解释，InventoryManager仍独占物品扣除。任务奖励类型只允许`signal_only`或`items`，未知类型不得被静默忽略。测试物品只放在fixtures中，正式manifest不得引用。
+
+`combat.schema.json`、`enemy.schema.json`与`skill.schema.json`以可选`runtime`契约补充CombatRunner所需的集中数值规则、状态效果注册、唯一单位实例、类型化阶段、观察、撤退、结算、AI动作、技能条件和类型化效果。未声明`runtime`的1.3正式数据继续作为兼容内容索引加载；只有需要进入CombatRunner的战斗才必须提供完整运行契约。跨文件语义校验器负责技能、状态、敌人实例、AI动作和阶段引用，并限制每单位最多四个技能、正权重AI以及首领2—3阶段。合成战斗数据只允许放在`content/tests/fixtures/combat_runner/`，不得写入正式manifest或Windows导出包。
 
 ## 4. 版本
 

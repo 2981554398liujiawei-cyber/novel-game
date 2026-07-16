@@ -214,6 +214,79 @@
                   }
                 }
               },
+              "combat_effects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "effect"
+                  ],
+                  "properties": {
+                    "effect": {
+                      "enum": [
+                        "heal",
+                        "apply_status",
+                        "remove_status"
+                      ]
+                    },
+                    "value": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "status_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]+$"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "magnitude": {
+                      "type": "number"
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "effect": {
+                            "const": "heal"
+                          }
+                        },
+                        "required": [
+                          "effect"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "effect": {
+                            "enum": [
+                              "apply_status",
+                              "remove_status"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "effect"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "status_id"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
               "use_context": {
                 "enum": [
                   "battle_only",

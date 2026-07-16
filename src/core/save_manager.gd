@@ -25,6 +25,7 @@ const SAVE_STORY_INVALID := "SAVE_STORY_INVALID"
 const SAVE_WRITE_FAILED := "SAVE_WRITE_FAILED"
 const SAVE_RESTORE_FAILED := "SAVE_RESTORE_FAILED"
 const SAVE_NOT_INITIALIZED := "SAVE_NOT_INITIALIZED"
+const SAVE_RUNTIME_BLOCKED := "SAVE_RUNTIME_BLOCKED"
 
 var last_result: Dictionary = {}
 
@@ -41,6 +42,7 @@ var _clock_provider: Callable
 var _schema: Dictionary = {}
 var _schema_validator := JsonSchemaValidatorClass.new()
 var _initialized := false
+var _runtime_guard: WeakRef
 
 
 func initialize(
@@ -61,6 +63,7 @@ func initialize(
     _schema = {}
     _playtime_seconds = 0.0
     _random_state = {"seed": 0}
+    _runtime_guard = null
     if content_loader == null or not content_loader.has_method("get_state_definitions") or not content_loader.has_method("get_story"):
         _set_last_result(_result(false, SAVE_SCHEMA_INVALID, "ContentLoader does not provide state and story data"))
         return false
@@ -129,8 +132,15 @@ func initialize(
 
 
 func save(slot_id: String) -> Dictionary:
+    return _save(slot_id, "save")
+
+
+func _save(slot_id: String, operation: String) -> Dictionary:
     if not _initialized:
         return _emit_save_result(_not_initialized_result(slot_id))
+    var runtime_block := _runtime_block_result(operation, slot_id)
+    if not runtime_block.is_empty():
+        return _emit_save_result(runtime_block)
     var slot_error := _validate_slot(slot_id)
     if not slot_error.is_empty():
         return _emit_save_result(slot_error)
@@ -188,6 +198,9 @@ func save(slot_id: String) -> Dictionary:
 func load(slot_id: String) -> Dictionary:
     if not _initialized:
         return _emit_load_result(_not_initialized_result(slot_id))
+    var runtime_block := _runtime_block_result("load", slot_id)
+    if not runtime_block.is_empty():
+        return _emit_load_result(runtime_block)
     var slot_error := _validate_slot(slot_id)
     if not slot_error.is_empty():
         return _emit_load_result(slot_error)
@@ -260,6 +273,9 @@ func has_save(slot_id: String) -> bool:
 func restore_backup(slot_id: String) -> Dictionary:
     if not _initialized:
         return _emit_load_result(_not_initialized_result(slot_id))
+    var runtime_block := _runtime_block_result("restore_backup", slot_id)
+    if not runtime_block.is_empty():
+        return _emit_load_result(runtime_block)
     var slot_error := _validate_slot(slot_id)
     if not slot_error.is_empty():
         return _emit_load_result(slot_error)
@@ -283,11 +299,73 @@ func restore_backup(slot_id: String) -> Dictionary:
 
 
 func request_auto_save() -> Dictionary:
-    return save(AUTO_SLOT)
+    return _save(AUTO_SLOT, "auto_save")
 
 
 func request_quick_save() -> Dictionary:
-    return save(QUICK_SLOT)
+    return _save(QUICK_SLOT, "quick_save")
+
+
+func create_precombat_checkpoint() -> Dictionary:
+    return request_auto_save()
+
+
+func set_runtime_guard(runtime_guard: RefCounted = null) -> Dictionary:
+    if runtime_guard != null and not runtime_guard.has_method("get_persistence_policy"):
+        return _set_last_result(_result(
+            false,
+            SAVE_SCHEMA_INVALID,
+            "Runtime persistence guard does not provide get_persistence_policy(operation)",
+        ))
+    _runtime_guard = weakref(runtime_guard) if runtime_guard != null else null
+    var message := "Runtime persistence guard cleared" if runtime_guard == null else "Runtime persistence guard set"
+    return _set_last_result(_result(true, "OK", message))
+
+
+func get_persistence_policy(operation: String) -> Dictionary:
+    if _runtime_guard == null:
+        return {
+            "allowed": true,
+            "code": "OK",
+            "message": "Persistence operation allowed",
+            "operation": operation,
+        }
+
+    var runtime_guard: Variant = _runtime_guard.get_ref()
+    if runtime_guard == null:
+        _runtime_guard = null
+        return {
+            "allowed": true,
+            "code": "OK",
+            "message": "Persistence operation allowed",
+            "operation": operation,
+        }
+    var raw_policy: Variant = runtime_guard.call("get_persistence_policy", operation)
+    if not raw_policy is Dictionary:
+        return {
+            "allowed": false,
+            "code": SAVE_RUNTIME_BLOCKED,
+            "message": "Runtime persistence guard returned an invalid policy",
+            "operation": operation,
+            "guard_code": "INVALID_POLICY",
+        }
+
+    var guard_policy: Dictionary = raw_policy
+    if bool(guard_policy.get("allowed", false)):
+        return {
+            "allowed": true,
+            "code": "OK",
+            "message": str(guard_policy.get("message", "Persistence operation allowed")),
+            "operation": operation,
+            "guard_code": str(guard_policy.get("code", "OK")),
+        }
+    return {
+        "allowed": false,
+        "code": SAVE_RUNTIME_BLOCKED,
+        "message": str(guard_policy.get("message", "Runtime state does not allow persistence")),
+        "operation": operation,
+        "guard_code": str(guard_policy.get("code", SAVE_RUNTIME_BLOCKED)),
+    }
 
 
 func migrate_save(document: Dictionary, from_version: int) -> Dictionary:
@@ -601,6 +679,22 @@ func _validate_slot(slot_id: String) -> Dictionary:
     if slot_id not in SLOT_IDS:
         return _result(false, SAVE_SCHEMA_INVALID, "Unknown save slot '%s'" % slot_id, slot_id)
     return {}
+
+
+func _runtime_block_result(operation: String, slot_id: String) -> Dictionary:
+    var policy := get_persistence_policy(operation)
+    if bool(policy.get("allowed", false)):
+        return {}
+    return _result(
+        false,
+        SAVE_RUNTIME_BLOCKED,
+        str(policy.get("message", "Runtime state does not allow persistence")),
+        slot_id,
+        {
+            "operation": operation,
+            "guard_code": str(policy.get("guard_code", SAVE_RUNTIME_BLOCKED)),
+        },
+    )
 
 
 func _metadata_from_document(document: Dictionary, valid: bool) -> Dictionary:

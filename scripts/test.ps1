@@ -22,6 +22,8 @@ try {
     $inventoryManagerExitCode = $LASTEXITCODE
     $inventoryIntegrationOutput = & $godot --headless --path $repo --script "res://tests/godot/test_inventory_quest_save_integration.gd" 2>&1
     $inventoryIntegrationExitCode = $LASTEXITCODE
+    $combatRunnerOutput = & $godot --headless --path $repo --script "res://tests/godot/test_combat_runner.gd" 2>&1
+    $combatRunnerExitCode = $LASTEXITCODE
     $saveManagerOutput = & $godot --headless --path $repo --script "res://tests/godot/test_save_manager.gd" 2>&1
     $saveManagerExitCode = $LASTEXITCODE
     $ErrorActionPreference = $previousErrorActionPreference
@@ -30,12 +32,14 @@ try {
     $questManagerOutput | Write-Output
     $inventoryManagerOutput | Write-Output
     $inventoryIntegrationOutput | Write-Output
+    $combatRunnerOutput | Write-Output
     $saveManagerOutput | Write-Output
     if ($gameStateExitCode -ne 0 -or ($gameStateOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($storyRunnerExitCode -ne 0 -or ($storyRunnerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($questManagerExitCode -ne 0 -or ($questManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($inventoryManagerExitCode -ne 0 -or ($inventoryManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($inventoryIntegrationExitCode -ne 0 -or ($inventoryIntegrationOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
+    if ($combatRunnerExitCode -ne 0 -or ($combatRunnerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     if ($saveManagerExitCode -ne 0 -or ($saveManagerOutput -join "`n") -match "SCRIPT ERROR") { exit 1 }
     & $godot --headless --path $repo --scene "res://tests/godot/story_runner_fixture_demo.tscn" --quit-after 1
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

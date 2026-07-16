@@ -98,8 +98,39 @@ class SaveManagerContractTests(unittest.TestCase):
             "SAVE_WRITE_FAILED",
             "SAVE_RESTORE_FAILED",
             "SAVE_NOT_INITIALIZED",
+            "SAVE_RUNTIME_BLOCKED",
         ):
             self.assertIn(f'const {error_code} := "{error_code}"', source)
+
+    def test_runtime_guard_blocks_before_persistence_or_runtime_restore(self):
+        source = (REPO_ROOT / "src/core/save_manager.gd").read_text(encoding="utf-8")
+        self.assertIn("func set_runtime_guard(", source)
+        self.assertIn("func get_persistence_policy(operation: String) -> Dictionary:", source)
+        self.assertIn('has_method("get_persistence_policy")', source)
+        self.assertNotIn('preload("res://src/core/combat_runner.gd")', source)
+
+        save_body = source.split("func save", 1)[1].split("func load", 1)[0]
+        self.assertLess(
+            save_body.index("_runtime_block_result"),
+            save_body.index('_story_runner.call("get_current_position")'),
+        )
+        load_body = source.split("func load", 1)[1].split("func delete_save", 1)[0]
+        self.assertLess(
+            load_body.index("_runtime_block_result"),
+            load_body.index("_read_json_file"),
+        )
+        restore_body = source.split("func restore_backup", 1)[1].split(
+            "func request_auto_save", 1
+        )[0]
+        self.assertLess(
+            restore_body.index("_runtime_block_result"),
+            restore_body.index("_read_json_file"),
+        )
+
+        self.assertIn('return _save(AUTO_SLOT, "auto_save")', source)
+        self.assertIn('return _save(QUICK_SLOT, "quick_save")', source)
+        self.assertIn("func create_precombat_checkpoint() -> Dictionary:", source)
+        self.assertIn("return request_auto_save()", source)
 
     def test_save_manager_uses_temp_validation_backup_and_single_rename(self):
         source = (REPO_ROOT / "src/core/save_manager.gd").read_text(encoding="utf-8")

@@ -111,6 +111,37 @@ func get_item_definitions() -> Array:
     return definitions
 
 
+func get_enemy(enemy_id: String) -> Variant:
+    return _get_typed_definition(enemy_id, "enemy")
+
+
+func get_enemy_definitions() -> Array:
+    return _get_definitions_by_type("enemy")
+
+
+func get_skill(skill_id: String) -> Variant:
+    return _get_typed_definition(skill_id, "skill")
+
+
+func get_skill_definitions() -> Array:
+    return _get_definitions_by_type("skill")
+
+
+func get_combat(combat_id: String) -> Variant:
+    return _get_typed_definition(combat_id, "combat")
+
+
+func get_combat_definitions() -> Array:
+    return _get_definitions_by_type("combat")
+
+
+func get_combat_runtime_registry() -> Dictionary:
+    var document: Variant = loaded_files.get("combats/combats.json", {})
+    if not document is Dictionary or not document.get("runtime") is Dictionary:
+        return {}
+    return document["runtime"].duplicate(true)
+
+
 func get_story(story_id: String) -> Variant:
     if get_type_for_id(story_id) != "quest":
         return null
@@ -139,6 +170,27 @@ func get_quest_dependencies() -> Dictionary:
 
 func get_index_size() -> int:
     return global_index.size()
+
+
+func _get_typed_definition(global_id: String, expected_type: String) -> Variant:
+    if get_type_for_id(global_id) != expected_type:
+        return null
+    var definition: Variant = get_by_id(global_id)
+    if definition is Dictionary:
+        return definition.duplicate(true)
+    return null
+
+
+func _get_definitions_by_type(expected_type: String) -> Array:
+    var definitions: Array = []
+    for global_id: Variant in global_index.keys():
+        var indexed: Dictionary = global_index[global_id]
+        if str(indexed.get("type", "")) != expected_type:
+            continue
+        var data: Variant = indexed.get("data")
+        if data is Dictionary:
+            definitions.append(data.duplicate(true))
+    return definitions
 
 
 func _load_declared_files() -> bool:
@@ -217,6 +269,7 @@ func _add_global_id(raw_id: Variant, kind: String, data: Dictionary, source_path
 func _validate_references() -> bool:
     var background_ids := _presentation_id_set("background_ids")
     var music_ids := _presentation_id_set("music_ids")
+    var combat_status_ids := _combat_status_id_set()
     var inventory_ownership_keys := {}
     for raw_indexed: Variant in global_index.values():
         var indexed_item: Dictionary = raw_indexed
@@ -260,6 +313,20 @@ func _validate_references() -> bool:
                 for skill_id: Variant in data["skill_ids"]:
                     if not _require_global_reference(str(skill_id), "skill", source, "enemy skill"):
                         return false
+                if data.get("runtime") is Dictionary and not _validate_enemy_runtime_references(
+                    data,
+                    data["runtime"],
+                    combat_status_ids,
+                    source,
+                ):
+                    return false
+            "skill":
+                if data.get("runtime") is Dictionary and not _validate_combat_effect_references(
+                    data.get("effects", []),
+                    combat_status_ids,
+                    source,
+                ):
+                    return false
             "combat":
                 if not _require_global_reference(str(data["location_id"]), "location", source, "combat location"):
                     return false
@@ -269,6 +336,13 @@ func _validate_references() -> bool:
                 for ally_id: Variant in data["ally_ids"]:
                     if not _require_global_reference(str(ally_id), "npc", source, "combat ally"):
                         return false
+                if data.get("runtime") is Dictionary and not _validate_combat_runtime_references(
+                    data,
+                    data["runtime"],
+                    combat_status_ids,
+                    source,
+                ):
+                    return false
             "item":
                 var runtime: Variant = data.get("runtime")
                 if runtime is Dictionary:
@@ -294,6 +368,12 @@ func _validate_references() -> bool:
                     ):
                         return false
                     if not _validate_state_references(runtime.get("use_effects", []), source):
+                        return false
+                    if not _validate_combat_effect_references(
+                        runtime.get("combat_effects", []),
+                        combat_status_ids,
+                        source,
+                    ):
                         return false
                     for raw_effect: Variant in runtime.get("use_effects", []):
                         var effect_key := str(raw_effect.get("key", ""))
@@ -332,6 +412,177 @@ func _validate_references() -> bool:
                     return false
         if not _validate_quest_dependency_cycles(dependencies["quests"]):
             return false
+    return true
+
+
+func _combat_status_id_set() -> Dictionary:
+    var result := {}
+    var registry_document: Variant = loaded_files.get("combats/combats.json", {})
+    if not registry_document is Dictionary:
+        return result
+    var runtime: Variant = registry_document.get("runtime")
+    if not runtime is Dictionary:
+        return result
+    for raw_status: Variant in runtime.get("status_definitions", []):
+        if raw_status is Dictionary:
+            result[str(raw_status.get("status_id", ""))] = true
+    return result
+
+
+func _validate_combat_effect_references(
+    raw_effects: Variant,
+    combat_status_ids: Dictionary,
+    source: String,
+) -> bool:
+    if not raw_effects is Array:
+        return _set_error("CONTENT_SCHEMA_INVALID", "Combat effects must be an array", source)
+    for raw_effect: Variant in raw_effects:
+        if not raw_effect is Dictionary:
+            return _set_error("CONTENT_SCHEMA_INVALID", "Combat effect must be an object", source)
+        var effect_type := str(raw_effect.get("effect", raw_effect.get("type", "")))
+        if effect_type in ["apply_status", "remove_status"]:
+            var status_id := str(raw_effect.get("status_id", ""))
+            if not combat_status_ids.has(status_id):
+                return _set_error(
+                    "INVALID_CONTENT_REFERENCE",
+                    "Combat effect references unknown status '%s'" % status_id,
+                    source,
+                )
+        if effect_type == "state_effect":
+            var state_effects: Array = []
+            if raw_effect.get("effects") is Array:
+                state_effects = raw_effect["effects"]
+            elif raw_effect.has("key") and raw_effect.has("op") and raw_effect.has("value"):
+                state_effects = [raw_effect]
+            if state_effects.is_empty():
+                return _set_error("CONTENT_SCHEMA_INVALID", "Combat state effect has no operations", source)
+            if not _validate_state_references(state_effects, source):
+                return false
+    return true
+
+
+func _validate_enemy_runtime_references(
+    enemy: Dictionary,
+    runtime: Dictionary,
+    combat_status_ids: Dictionary,
+    source: String,
+) -> bool:
+    var equipped_skills := {}
+    for raw_skill_id: Variant in enemy.get("skill_ids", []):
+        equipped_skills[str(raw_skill_id)] = true
+    for raw_action: Variant in runtime.get("ai_actions", []):
+        if not raw_action is Dictionary:
+            return _set_error("CONTENT_SCHEMA_INVALID", "Enemy AI action must be an object", source)
+        var action: Dictionary = raw_action
+        if str(action.get("action_type", "")) == "skill":
+            var skill_id := str(action.get("skill_id", ""))
+            if not equipped_skills.has(skill_id):
+                return _set_error(
+                    "INVALID_CONTENT_REFERENCE",
+                    "Enemy AI action references unequipped skill '%s'" % skill_id,
+                    source,
+                )
+            if not _require_global_reference(skill_id, "skill", source, "enemy AI skill"):
+                return false
+        for raw_condition: Variant in action.get("conditions", []):
+            if raw_condition is Dictionary and raw_condition.has("status_id"):
+                var status_id := str(raw_condition.get("status_id", ""))
+                if not combat_status_ids.has(status_id):
+                    return _set_error(
+                        "INVALID_CONTENT_REFERENCE",
+                        "Enemy AI condition references unknown status '%s'" % status_id,
+                        source,
+                    )
+    for raw_status_id: Variant in runtime.get("status_immunities", []):
+        var status_id := str(raw_status_id)
+        if not combat_status_ids.has(status_id):
+            return _set_error(
+                "INVALID_CONTENT_REFERENCE",
+                "Enemy immunity references unknown status '%s'" % status_id,
+                source,
+            )
+    return true
+
+
+func _validate_combat_runtime_references(
+    combat: Dictionary,
+    runtime: Dictionary,
+    combat_status_ids: Dictionary,
+    source: String,
+) -> bool:
+    var unit_ids := {}
+    var units: Array = []
+    if runtime.get("player_unit") is Dictionary:
+        units.append(runtime["player_unit"])
+    units.append_array(runtime.get("companion_units", []))
+    units.append_array(runtime.get("enemy_instances", []))
+    for raw_unit: Variant in units:
+        if not raw_unit is Dictionary:
+            return _set_error("CONTENT_SCHEMA_INVALID", "Combat runtime unit must be an object", source)
+        var unit_id := str(raw_unit.get("unit_id", ""))
+        if unit_id.is_empty() or unit_ids.has(unit_id):
+            return _set_error("INVALID_CONTENT_REFERENCE", "Combat runtime unit IDs must be non-empty and unique", source)
+        unit_ids[unit_id] = true
+        if raw_unit.has("enemy_id") and not _require_global_reference(
+            str(raw_unit.get("enemy_id", "")),
+            "enemy",
+            source,
+            "combat runtime enemy",
+        ):
+            return false
+        var equipped_skills := {}
+        for raw_skill_id: Variant in raw_unit.get("skill_ids", []):
+            var skill_id := str(raw_skill_id)
+            if not _require_global_reference(skill_id, "skill", source, "combat runtime unit skill"):
+                return false
+            equipped_skills[skill_id] = true
+        for raw_action: Variant in raw_unit.get("ai_actions", []):
+            if raw_action is Dictionary and str(raw_action.get("action_type", "")) == "skill":
+                var skill_id := str(raw_action.get("skill_id", ""))
+                if not equipped_skills.has(skill_id):
+                    return _set_error(
+                        "INVALID_CONTENT_REFERENCE",
+                        "Companion AI action references unequipped skill '%s'" % skill_id,
+                        source,
+                    )
+                if not _require_global_reference(skill_id, "skill", source, "companion AI skill"):
+                    return false
+    for raw_rule: Variant in runtime.get("inspect_rules", []):
+        if raw_rule is Dictionary:
+            var target_id := str(raw_rule.get("target_unit_id", ""))
+            if not target_id.is_empty() and not unit_ids.has(target_id):
+                return _set_error(
+                    "INVALID_CONTENT_REFERENCE",
+                    "Inspect rule references unknown unit '%s'" % target_id,
+                    source,
+                )
+    var phase_ids := {}
+    for raw_phase: Variant in runtime.get("phases", []):
+        if not raw_phase is Dictionary:
+            return _set_error("CONTENT_SCHEMA_INVALID", "Combat runtime phase must be an object", source)
+        var phase_id := str(raw_phase.get("phase_id", ""))
+        if phase_id.is_empty() or phase_ids.has(phase_id):
+            return _set_error("INVALID_CONTENT_REFERENCE", "Combat runtime phase IDs must be non-empty and unique", source)
+        phase_ids[phase_id] = true
+        var target_unit_id := str(raw_phase.get("target_unit_id", raw_phase.get("unit_id", "")))
+        if not target_unit_id.is_empty() and not unit_ids.has(target_unit_id):
+            return _set_error(
+                "INVALID_CONTENT_REFERENCE",
+                "Combat phase references unknown unit '%s'" % target_unit_id,
+                source,
+            )
+        for raw_skill_id: Variant in raw_phase.get("skill_ids", []):
+            if not _require_global_reference(str(raw_skill_id), "skill", source, "combat phase skill"):
+                return false
+        var trigger: Variant = raw_phase.get("trigger")
+        if trigger is Dictionary and trigger.has("status_id"):
+            var status_id := str(trigger.get("status_id", ""))
+            if not combat_status_ids.has(status_id):
+                return _set_error(
+                    "INVALID_CONTENT_REFERENCE",
+                    "Combat phase references unknown status '%s'" % status_id,
+                    source,
+                )
     return true
 
 

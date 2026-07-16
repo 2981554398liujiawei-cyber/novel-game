@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.4.0",
+  "skills": [
+    {
+      "skill_id": "TEST_SKILL_POWER_STRIKE",
+      "name": "Synthetic power strike",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 1,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "damage", "power": 1.35, "damage_type": "direct"}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_POISON_EDGE",
+      "name": "Synthetic poison edge",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": 2,
+      "effects": [
+        {"effect": "damage", "power": 0.8, "damage_type": "direct"},
+        {"effect": "apply_status", "status_id": "poison", "duration": 2, "stacks": 1, "chance": 1.0}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive", "status"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_STUN_BLOW",
+      "name": "Synthetic stun blow",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": 1,
+      "effects": [
+        {"effect": "damage", "power": 0.65, "damage_type": "direct"},
+        {"effect": "apply_status", "status_id": "stun", "duration": 1, "stacks": 1, "chance": 1.0}
+      ],
+      "source": "test_fixture",
+      "runtime": {
+        "conditions": [
+          {"type": "status", "subject": "target", "status_id": "stun", "present": false}
+        ],
+        "ai_tags": ["control", "support"]
+      }
+    },
+    {
+      "skill_id": "TEST_SKILL_RECOVER",
+      "name": "Synthetic recovery",
+      "kind": "companion",
+      "target": "ally_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": 2,
+      "effects": [
+        {"effect": "heal", "power": 0.35}
+      ],
+      "source": "test_fixture",
+      "runtime": {
+        "conditions": [
+          {"type": "hp_threshold", "subject": "target", "op": "lte", "value": 0.6}
+        ],
+        "ai_tags": ["support"]
+      }
+    },
+    {
+      "skill_id": "TEST_SKILL_RALLY",
+      "name": "Synthetic rally",
+      "kind": "companion",
+      "target": "ally_single",
+      "cooldown_rounds": 3,
+      "uses_per_battle": 1,
+      "effects": [
+        {"effect": "apply_status", "status_id": "attack_up", "duration": 2, "stacks": 1}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive", "support"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_BREAK_ARMOR",
+      "name": "Synthetic armor break",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 1,
+      "uses_per_battle": 3,
+      "effects": [
+        {"effect": "apply_status", "status_id": "defense_down", "duration": 2, "stacks": 1}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive", "support", "debuff"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_GUARD_STANCE",
+      "name": "Synthetic guard stance",
+      "kind": "active",
+      "target": "self",
+      "cooldown_rounds": 1,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "apply_status", "status_id": "guard", "duration": 1, "stacks": 1}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["defensive"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_SCAN",
+      "name": "Synthetic scan",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 2,
+      "uses_per_battle": 2,
+      "effects": [
+        {"effect": "reveal", "reveal": "synthetic_mechanic"}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["inspect", "support"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_PERIODIC_PULSE",
+      "name": "Synthetic periodic pulse",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "damage", "power": 1.0, "damage_type": "periodic"}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive", "status"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_GROUP_STRIKE",
+      "name": "Synthetic group strike",
+      "kind": "active",
+      "target": "enemy_all",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "damage", "power": 0.5, "damage_type": "direct"}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["offensive"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_ANY_HEAL",
+      "name": "Synthetic any-unit heal",
+      "kind": "active",
+      "target": "any_single",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "heal", "power": 0.2}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["support"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_GROUP_HEAL",
+      "name": "Synthetic group heal",
+      "kind": "active",
+      "target": "ally_all",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "heal", "power": 0.2}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["support"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_STATE_MARK",
+      "name": "Synthetic state marker",
+      "kind": "active",
+      "target": "self",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "state_effect", "key": "test.combat.counter", "op": "inc", "value": 1}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["support"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_REVEAL_MECHANIC",
+      "name": "Synthetic mechanic reveal",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "reveal_mechanic", "power": 1.0}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["inspect"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_DOUBLE_POISON",
+      "name": "Synthetic double poison",
+      "kind": "active",
+      "target": "enemy_single",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "apply_status", "status_id": "poison", "duration": 2, "stacks": 2, "chance": 1.0}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["status"]}
+    },
+    {
+      "skill_id": "TEST_SKILL_PASSIVE_AURA",
+      "name": "Synthetic passive aura",
+      "kind": "passive",
+      "target": "self",
+      "cooldown_rounds": 0,
+      "uses_per_battle": null,
+      "effects": [
+        {"effect": "heal", "power": 0.1}
+      ],
+      "source": "test_fixture",
+      "runtime": {"conditions": [], "ai_tags": ["passive"]}
+    }
+  ]
+}
