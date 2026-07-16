@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "items": [
     {
       "item_id": "NV7_ITEM_RABBIT_MASK",
@@ -9,7 +9,25 @@
       "key_item": true,
       "stack_limit": 1,
       "base_price": 0,
-      "equip_slot": "head"
+      "equip_slot": "head",
+      "runtime": {
+        "type": "equipment",
+        "stackable": false,
+        "max_stack": 1,
+        "sellable": false,
+        "discardable": false,
+        "unique": true,
+        "quest_critical": true,
+        "storage": "normal",
+        "overflow_policy": "custody",
+        "equipment_slot": "head",
+        "compatible_slots": ["head"],
+        "occupies_slots": ["head"],
+        "stat_modifiers": [],
+        "use_effects": [],
+        "use_context": "both",
+        "ownership_state_key": "inventory.has.rabbit_mask"
+      }
     },
     {
       "item_id": "NV7_ITEM_POACHER_LEDGER",
@@ -19,7 +37,25 @@
       "key_item": true,
       "stack_limit": 1,
       "base_price": 0,
-      "equip_slot": null
+      "equip_slot": null,
+      "runtime": {
+        "type": "quest",
+        "stackable": false,
+        "max_stack": 1,
+        "sellable": false,
+        "discardable": false,
+        "unique": true,
+        "quest_critical": true,
+        "storage": "quest",
+        "overflow_policy": "custody",
+        "equipment_slot": null,
+        "compatible_slots": [],
+        "occupies_slots": [],
+        "stat_modifiers": [],
+        "use_effects": [],
+        "use_context": "field_only",
+        "ownership_state_key": "inventory.has.poacher_ledger"
+      }
     },
     {
       "item_id": "NV7_ITEM_RABBIT_HIDE",
@@ -29,7 +65,24 @@
       "key_item": false,
       "stack_limit": 99,
       "base_price": 35,
-      "equip_slot": null
+      "equip_slot": null,
+      "runtime": {
+        "type": "material",
+        "stackable": true,
+        "max_stack": 99,
+        "sellable": true,
+        "discardable": true,
+        "unique": false,
+        "quest_critical": false,
+        "storage": "normal",
+        "overflow_policy": "reject",
+        "equipment_slot": null,
+        "compatible_slots": [],
+        "occupies_slots": [],
+        "stat_modifiers": [],
+        "use_effects": [],
+        "use_context": "field_only"
+      }
     }
   ]
 }

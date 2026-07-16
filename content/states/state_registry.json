@@ -130,7 +130,10 @@
       "default": false,
       "persistent": true,
       "writers": [],
-      "readers": []
+      "readers": [],
+      "write_sources": [
+        "inventory"
+      ]
     },
     {
       "key": "inventory.has.poacher_ledger",
@@ -138,7 +141,10 @@
       "default": false,
       "persistent": true,
       "writers": [],
-      "readers": []
+      "readers": [],
+      "write_sources": [
+        "inventory"
+      ]
     },
     {
       "key": "quest.nv_main_002.status",

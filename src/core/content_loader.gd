@@ -90,6 +90,27 @@ func get_state_definitions() -> Array:
     return definitions
 
 
+func get_item(item_id: String) -> Variant:
+    if get_type_for_id(item_id) != "item":
+        return null
+    var item: Variant = get_by_id(item_id)
+    if item is Dictionary:
+        return item.duplicate(true)
+    return null
+
+
+func get_item_definitions() -> Array:
+    var definitions: Array = []
+    for global_id: Variant in global_index.keys():
+        var indexed: Dictionary = global_index[global_id]
+        if str(indexed.get("type", "")) != "item":
+            continue
+        var data: Variant = indexed.get("data")
+        if data is Dictionary:
+            definitions.append(data.duplicate(true))
+    return definitions
+
+
 func get_story(story_id: String) -> Variant:
     if get_type_for_id(story_id) != "quest":
         return null
@@ -196,6 +217,25 @@ func _add_global_id(raw_id: Variant, kind: String, data: Dictionary, source_path
 func _validate_references() -> bool:
     var background_ids := _presentation_id_set("background_ids")
     var music_ids := _presentation_id_set("music_ids")
+    var inventory_ownership_keys := {}
+    for raw_indexed: Variant in global_index.values():
+        var indexed_item: Dictionary = raw_indexed
+        if str(indexed_item.get("type", "")) != "item":
+            continue
+        var item_data: Dictionary = indexed_item["data"]
+        var item_runtime: Variant = item_data.get("runtime")
+        if not item_runtime is Dictionary:
+            continue
+        var ownership_key := str(item_runtime.get("ownership_state_key", ""))
+        if ownership_key.is_empty():
+            continue
+        if inventory_ownership_keys.has(ownership_key):
+            return _set_error(
+                "INVALID_CONTENT_REFERENCE",
+                "Inventory ownership state key '%s' is assigned to multiple items" % ownership_key,
+                str(indexed_item.get("source", "")),
+            )
+        inventory_ownership_keys[ownership_key] = item_data.get("item_id", "")
 
     for indexed: Variant in global_index.values():
         var kind := str(indexed["type"])
@@ -229,6 +269,42 @@ func _validate_references() -> bool:
                 for ally_id: Variant in data["ally_ids"]:
                     if not _require_global_reference(str(ally_id), "npc", source, "combat ally"):
                         return false
+            "item":
+                var runtime: Variant = data.get("runtime")
+                if runtime is Dictionary:
+                    var ownership_state_key := str(runtime.get("ownership_state_key", ""))
+                    if not ownership_state_key.is_empty() and not state_index.has(ownership_state_key):
+                        return _set_error(
+                            "INVALID_CONTENT_REFERENCE",
+                            "Unknown inventory ownership state key '%s'" % ownership_state_key,
+                            source,
+                        )
+                    if (
+                        not ownership_state_key.is_empty()
+                        and str(state_index[ownership_state_key].get("type", "")) != "boolean"
+                    ):
+                        return _set_error(
+                            "INVALID_CONTENT_REFERENCE",
+                            "Inventory ownership state key '%s' must be boolean" % ownership_state_key,
+                            source,
+                        )
+                    if (
+                        not ownership_state_key.is_empty()
+                        and not _inventory_state_write_allowed(ownership_state_key, source)
+                    ):
+                        return false
+                    if not _validate_state_references(runtime.get("use_effects", []), source):
+                        return false
+                    for raw_effect: Variant in runtime.get("use_effects", []):
+                        var effect_key := str(raw_effect.get("key", ""))
+                        if not _inventory_state_write_allowed(effect_key, source):
+                            return false
+                        if inventory_ownership_keys.has(effect_key):
+                            return _set_error(
+                                "INVALID_CONTENT_REFERENCE",
+                                "Item use effect cannot modify inventory ownership state '%s'" % effect_key,
+                                source,
+                            )
             "quest":
                 if not _validate_quest_references(data, source):
                     return false
@@ -296,6 +372,17 @@ func _validate_quest_references(quest: Dictionary, source: String) -> bool:
             if not _validate_state_references(choice.get("conditions", []), source):
                 return false
             if not _validate_state_references(choice.get("effects", []), source):
+                return false
+    for raw_reward: Variant in quest.get("rewards", []):
+        if not raw_reward is Dictionary:
+            continue
+        var reward: Dictionary = raw_reward
+        if str(reward.get("type", "")) != "items":
+            continue
+        for raw_grant: Variant in reward.get("items", []):
+            if not raw_grant is Dictionary:
+                continue
+            if not _require_global_reference(str(raw_grant.get("item_id", "")), "item", source, "quest item reward"):
                 return false
     if quest.has("runtime") and not _validate_quest_runtime_references(quest["runtime"], source):
         return false
@@ -385,6 +472,26 @@ func _validate_state_references(operations: Array, source: String) -> bool:
         var state_key := str(operation["key"])
         if not state_index.has(state_key):
             return _set_error("INVALID_CONTENT_REFERENCE", "Unknown state key '%s'" % state_key, source)
+    return true
+
+
+func _inventory_state_write_allowed(state_key: String, source: String) -> bool:
+    if not state_index.has(state_key):
+        return false
+    var definition: Dictionary = state_index[state_key]
+    var write_sources: Variant = definition.get("write_sources", [])
+    if bool(definition.get("read_only", false)):
+        return _set_error(
+            "INVALID_CONTENT_REFERENCE",
+            "Inventory state key '%s' is read-only" % state_key,
+            source,
+        )
+    if not write_sources is Array or (not write_sources.is_empty() and "inventory" not in write_sources):
+        return _set_error(
+            "INVALID_CONTENT_REFERENCE",
+            "Inventory state key '%s' does not allow inventory writes" % state_key,
+            source,
+        )
     return true
 
 

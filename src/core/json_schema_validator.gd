@@ -35,6 +35,18 @@ func _validate_value(value: Variant, schema: Dictionary, path: String, errors: A
             if child_schema is Dictionary:
                 _validate_value(value, child_schema, path, errors)
 
+    if schema.has("oneOf") and schema["oneOf"] is Array:
+        var matched_count := 0
+        for child_schema: Variant in schema["oneOf"]:
+            if not child_schema is Dictionary:
+                continue
+            var child_errors: Array[String] = []
+            _validate_value(value, child_schema, path, child_errors)
+            if child_errors.is_empty():
+                matched_count += 1
+        if matched_count != 1:
+            errors.append("%s: expected exactly one oneOf schema match, got %d" % [path, matched_count])
+
     if schema.has("if") and schema["if"] is Dictionary:
         var condition_errors: Array[String] = []
         _validate_value(value, schema["if"], path, condition_errors)

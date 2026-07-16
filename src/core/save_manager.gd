@@ -5,9 +5,10 @@ signal load_completed(result: Dictionary)
 
 const JsonSchemaValidatorClass = preload("res://src/core/json_schema_validator.gd")
 const GameStateClass = preload("res://src/core/game_state.gd")
+const InventoryManagerClass = preload("res://src/core/inventory_manager.gd")
 const StoryRunnerClass = preload("res://src/core/story_runner.gd")
 
-const SAVE_SCHEMA_VERSION := "1.0.0"
+const SAVE_SCHEMA_VERSION := "1.1.0"
 const CURRENT_SAVE_VERSION := 1
 const DEFAULT_GAME_VERSION := "0.1.0"
 const SLOT_IDS := ["manual_1", "manual_2", "manual_3", "auto", "quick"]
@@ -19,6 +20,7 @@ const SAVE_JSON_INVALID := "SAVE_JSON_INVALID"
 const SAVE_SCHEMA_INVALID := "SAVE_SCHEMA_INVALID"
 const SAVE_VERSION_UNSUPPORTED := "SAVE_VERSION_UNSUPPORTED"
 const SAVE_STATE_INVALID := "SAVE_STATE_INVALID"
+const SAVE_INVENTORY_INVALID := "SAVE_INVENTORY_INVALID"
 const SAVE_STORY_INVALID := "SAVE_STORY_INVALID"
 const SAVE_WRITE_FAILED := "SAVE_WRITE_FAILED"
 const SAVE_RESTORE_FAILED := "SAVE_RESTORE_FAILED"
@@ -27,6 +29,7 @@ const SAVE_NOT_INITIALIZED := "SAVE_NOT_INITIALIZED"
 var last_result: Dictionary = {}
 
 var _game_state: RefCounted
+var _inventory_manager: RefCounted
 var _story_runner: RefCounted
 var _content_loader: RefCounted
 var _save_root := "user://saves"
@@ -48,10 +51,12 @@ func initialize(
     backup_root: String = "user://backups",
     game_version: String = "",
     clock_provider: Callable = Callable(),
+    inventory_manager: RefCounted = null,
 ) -> bool:
     _initialized = false
     _content_loader = null
     _game_state = null
+    _inventory_manager = null
     _story_runner = null
     _schema = {}
     _playtime_seconds = 0.0
@@ -81,6 +86,21 @@ func initialize(
     ):
         _set_last_result(_result(false, SAVE_STORY_INVALID, "StoryRunner does not provide position interfaces"))
         return false
+    if inventory_manager != null:
+        for method_name: String in [
+            "get_capacity", "export_snapshot", "validate_snapshot", "restore_snapshot",
+            "create_runtime_checkpoint", "restore_runtime_checkpoint", "emit_changes_from_checkpoint",
+        ]:
+            if not inventory_manager.has_method(method_name):
+                _set_last_result(_result(
+                    false,
+                    SAVE_INVENTORY_INVALID,
+                    "InventoryManager does not provide '%s'" % method_name,
+                ))
+                return false
+        if not content_loader.has_method("get_item_definitions"):
+            _set_last_result(_result(false, SAVE_INVENTORY_INVALID, "ContentLoader does not provide item definitions"))
+            return false
 
     var normalized_save_root := _normalize_root(save_root)
     var normalized_backup_root := _normalize_root(backup_root)
@@ -101,6 +121,7 @@ func initialize(
         return false
     _content_loader = content_loader
     _game_state = game_state
+    _inventory_manager = inventory_manager
     _story_runner = story_runner
     _initialized = true
     _set_last_result(_result(true, "OK", "SaveManager initialized"))
@@ -119,6 +140,14 @@ func save(slot_id: String) -> Dictionary:
     var node_id := str(position.get("node_id", ""))
     if not bool(_story_runner.call("is_valid_position", story_id, node_id)):
         return _emit_save_result(_result(false, SAVE_STORY_INVALID, "Current StoryRunner position cannot be saved", slot_id))
+
+    var inventory_snapshot: Dictionary = {}
+    if _inventory_manager != null:
+        inventory_snapshot = _inventory_manager.call("export_snapshot")
+        if not bool(_inventory_manager.call("validate_snapshot", inventory_snapshot)):
+            return _emit_save_result(_result(false, SAVE_INVENTORY_INVALID, "Current InventoryManager state cannot be saved", slot_id, {
+                "details": _inventory_manager.get("last_error"),
+            }))
 
     var now := _now_timestamp()
     if now.is_empty():
@@ -143,6 +172,8 @@ func save(slot_id: String) -> Dictionary:
         "game_state": _game_state.call("export_snapshot"),
         "random_state": _random_state.duplicate(true),
     }
+    if _inventory_manager != null:
+        document["inventory_state"] = inventory_snapshot
     var validation := _validate_document(document, slot_id)
     if not bool(validation.get("ok", false)):
         return _emit_save_result(validation)
@@ -311,6 +342,8 @@ func _validate_document(document: Dictionary, expected_slot: String, include_pre
             return _result(false, SAVE_VERSION_UNSUPPORTED, "Save version is not supported", expected_slot)
     if document.has("game_state") and not document["game_state"] is Dictionary:
         return _result(false, SAVE_STATE_INVALID, "Save snapshot must be an object", expected_slot)
+    if document.has("inventory_state") and not document["inventory_state"] is Dictionary:
+        return _result(false, SAVE_INVENTORY_INVALID, "Inventory snapshot must be an object", expected_slot)
     var schema_errors: Array[String] = _schema_validator.validate(document, _schema)
     if not schema_errors.is_empty():
         return _result(false, SAVE_SCHEMA_INVALID, schema_errors[0], expected_slot, {"details": schema_errors})
@@ -339,6 +372,28 @@ func _preflight_restore(document: Dictionary, slot_id: String) -> Dictionary:
     if not shadow_state.restore_snapshot(snapshot, "save_restore"):
         return _result(false, SAVE_STATE_INVALID, "GameState rejected the save snapshot", slot_id, {"details": shadow_state.last_error})
 
+    var shadow_inventory: Variant = null
+    if _inventory_manager != null:
+        var inventory_snapshot: Variant = document.get("inventory_state")
+        if not inventory_snapshot is Dictionary:
+            return _result(false, SAVE_INVENTORY_INVALID, "Save does not contain an InventoryManager snapshot", slot_id)
+        shadow_inventory = InventoryManagerClass.new()
+        var configured_capacity := int(_inventory_manager.call("get_capacity"))
+        if not shadow_inventory.initialize(_content_loader, shadow_state, configured_capacity):
+            return _result(false, SAVE_INVENTORY_INVALID, "InventoryManager could not initialize for save validation", slot_id, {
+                "details": shadow_inventory.last_error,
+            })
+        if not shadow_inventory.validate_snapshot(inventory_snapshot):
+            return _result(false, SAVE_INVENTORY_INVALID, "InventoryManager snapshot failed validation", slot_id, {
+                "details": shadow_inventory.last_error,
+            })
+        if not shadow_inventory.restore_snapshot(inventory_snapshot, "save_restore"):
+            return _result(false, SAVE_INVENTORY_INVALID, "InventoryManager rejected the save snapshot", slot_id, {
+                "details": shadow_inventory.last_error,
+            })
+    elif document.has("inventory_state"):
+        return _result(false, SAVE_INVENTORY_INVALID, "Save contains inventory data but no InventoryManager is bound", slot_id)
+
     var shadow_story := StoryRunnerClass.new()
     if not shadow_story.initialize(_content_loader, shadow_state):
         return _result(false, SAVE_STORY_INVALID, "StoryRunner could not initialize for save validation", slot_id, {"details": shadow_story.last_error})
@@ -346,40 +401,62 @@ func _preflight_restore(document: Dictionary, slot_id: String) -> Dictionary:
     var node_id := str(document.get("current_story_node_id", ""))
     if not shadow_story.restore_position(story_id, node_id, false):
         return _result(false, SAVE_STORY_INVALID, "Saved story position cannot be restored", slot_id, {"details": shadow_story.last_error})
+    var prepared_runtime := {
+        "game_state": shadow_state.create_runtime_checkpoint(),
+        "story_runner": shadow_story.create_runtime_checkpoint(),
+    }
+    if shadow_inventory != null:
+        prepared_runtime["inventory_manager"] = shadow_inventory.create_runtime_checkpoint()
     return _result(true, "OK", "Runtime restore preflight passed", slot_id, {
-        "prepared_runtime": {
-            "game_state": shadow_state.create_runtime_checkpoint(),
-            "story_runner": shadow_story.create_runtime_checkpoint(),
-        },
+        "prepared_runtime": prepared_runtime,
     })
 
 
 func _apply_document(document: Dictionary, slot_id: String, prepared_runtime: Dictionary) -> Dictionary:
     var previous_state: Dictionary = _game_state.call("create_runtime_checkpoint")
+    var previous_inventory: Dictionary = {}
+    if _inventory_manager != null:
+        previous_inventory = _inventory_manager.call("create_runtime_checkpoint")
     var previous_story: Dictionary = _story_runner.call("create_runtime_checkpoint")
     if not bool(_game_state.call("restore_runtime_checkpoint", prepared_runtime["game_state"])):
         var state_failure: Variant = _game_state.get("last_error")
-        var state_rollback_ok := bool(_game_state.call("restore_runtime_checkpoint", previous_state))
-        var story_rollback_ok := bool(_story_runner.call("restore_runtime_checkpoint", previous_story))
         return _result(false, SAVE_RESTORE_FAILED, "GameState could not commit the prepared save snapshot", slot_id, {
             "details": state_failure,
-            "rollback_ok": state_rollback_ok and story_rollback_ok,
+            "rollback_ok": _rollback_runtime(previous_state, previous_inventory, previous_story),
         })
+    if _inventory_manager != null:
+        if not prepared_runtime.has("inventory_manager") or not bool(_inventory_manager.call(
+            "restore_runtime_checkpoint", prepared_runtime["inventory_manager"]
+        )):
+            var inventory_failure: Variant = _inventory_manager.get("last_error")
+            return _result(false, SAVE_RESTORE_FAILED, "InventoryManager could not commit the prepared save snapshot", slot_id, {
+                "details": inventory_failure,
+                "rollback_ok": _rollback_runtime(previous_state, previous_inventory, previous_story),
+            })
     if not bool(_story_runner.call("restore_runtime_checkpoint", prepared_runtime["story_runner"])):
         var story_failure: Variant = _story_runner.get("last_error")
-        var state_rollback_ok := bool(_game_state.call("restore_runtime_checkpoint", previous_state))
-        var story_rollback_ok := bool(_story_runner.call("restore_runtime_checkpoint", previous_story))
         return _result(false, SAVE_RESTORE_FAILED, "StoryRunner could not commit the prepared save position", slot_id, {
             "details": story_failure,
-            "rollback_ok": state_rollback_ok and story_rollback_ok,
+            "rollback_ok": _rollback_runtime(previous_state, previous_inventory, previous_story),
         })
 
     _playtime_seconds = float(document["playtime_seconds"])
     _random_state = document["random_state"].duplicate(true)
     _random_state["seed"] = int(_random_state["seed"])
     _game_state.call("emit_changes_from_checkpoint", previous_state, "save_restore")
+    if _inventory_manager != null:
+        _inventory_manager.call("emit_changes_from_checkpoint", previous_inventory, "save_restore")
     _story_runner.call("emit_position_restored")
     return _result(true, "OK", "Save loaded", slot_id)
+
+
+func _rollback_runtime(previous_state: Dictionary, previous_inventory: Dictionary, previous_story: Dictionary) -> bool:
+    var story_ok := bool(_story_runner.call("restore_runtime_checkpoint", previous_story))
+    var inventory_ok := true
+    if _inventory_manager != null:
+        inventory_ok = bool(_inventory_manager.call("restore_runtime_checkpoint", previous_inventory))
+    var state_ok := bool(_game_state.call("restore_runtime_checkpoint", previous_state))
+    return state_ok and inventory_ok and story_ok
 
 
 func _write_document_atomic(document: Dictionary, slot_id: String, create_backup: bool) -> Dictionary:

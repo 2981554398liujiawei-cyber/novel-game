@@ -569,7 +569,64 @@
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object"
+        "type": "object",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "reward_id"
+            ],
+            "properties": {
+              "type": {
+                "const": "signal_only"
+              },
+              "reward_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "reward_id",
+              "items"
+            ],
+            "properties": {
+              "type": {
+                "const": "items"
+              },
+              "reward_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "item_id",
+                    "quantity"
+                  ],
+                  "properties": {
+                    "item_id": {
+                      "type": "string",
+                      "pattern": "^[A-Z][A-Z0-9_]+$"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "world_changes": {

@@ -101,6 +101,36 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
             self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
 
+    def test_inventory_state_without_write_permission_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            path = content_root / "states/state_registry.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            state = next(
+                entry for entry in document["states"] if entry["key"] == "inventory.has.rabbit_mask"
+            )
+            state["write_sources"] = ["story"]
+            path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+            self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
+
+    def test_unknown_quest_reward_type_fails_runtime_schema_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture = json.loads(
+                (ROOT / "content/tests/fixtures/story_runner/minimal_story.json").read_text(encoding="utf-8")
+            )
+            fixture["rewards"] = [{"type": "itmes", "reward_id": "typo_reward", "items": []}]
+            relative_path = "quests/invalid_reward_story.json"
+            destination = content_root / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(fixture, ensure_ascii=False), encoding="utf-8")
+
+            manifest_path = content_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["content_files"].append(relative_path)
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+            self._run_loader(content_root, "CONTENT_SCHEMA_INVALID")
+
     def test_duplicate_id_fails_and_restored_data_recovers(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)

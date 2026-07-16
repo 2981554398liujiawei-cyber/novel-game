@@ -64,7 +64,15 @@
       "mechanics": [{"type": "quest_manager_fixture"}],
       "branch_summary": [{"type": "none"}],
       "continuations": [{"continuation_id": "retry_route", "tests_only": true}],
-      "rewards": [{"type": "signal_only", "reward_id": "parallel_reward"}],
+      "rewards": [
+        {
+          "type": "items",
+          "reward_id": "parallel_reward",
+          "items": [
+            {"item_id": "TEST_ITEM_CRITICAL_REWARD", "quantity": 1}
+          ]
+        }
+      ],
       "world_changes": [{"scope": "test_states_only"}],
       "post_quest_feedback": [{"type": "none"}],
       "implementation": {

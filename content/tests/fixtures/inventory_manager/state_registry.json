@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.5.0",
+  "states": [
+    {
+      "key": "test.inventory.health",
+      "type": "integer",
+      "default": 5,
+      "min": 0,
+      "max": 20,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["inventory"]
+    },
+    {
+      "key": "test.inventory.battle_buff",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": [],
+      "write_sources": ["inventory"]
+    }
+  ]
+}
