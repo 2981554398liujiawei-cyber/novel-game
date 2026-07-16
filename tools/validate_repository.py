@@ -28,7 +28,9 @@ REQUIRED_FILES = [
     "content/combats/combats.json",
     "content/quest_dependencies.json",
     "schemas/presentation_tags.schema.json",
+    "schemas/relationship.schema.json",
     "src/core/content_loader.gd",
+    "src/core/relationship_manager.gd",
     "src/core/json_schema_validator.gd",
     "scripts/validate.ps1",
     "scripts/test.ps1",
@@ -121,6 +123,133 @@ ITEM_EQUIPMENT_SLOTS = {
     "accessory_2",
 }
 ITEM_STATE_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_.]+$")
+
+
+def validate_relationship_registry(document: Any, state_registry: Any) -> list[str]:
+    """Validate relationship cross-references that JSON Schema cannot express."""
+    errors: list[str] = []
+    if not isinstance(document, dict) or not isinstance(state_registry, dict):
+        return ["Relationship registry and state registry must be objects"]
+    state_by_key = {
+        state.get("key"): state
+        for state in state_registry.get("states", [])
+        if isinstance(state, dict) and isinstance(state.get("key"), str)
+    }
+    dimensions = {
+        entry.get("dimension_id")
+        for entry in document.get("dimension_definitions", [])
+        if isinstance(entry, dict)
+    }
+    stages = {
+        entry.get("stage_id")
+        for entry in document.get("stage_definitions", [])
+        if isinstance(entry, dict)
+    }
+    for required in {"trust", "affection", "respect", "tension"} - dimensions:
+        errors.append(f"Missing required relationship dimension: {required}")
+    for required in {"stranger", "acquaintance", "trusted", "close", "intimate"} - stages:
+        errors.append(f"Missing required relationship stage: {required}")
+    ids: set[str] = set()
+    pairs: set[tuple[str, str]] = set()
+
+    def validate_state(key: Any, expected: set[str], relationship_id: str) -> None:
+        state = state_by_key.get(key)
+        if state is None:
+            errors.append(f"Relationship '{relationship_id}' references unknown state: {key}")
+            return
+        if state.get("type") not in expected:
+            errors.append(f"Relationship '{relationship_id}' state '{key}' has incompatible type")
+        if state.get("persistent") is not True:
+            errors.append(f"Relationship '{relationship_id}' state '{key}' must be persistent")
+        sources = state.get("write_sources", [])
+        if state.get("read_only") or (sources and "relationship" not in sources):
+            errors.append(f"Relationship '{relationship_id}' state '{key}' forbids relationship writes")
+
+    def validate_conditions(
+        group: Any,
+        relationship_id: str,
+        declared_dimensions: set[str],
+        flags: set[str],
+        boundaries: set[str],
+    ) -> None:
+        if not isinstance(group, dict):
+            return
+        for condition in [*group.get("all", []), *group.get("any", [])]:
+            if not isinstance(condition, dict):
+                continue
+            kind = condition.get("kind")
+            if kind == "dimension" and condition.get("dimension_id") not in declared_dimensions:
+                errors.append(f"Relationship '{relationship_id}' condition references unknown dimension: {condition.get('dimension_id')}")
+            elif kind == "stage" and condition.get("stage_id") not in stages:
+                errors.append(f"Relationship '{relationship_id}' condition references unknown stage: {condition.get('stage_id')}")
+            elif kind == "flag" and condition.get("flag_id") not in flags:
+                errors.append(f"Relationship '{relationship_id}' condition references unknown flag: {condition.get('flag_id')}")
+            elif kind == "boundary" and condition.get("boundary_id") not in boundaries:
+                errors.append(f"Relationship '{relationship_id}' condition references unknown boundary: {condition.get('boundary_id')}")
+            elif kind == "state" and condition.get("key") not in state_by_key:
+                errors.append(f"Relationship '{relationship_id}' condition references unknown state: {condition.get('key')}")
+
+    for relationship in document.get("relationships", []):
+        if not isinstance(relationship, dict):
+            continue
+        relationship_id = str(relationship.get("relationship_id", ""))
+        if relationship_id in ids:
+            errors.append(f"Duplicate relationship ID: {relationship_id}")
+        ids.add(relationship_id)
+        pair = (str(relationship.get("actor_id", "")), str(relationship.get("target_id", "")))
+        if pair in pairs:
+            errors.append(f"Duplicate directed relationship pair: {pair[0]}>{pair[1]}")
+        pairs.add(pair)
+        if pair[0] == pair[1]:
+            errors.append(f"Relationship '{relationship_id}' actor and target must differ")
+        relation_dimensions = set(relationship.get("dimensions", {}))
+        for dimension_id, state_key in relationship.get("dimensions", {}).items():
+            if dimension_id not in dimensions:
+                errors.append(f"Relationship '{relationship_id}' references unknown dimension: {dimension_id}")
+            validate_state(state_key, {"integer", "number"}, relationship_id)
+        validate_state(relationship.get("stage_state_key"), {"string"}, relationship_id)
+        flags = {entry.get("id") for entry in relationship.get("flags", []) if isinstance(entry, dict)}
+        boundaries = {entry.get("id") for entry in relationship.get("boundaries", []) if isinstance(entry, dict)}
+        for entry in [*relationship.get("flags", []), *relationship.get("boundaries", [])]:
+            if isinstance(entry, dict):
+                validate_state(entry.get("state_key"), {"boolean"}, relationship_id)
+        conflict = relationship.get("conflict", {})
+        validate_state(conflict.get("active_state_key"), {"boolean"}, relationship_id)
+        validate_state(conflict.get("reason_state_key"), {"string"}, relationship_id)
+        validate_state(conflict.get("repair_progress_state_key"), {"integer", "number"}, relationship_id)
+        for rule in relationship.get("stage_rules", []):
+            if not isinstance(rule, dict):
+                continue
+            if rule.get("stage_id") not in stages:
+                errors.append(f"Relationship '{relationship_id}' rule references unknown stage: {rule.get('stage_id')}")
+            validate_conditions(rule.get("conditions"), relationship_id, relation_dimensions, flags, boundaries)
+        for rule in relationship.get("action_rules", []):
+            if isinstance(rule, dict):
+                validate_conditions(rule.get("conditions"), relationship_id, relation_dimensions, flags, boundaries)
+        for rule in relationship.get("rejection_rules", []):
+            if not isinstance(rule, dict):
+                continue
+            if rule.get("rejection_flag_id") not in flags:
+                errors.append(f"Relationship '{relationship_id}' rejection references unknown flag: {rule.get('rejection_flag_id')}")
+            for boundary_id in rule.get("boundary_updates", {}):
+                if boundary_id not in boundaries:
+                    errors.append(f"Relationship '{relationship_id}' rejection references unknown boundary: {boundary_id}")
+        for version in relationship.get("text_versions", []):
+            if isinstance(version, dict):
+                validate_conditions(version.get("conditions"), relationship_id, relation_dimensions, flags, boundaries)
+    return errors
+
+
+def check_relationship_fixture(errors: list[str]) -> None:
+    fixture_root = CONTENT / "tests/fixtures/relationship_manager"
+    relationship_path = fixture_root / "relationships.json"
+    state_path = fixture_root / "state_registry.json"
+    if not relationship_path.exists() or not state_path.exists():
+        errors.append("RelationshipManager fixtures are missing")
+        return
+    validate_schema(relationship_path, SCHEMAS / "relationship.schema.json", errors)
+    validate_schema(state_path, SCHEMAS / "state_registry.schema.json", errors)
+    errors.extend(validate_relationship_registry(load_json(relationship_path), load_json(state_path)))
 
 
 def validate_item_registry(document: Any, state_registry: Any | None = None) -> list[str]:
@@ -856,6 +985,7 @@ def main() -> int:
     check_manifest(errors)
     check_states(errors)
     check_items(errors)
+    check_relationship_fixture(errors)
     check_combat_registries(errors)
     check_portraits(errors)
     check_asset_counts(errors)

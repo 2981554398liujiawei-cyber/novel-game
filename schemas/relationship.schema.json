@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relationship.schema.json",
+  "title": "Relationship runtime registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dimension_definitions", "stage_definitions", "relationships"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+    "dimension_definitions": {
+      "type": "array", "minItems": 4,
+      "items": {"$ref": "#/$defs/dimension_definition"}
+    },
+    "stage_definitions": {
+      "type": "array", "minItems": 5,
+      "items": {"$ref": "#/$defs/stage_definition"}
+    },
+    "relationships": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relationship"}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "local_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "state_key": {"type": "string", "pattern": "^[a-z][a-z0-9_.]+$"},
+    "dimension_definition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension_id", "default", "min", "max"],
+      "properties": {
+        "dimension_id": {"$ref": "#/$defs/local_id"},
+        "default": {"type": "number"},
+        "min": {"type": "number"},
+        "max": {"type": "number"}
+      }
+    },
+    "stage_definition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "rank"],
+      "properties": {
+        "stage_id": {"$ref": "#/$defs/local_id"},
+        "rank": {"type": "integer", "minimum": 0}
+      }
+    },
+    "condition_group": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "all": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+        "any": {"type": "array", "items": {"$ref": "#/$defs/condition"}}
+      }
+    },
+    "condition": {
+      "type": "object", "required": ["kind"],
+      "oneOf": [
+        {"additionalProperties": false, "required": ["kind", "dimension_id", "op", "value"], "properties": {"kind": {"const": "dimension"}, "dimension_id": {"$ref": "#/$defs/local_id"}, "op": {"enum": ["eq", "neq", "ne", "gt", "gte", "lt", "lte", "in", "not_in"]}, "value": {}}},
+        {"additionalProperties": false, "required": ["kind", "flag_id", "value"], "properties": {"kind": {"const": "flag"}, "flag_id": {"$ref": "#/$defs/local_id"}, "value": {"type": "boolean"}}},
+        {"additionalProperties": false, "required": ["kind", "boundary_id", "value"], "properties": {"kind": {"const": "boundary"}, "boundary_id": {"$ref": "#/$defs/local_id"}, "value": {"type": "boolean"}}},
+        {"additionalProperties": false, "required": ["kind", "active"], "properties": {"kind": {"const": "conflict"}, "active": {"type": "boolean"}}},
+        {"additionalProperties": false, "required": ["kind", "stage_id"], "properties": {"kind": {"const": "stage"}, "stage_id": {"$ref": "#/$defs/local_id"}, "op": {"enum": ["eq", "neq", "ne", "gte", "lte", "gt", "lt"]}}},
+        {"additionalProperties": false, "required": ["kind", "key", "op", "value"], "properties": {"kind": {"const": "state"}, "key": {"$ref": "#/$defs/state_key"}, "op": {"enum": ["eq", "neq", "ne", "gt", "gte", "lt", "lte", "in", "not_in"]}, "value": {}}}
+      ]
+    },
+    "named_state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "state_key"],
+      "properties": {"id": {"$ref": "#/$defs/local_id"}, "state_key": {"$ref": "#/$defs/state_key"}}
+    },
+    "stage_rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "conditions"],
+      "properties": {"stage_id": {"$ref": "#/$defs/local_id"}, "conditions": {"$ref": "#/$defs/condition_group"}}
+    },
+    "action_rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_id", "conditions"],
+      "properties": {"action_id": {"$ref": "#/$defs/local_id"}, "conditions": {"$ref": "#/$defs/condition_group"}}
+    },
+    "rejection_rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_id", "rejection_flag_id", "boundary_updates", "reopen_action_id"],
+      "properties": {
+        "action_id": {"$ref": "#/$defs/local_id"},
+        "rejection_flag_id": {"$ref": "#/$defs/local_id"},
+        "boundary_updates": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "reopen_action_id": {"$ref": "#/$defs/local_id"}
+      }
+    },
+    "text_version": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tag", "priority", "conditions"],
+      "properties": {"tag": {"$ref": "#/$defs/local_id"}, "priority": {"type": "integer"}, "conditions": {"$ref": "#/$defs/condition_group"}}
+    },
+    "relationship": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relationship_id", "actor_id", "target_id", "dimensions", "stage_state_key", "stage_rules", "flags", "boundaries", "action_rules", "rejection_rules", "conflict", "text_versions", "metadata"],
+      "properties": {
+        "relationship_id": {"$ref": "#/$defs/id"},
+        "actor_id": {"$ref": "#/$defs/id"},
+        "target_id": {"$ref": "#/$defs/id"},
+        "dimensions": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/state_key"}},
+        "stage_state_key": {"$ref": "#/$defs/state_key"},
+        "stage_rules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stage_rule"}},
+        "flags": {"type": "array", "items": {"$ref": "#/$defs/named_state"}},
+        "boundaries": {"type": "array", "items": {"$ref": "#/$defs/named_state"}},
+        "action_rules": {"type": "array", "items": {"$ref": "#/$defs/action_rule"}},
+        "rejection_rules": {"type": "array", "items": {"$ref": "#/$defs/rejection_rule"}},
+        "conflict": {
+          "type": "object", "additionalProperties": false,
+          "required": ["active_state_key", "reason_state_key", "repair_progress_state_key", "repair_threshold"],
+          "properties": {
+            "active_state_key": {"$ref": "#/$defs/state_key"},
+            "reason_state_key": {"$ref": "#/$defs/state_key"},
+            "repair_progress_state_key": {"$ref": "#/$defs/state_key"},
+            "repair_threshold": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        "text_versions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text_version"}},
+        "metadata": {"type": "object"}
+      }
+    }
+  }
+}

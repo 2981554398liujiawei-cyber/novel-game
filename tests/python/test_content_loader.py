@@ -162,6 +162,48 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             )
             self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
 
+    def test_relationship_fixture_loads_and_indexes_through_content_loader(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_root = ROOT / "content/tests/fixtures/relationship_manager"
+            relationship_path = content_root / "relationships/relationships.json"
+            relationship_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(fixture_root / "relationships.json", relationship_path)
+
+            state_path = content_root / "states/state_registry.json"
+            states = json.loads(state_path.read_text(encoding="utf-8"))
+            fixture_states = json.loads((fixture_root / "state_registry.json").read_text(encoding="utf-8"))
+            states["states"].extend(fixture_states["states"])
+            state_path.write_text(json.dumps(states, ensure_ascii=False), encoding="utf-8")
+
+            manifest_path = content_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["content_files"].append("relationships/relationships.json")
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+            output = self._run_loader(content_root, expected_content_id="TEST_REL_PLAYER_ALPHA")
+            self.assertIn("RELATIONSHIP_MANAGER_OK:3", output)
+
+    def test_relationship_unknown_state_reference_fails_content_loading(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content_root = self._copy_content(temp_dir)
+            fixture_root = ROOT / "content/tests/fixtures/relationship_manager"
+            relationships = json.loads((fixture_root / "relationships.json").read_text(encoding="utf-8"))
+            relationships["relationships"][0]["dimensions"]["trust"] = "test.relationship.missing"
+            relationship_path = content_root / "relationships/relationships.json"
+            relationship_path.parent.mkdir(parents=True, exist_ok=True)
+            relationship_path.write_text(json.dumps(relationships, ensure_ascii=False), encoding="utf-8")
+
+            state_path = content_root / "states/state_registry.json"
+            states = json.loads(state_path.read_text(encoding="utf-8"))
+            fixture_states = json.loads((fixture_root / "state_registry.json").read_text(encoding="utf-8"))
+            states["states"].extend(fixture_states["states"])
+            state_path.write_text(json.dumps(states, ensure_ascii=False), encoding="utf-8")
+            manifest_path = content_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["content_files"].append("relationships/relationships.json")
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+            self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
+
     def test_inventory_state_without_write_permission_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)

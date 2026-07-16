@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0.0",
+  "dimension_definitions": [
+    {"dimension_id": "trust", "default": 1, "min": 0, "max": 10},
+    {"dimension_id": "affection", "default": 1, "min": 0, "max": 10},
+    {"dimension_id": "respect", "default": 1, "min": 0, "max": 10},
+    {"dimension_id": "tension", "default": 0, "min": 0, "max": 10}
+  ],
+  "stage_definitions": [
+    {"stage_id": "stranger", "rank": 0},
+    {"stage_id": "acquaintance", "rank": 1},
+    {"stage_id": "trusted", "rank": 2},
+    {"stage_id": "close", "rank": 3},
+    {"stage_id": "intimate", "rank": 4}
+  ],
+  "relationships": [
+    {
+      "relationship_id": "TEST_REL_PLAYER_ALPHA",
+      "actor_id": "TEST_ACTOR_PLAYER",
+      "target_id": "TEST_ACTOR_ALPHA",
+      "dimensions": {
+        "trust": "test.relationship.alpha.trust",
+        "affection": "test.relationship.alpha.affection",
+        "respect": "test.relationship.alpha.respect",
+        "tension": "test.relationship.alpha.tension"
+      },
+      "stage_state_key": "test.relationship.alpha.stage",
+      "stage_rules": [
+        {"stage_id": "intimate", "conditions": {"all": [
+          {"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 8},
+          {"kind": "dimension", "dimension_id": "affection", "op": "gte", "value": 7},
+          {"kind": "dimension", "dimension_id": "respect", "op": "gte", "value": 6},
+          {"kind": "flag", "flag_id": "mutual_interest", "value": true},
+          {"kind": "flag", "flag_id": "romance_rejected", "value": false},
+          {"kind": "boundary", "boundary_id": "romance_allowed", "value": true},
+          {"kind": "state", "key": "test.relationship.story_gate", "op": "eq", "value": true},
+          {"kind": "conflict", "active": false}
+        ]}},
+        {"stage_id": "close", "conditions": {"all": [
+          {"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 6},
+          {"kind": "dimension", "dimension_id": "affection", "op": "gte", "value": 4},
+          {"kind": "dimension", "dimension_id": "respect", "op": "gte", "value": 4},
+          {"kind": "conflict", "active": false}
+        ]}},
+        {"stage_id": "trusted", "conditions": {"all": [
+          {"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 5},
+          {"kind": "dimension", "dimension_id": "respect", "op": "gte", "value": 4},
+          {"kind": "dimension", "dimension_id": "tension", "op": "lte", "value": 6}
+        ]}},
+        {"stage_id": "acquaintance", "conditions": {"all": [
+          {"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 2}
+        ]}},
+        {"stage_id": "stranger", "conditions": {"all": []}}
+      ],
+      "flags": [
+        {"id": "mutual_interest", "state_key": "test.relationship.alpha.flag.mutual_interest"},
+        {"id": "flirt_rejected", "state_key": "test.relationship.alpha.flag.flirt_rejected"},
+        {"id": "contact_rejected", "state_key": "test.relationship.alpha.flag.contact_rejected"},
+        {"id": "romance_rejected", "state_key": "test.relationship.alpha.flag.romance_rejected"},
+        {"id": "quest_access", "state_key": "test.relationship.alpha.flag.quest_access"}
+      ],
+      "boundaries": [
+        {"id": "romance_allowed", "state_key": "test.relationship.alpha.boundary.romance_allowed"},
+        {"id": "physical_contact_allowed", "state_key": "test.relationship.alpha.boundary.physical_contact_allowed"},
+        {"id": "trust_sensitive", "state_key": "test.relationship.alpha.boundary.trust_sensitive"},
+        {"id": "conflict_active", "state_key": "test.relationship.alpha.boundary.conflict_active"},
+        {"id": "romance_rejected", "state_key": "test.relationship.alpha.boundary.romance_rejected"}
+      ],
+      "action_rules": [
+        {"action_id": "flirt", "conditions": {"all": [
+          {"kind": "flag", "flag_id": "flirt_rejected", "value": false}
+        ]}},
+        {"action_id": "contact", "conditions": {"all": [
+          {"kind": "flag", "flag_id": "contact_rejected", "value": false},
+          {"kind": "boundary", "boundary_id": "physical_contact_allowed", "value": true}
+        ]}},
+        {"action_id": "romance", "conditions": {"all": [
+          {"kind": "flag", "flag_id": "romance_rejected", "value": false},
+          {"kind": "boundary", "boundary_id": "romance_allowed", "value": true}
+        ]}}
+      ],
+      "rejection_rules": [
+        {"action_id": "flirt", "rejection_flag_id": "flirt_rejected", "boundary_updates": {}, "reopen_action_id": "reopen_flirt"},
+        {"action_id": "contact", "rejection_flag_id": "contact_rejected", "boundary_updates": {"physical_contact_allowed": false}, "reopen_action_id": "reopen_contact"},
+        {"action_id": "romance", "rejection_flag_id": "romance_rejected", "boundary_updates": {"romance_allowed": false, "romance_rejected": true}, "reopen_action_id": "reopen_romance"}
+      ],
+      "conflict": {
+        "active_state_key": "test.relationship.alpha.conflict.active",
+        "reason_state_key": "test.relationship.alpha.conflict.reason",
+        "repair_progress_state_key": "test.relationship.alpha.conflict.repair_progress",
+        "repair_threshold": 5
+      },
+      "text_versions": [
+        {"tag": "conflict", "priority": 100, "conditions": {"all": [{"kind": "conflict", "active": true}]}},
+        {"tag": "romance_blocked", "priority": 90, "conditions": {"all": [{"kind": "flag", "flag_id": "romance_rejected", "value": true}]}},
+        {"tag": "close", "priority": 80, "conditions": {"all": [{"kind": "stage", "stage_id": "close", "op": "gte"}]}},
+        {"tag": "high_trust", "priority": 70, "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 6}]}},
+        {"tag": "low_trust", "priority": 60, "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "lte", "value": 2}]}},
+        {"tag": "neutral", "priority": 0, "conditions": {"all": []}}
+      ],
+      "metadata": {"relationship_kind": "player_npc", "fixture_only": true}
+    },
+    {
+      "relationship_id": "TEST_REL_PLAYER_BETA",
+      "actor_id": "TEST_ACTOR_PLAYER",
+      "target_id": "TEST_ACTOR_BETA",
+      "dimensions": {
+        "trust": "test.relationship.beta.trust",
+        "affection": "test.relationship.beta.affection",
+        "respect": "test.relationship.beta.respect",
+        "tension": "test.relationship.beta.tension"
+      },
+      "stage_state_key": "test.relationship.beta.stage",
+      "stage_rules": [
+        {"stage_id": "trusted", "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 5}]}},
+        {"stage_id": "acquaintance", "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 2}]}},
+        {"stage_id": "stranger", "conditions": {"all": []}}
+      ],
+      "flags": [], "boundaries": [], "action_rules": [], "rejection_rules": [],
+      "conflict": {"active_state_key": "test.relationship.beta.conflict.active", "reason_state_key": "test.relationship.beta.conflict.reason", "repair_progress_state_key": "test.relationship.beta.conflict.repair_progress", "repair_threshold": 5},
+      "text_versions": [{"tag": "neutral", "priority": 0, "conditions": {"all": []}}],
+      "metadata": {"relationship_kind": "player_npc", "fixture_only": true}
+    },
+    {
+      "relationship_id": "TEST_REL_ALPHA_BETA",
+      "actor_id": "TEST_ACTOR_ALPHA",
+      "target_id": "TEST_ACTOR_BETA",
+      "dimensions": {
+        "trust": "test.relationship.alpha_beta.trust",
+        "affection": "test.relationship.alpha_beta.affection",
+        "respect": "test.relationship.alpha_beta.respect",
+        "tension": "test.relationship.alpha_beta.tension"
+      },
+      "stage_state_key": "test.relationship.alpha_beta.stage",
+      "stage_rules": [
+        {"stage_id": "trusted", "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 5}]}},
+        {"stage_id": "acquaintance", "conditions": {"all": [{"kind": "dimension", "dimension_id": "trust", "op": "gte", "value": 2}]}},
+        {"stage_id": "stranger", "conditions": {"all": []}}
+      ],
+      "flags": [], "boundaries": [], "action_rules": [], "rejection_rules": [],
+      "conflict": {"active_state_key": "test.relationship.alpha_beta.conflict.active", "reason_state_key": "test.relationship.alpha_beta.conflict.reason", "repair_progress_state_key": "test.relationship.alpha_beta.conflict.repair_progress", "repair_threshold": 5},
+      "text_versions": [{"tag": "neutral", "priority": 0, "conditions": {"all": []}}],
+      "metadata": {"relationship_kind": "npc_npc", "fixture_only": true}
+    }
+  ]
+}
