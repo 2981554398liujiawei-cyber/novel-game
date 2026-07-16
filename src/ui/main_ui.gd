@@ -11,13 +11,17 @@ const SettingsManagerClass = preload("res://src/ui/settings_manager.gd")
 const MODES := ["main_menu", "exploration", "dialogue", "combat"]
 const PAGES := ["quest", "inventory", "relationship", "save", "settings", "history"]
 const SAVE_SLOTS := ["manual_1", "manual_2", "manual_3", "auto", "quick"]
+const HISTORY_LIMIT := 200
+const CHOICE_VIEW_HEIGHT := 190.0
 
 var _services: Dictionary = {}
 var _settings := SettingsManagerClass.new()
 var _mode := "main_menu"
 var _page := ""
-var _history: Array[String] = []
+var _history: Array[Dictionary] = []
 var _choice_ids: Array[String] = []
+var _choice_slots: Array[Dictionary] = []
+var _choice_texts: Dictionary = {}
 var _test_story_id := ""
 var _last_result: Dictionary = {"ok": true, "code": "OK", "message": ""}
 var _combat_log: Array[String] = []
@@ -37,6 +41,7 @@ var _text_label: RichTextLabel
 var _objective_label: Label
 var _character_label: Label
 var _choice_box: VBoxContainer
+var _choice_scroll: ScrollContainer
 var _status_label: Label
 var _history_label: RichTextLabel
 var _page_title: Label
@@ -49,6 +54,8 @@ var _combat_info_label: Label
 var _combat_log_label: RichTextLabel
 var _combat_actions: HBoxContainer
 var _text_tween: Tween
+var _player_input_locked := false
+var _active_font_size := 22
 
 
 func _ready() -> void:
@@ -120,13 +127,39 @@ func advance_story() -> Dictionary:
     return _feedback(true, "OK", "Story advanced")
 
 
+func submit_player_advance() -> Dictionary:
+    if not _begin_player_input():
+        return {"ok": false, "code": "UI_INPUT_LOCKED", "message": "Input is already being handled"}
+    if _is_typewriter_active():
+        _finish_typewriter()
+        return {"ok": true, "code": "UI_TEXT_REVEALED", "message": "Current text revealed"}
+    return advance_story()
+
+
 func choose_choice(choice_id: String) -> Dictionary:
     if choice_id not in _choice_ids:
         return _feedback(false, "STORY_CHOICE_UNAVAILABLE", "Choice is not available")
+    var selected_text := str(_choice_texts.get(choice_id, choice_id))
+    _append_history("choice", "枫月", selected_text)
     if not bool(_services["story_runner"].call("choose_choice", choice_id)):
+        if not _history.is_empty() and str(_history.back().get("category", "")) == "choice":
+            _history.pop_back()
         var error: Dictionary = _services["story_runner"].last_error
         return _feedback(false, str(error.get("code", "STORY_CHOICE_FAILED")), str(error.get("message", "Choice failed")))
     return _feedback(true, "OK", "Choice submitted")
+
+
+func submit_player_choice(choice_id: String) -> Dictionary:
+    if not _begin_player_input():
+        return {"ok": false, "code": "UI_INPUT_LOCKED", "message": "Input is already being handled"}
+    if _is_typewriter_active():
+        _finish_typewriter()
+        return {"ok": false, "code": "UI_TEXT_REVEALED", "message": "Finish reading before choosing"}
+    return choose_choice(choice_id)
+
+
+func present_system_message(message: String) -> void:
+    _append_history("system", "系统", message)
 
 
 func show_page(page: String) -> Dictionary:
@@ -270,7 +303,11 @@ func get_ui_snapshot() -> Dictionary:
         "speaker": _speaker_label.text,
         "text": _text_label.text,
         "choices": _choice_ids.duplicate(),
+        "choice_slots": _choice_slots.duplicate(true),
         "history_size": _history.size(),
+        "history": _history.duplicate(true),
+        "input_locked": _player_input_locked,
+        "text_complete": not _is_typewriter_active(),
         "portrait": _portrait.get_presentation_state(),
         "background": _background.get_presentation_state(),
         "page_text": _page_content.text,
@@ -283,13 +320,17 @@ func validate_layout(size: Vector2i, font_size: int = 22) -> Dictionary:
     var valid_resolution := size.x >= 1280 and size.y >= 720
     var valid_font := font_size >= 18 and font_size <= 32
     var sidebar_collapsible := size.x <= 1280
+    var text_scrollable := _text_label != null and _text_label.scroll_active
+    var choices_scrollable := _choice_scroll != null and _choice_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED
     return {
-        "ok": valid_resolution and valid_font,
+        "ok": valid_resolution and valid_font and text_scrollable and choices_scrollable,
         "core_controls_visible": valid_resolution,
         "choices_visible": valid_resolution,
         "portrait_does_not_cover_text": valid_resolution,
         "sidebar_collapsible": sidebar_collapsible,
         "font_operable": valid_font,
+        "text_scrollable": text_scrollable,
+        "choices_scrollable": choices_scrollable,
     }
 
 
@@ -362,9 +403,16 @@ func _build_interface() -> void:
     _text_label.scroll_active = true
     _text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
     narrative_box.add_child(_text_label)
+    _choice_scroll = ScrollContainer.new()
+    _choice_scroll.name = "ChoiceScroll"
+    _choice_scroll.custom_minimum_size = Vector2(0, CHOICE_VIEW_HEIGHT)
+    _choice_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    _choice_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+    narrative_box.add_child(_choice_scroll)
     _choice_box = VBoxContainer.new()
     _choice_box.name = "Choices"
-    narrative_box.add_child(_choice_box)
+    _choice_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _choice_scroll.add_child(_choice_box)
 
     _sidebar = VBoxContainer.new()
     _sidebar.custom_minimum_size = Vector2(260, 0)
@@ -477,10 +525,13 @@ func _input(event: InputEvent) -> void:
     if event is InputEventKey:
         match event.keycode:
             KEY_ENTER, KEY_SPACE:
-                if _mode in ["exploration", "dialogue"] and _page.is_empty(): advance_story()
+                if _mode in ["exploration", "dialogue"] and _page.is_empty(): submit_player_advance()
             KEY_1, KEY_2, KEY_3, KEY_4, KEY_5:
                 var index := int(event.keycode - KEY_1)
-                if index < _choice_ids.size(): choose_choice(_choice_ids[index])
+                if index < _choice_slots.size():
+                    var slot: Dictionary = _choice_slots[index]
+                    if bool(slot.get("enabled", false)):
+                        submit_player_choice(str(slot.get("choice_id", "")))
             KEY_ESCAPE:
                 if not _page.is_empty(): close_page()
                 elif _mode != "main_menu": show_main_menu()
@@ -512,11 +563,23 @@ func _on_choice_presented(payload: Dictionary) -> void:
             continue
         var choice: Dictionary = raw_choice
         var choice_id := str(choice.get("choice_id", ""))
-        var button := _make_button(str(choice.get("text", choice_id)), func(id: String = choice_id): choose_choice(id))
-        button.disabled = not bool(choice.get("enabled", false))
+        var enabled := bool(choice.get("enabled", false))
+        var display_text := str(choice.get("text", choice_id))
+        if not enabled and not display_text.begins_with("【"):
+            display_text = "【暂不可选】%s" % display_text
+        var visual_index := _choice_slots.size() + 1
+        var button := _make_button("%d. %s" % [visual_index, display_text], func(id: String = choice_id): submit_player_choice(id))
+        button.name = "Choice_%s" % choice_id
+        button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+        button.custom_minimum_size = Vector2(0, 54)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.disabled = not enabled
         _choice_box.add_child(button)
+        _choice_slots.append({"choice_id": choice_id, "enabled": enabled, "text": display_text})
         if not button.disabled:
             _choice_ids.append(choice_id)
+            _choice_texts[choice_id] = display_text
 
 
 func _on_combat_requested(payload: Dictionary) -> void:
@@ -525,9 +588,10 @@ func _on_combat_requested(payload: Dictionary) -> void:
 
 
 func _on_reward_requested(payload: Dictionary) -> void:
-    var grants: Array = []
-    for item_id: Variant in payload.get("reward_item_ids", []):
-        grants.append({"item_id": str(item_id), "quantity": 1})
+    var grants: Array = payload.get("reward_items", []).duplicate(true)
+    if grants.is_empty():
+        for item_id: Variant in payload.get("reward_item_ids", []):
+            grants.append({"item_id": str(item_id), "quantity": 1})
     var result: Dictionary = _services["inventory_manager"].call("grant_items", grants, "story")
     if bool(result.get("ok", false)):
         _services["story_runner"].call("resolve_external_node", "success")
@@ -546,6 +610,9 @@ func _on_story_position_restored(_position: Dictionary, presentation: Dictionary
 
 func _on_quest_status_changed(_quest_id: String, _old_status: String, _new_status: String, _source: String) -> void:
     _refresh_objective_summary()
+    if _new_status in ["qualified", "completed", "failed", "suspended"]:
+        var definition: Dictionary = _services["quest_manager"].call("get_quest_definition", _quest_id)
+        _append_history("system", "系统", "任务“%s”状态已更新。" % definition.get("title", "当前任务"))
     if _page == "quest": _refresh_quest_page()
 
 
@@ -589,11 +656,15 @@ func _on_combat_finished(result: Dictionary) -> void:
 
 func _on_save_signal(result: Dictionary) -> void:
     _feedback_from_result(result)
+    if bool(result.get("ok", false)):
+        _append_history("system", "系统", "存档已保存。")
     refresh_continue_state()
 
 
 func _on_load_signal(result: Dictionary) -> void:
     _feedback_from_result(result)
+    if bool(result.get("ok", false)):
+        _append_history("system", "系统", "存档已读取。")
 
 
 func _render_text(payload: Dictionary, dialogue: bool) -> void:
@@ -616,8 +687,7 @@ func _render_text(payload: Dictionary, dialogue: bool) -> void:
     else:
         _text_label.visible_characters = -1
     if not _text_label.text.is_empty():
-        _history.append("%s：%s" % [_speaker_label.text, _text_label.text])
-    _history_label.text = "\n".join(_history.slice(maxi(0, _history.size() - 8)))
+        _append_history("dialogue" if dialogue else "narrative", _speaker_label.text, _text_label.text)
     _clear_choices()
     var location_id := str(payload.get("location_id", ""))
     _location_label.text = "地点：%s" % (location_id if not location_id.is_empty() else "—")
@@ -645,7 +715,7 @@ func _show_game_shell(mode: String) -> void:
     _combat_panel.visible = mode == "combat"
     _portrait.visible = mode == "dialogue"
     _text_label.visible = mode != "combat"
-    _choice_box.visible = mode != "combat"
+    _choice_scroll.visible = mode != "combat"
     _set_mode(mode)
 
 
@@ -659,9 +729,12 @@ func _set_mode(mode: String) -> void:
 
 func _clear_choices() -> void:
     _choice_ids.clear()
+    _choice_slots.clear()
+    _choice_texts.clear()
     if _choice_box == null:
         return
     for child: Node in _choice_box.get_children():
+        _choice_box.remove_child(child)
         child.queue_free()
 
 
@@ -675,7 +748,7 @@ func _refresh_page() -> void:
         "settings": _refresh_settings_page()
         "history":
             _page_title.text = "历史记录"
-            _page_content.text = "\n\n".join(_history)
+            _page_content.text = "\n\n".join(_formatted_history(_history))
 
 
 func _refresh_quest_page() -> void:
@@ -897,7 +970,8 @@ func _display_name(global_id: String) -> String:
 
 func _apply_settings(settings: Dictionary) -> void:
     var font_size := int(settings.get("font_size", 22))
-    add_theme_font_size_override("font_size", font_size)
+    _active_font_size = font_size
+    _apply_font_size(self, font_size)
     if _audio != null:
         _audio.set_volumes(float(settings.get("master_volume", 1.0)), float(settings.get("music_volume", 0.8)), float(settings.get("sfx_volume", 0.8)))
     _settings.apply_window_settings()
@@ -907,6 +981,7 @@ func _apply_settings(settings: Dictionary) -> void:
 func _make_label(text_value: String) -> Label:
     var label := Label.new()
     label.text = text_value
+    label.add_theme_font_size_override("font_size", _active_font_size)
     return label
 
 
@@ -914,8 +989,71 @@ func _make_button(text_value: String, callback: Callable) -> Button:
     var button := Button.new()
     button.text = text_value
     button.custom_minimum_size = Vector2(140, 44)
+    button.add_theme_font_size_override("font_size", _active_font_size)
     button.pressed.connect(callback)
     return button
+
+
+func _apply_font_size(node: Node, font_size: int) -> void:
+    if node is RichTextLabel:
+        node.add_theme_font_size_override("normal_font_size", font_size)
+        node.add_theme_font_size_override("bold_font_size", font_size)
+    elif node is Control:
+        node.add_theme_font_size_override("font_size", font_size)
+    for child: Node in node.get_children():
+        _apply_font_size(child, font_size)
+
+
+func _begin_player_input() -> bool:
+    if _player_input_locked:
+        return false
+    _player_input_locked = true
+    call_deferred("_release_player_input")
+    return true
+
+
+func _release_player_input() -> void:
+    _player_input_locked = false
+
+
+func _is_typewriter_active() -> bool:
+    return _text_label != null and _text_label.visible_characters >= 0 and _text_label.visible_characters < _text_label.text.length()
+
+
+func _finish_typewriter() -> void:
+    if _text_tween != null and _text_tween.is_valid():
+        _text_tween.kill()
+    _text_label.visible_characters = -1
+
+
+func _append_history(category: String, speaker: String, text_value: String) -> void:
+    var clean_text := text_value.strip_edges()
+    if clean_text.is_empty():
+        return
+    _history.append({"category": category, "speaker": speaker, "text": clean_text})
+    while _history.size() > HISTORY_LIMIT:
+        _history.pop_front()
+    if _history_label != null:
+        var recent: Array = _history.slice(maxi(0, _history.size() - 8))
+        _history_label.text = "\n".join(_formatted_history(recent))
+
+
+func _formatted_history(entries: Array) -> Array[String]:
+    var lines: Array[String] = []
+    for entry_value: Variant in entries:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        var category := str(entry.get("category", ""))
+        var speaker := str(entry.get("speaker", ""))
+        var text_value := str(entry.get("text", ""))
+        if category == "choice":
+            lines.append("【选择】%s" % text_value)
+        elif category == "system":
+            lines.append("【系统】%s" % text_value)
+        else:
+            lines.append("%s：%s" % [speaker, text_value])
+    return lines
 
 
 func _clear_page_actions() -> void:
@@ -930,8 +1068,33 @@ func _feedback_from_result(result: Dictionary) -> void:
 
 
 func _feedback(ok: bool, code: String, message: String) -> Dictionary:
-    _last_result = {"ok": ok, "code": code, "message": message}
+    var public_message := message if ok else _friendly_error_summary(code)
+    _last_result = {"ok": ok, "code": code, "message": public_message}
     if _status_label != null:
-        _status_label.text = ("✓ " if ok else "⚠ ") + code
+        _status_label.text = ("✓ " if ok else "⚠ ") + public_message
+    if not ok and _should_log_error(code):
+        push_error("UI_DETAIL [%s] %s" % [code, message])
+    if not ok:
+        _append_history("system", "系统", public_message)
     feedback_changed.emit(_last_result.duplicate(true))
     return _last_result.duplicate(true)
+
+
+func _friendly_error_summary(code: String) -> String:
+    if code.begins_with("SAVE_") or code.begins_with("LOAD_"):
+        return "存档操作失败，请稍后重试或尝试恢复备份。"
+    if code.begins_with("STORY_"):
+        return "剧情数据暂时无法继续，请返回菜单后重试。"
+    if code.begins_with("COMBAT_"):
+        return "当前战斗操作无法执行，请选择其他行动。"
+    if code.begins_with("INVENTORY_"):
+        return "当前物品操作无法完成。"
+    return "操作未能完成，请稍后重试。"
+
+
+func _should_log_error(code: String) -> bool:
+    return not (
+        code.begins_with("UI_")
+        or code.ends_with("_BLOCKED_COMBAT")
+        or code in ["SAVE_NOT_FOUND", "STORY_CHOICE_UNAVAILABLE", "INVENTORY_CAPACITY_FULL"]
+    )

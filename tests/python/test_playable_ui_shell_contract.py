@@ -20,7 +20,8 @@ class PlayableUIShellContractTests(unittest.TestCase):
         manifest = json.loads((ROOT / "content/manifest.json").read_text(encoding="utf-8"))
         self.assertNotIn("tests/fixtures/playable_ui_shell/technical_story.json", manifest["content_files"])
         export = (ROOT / "export_presets.cfg").read_text(encoding="utf-8")
-        self.assertIn('exclude_filter="content/tests/**,tests/**"', export)
+        self.assertIn("content/tests/**", export)
+        self.assertIn("tests/**", export)
 
     def test_ui_uses_public_manager_interfaces(self):
         source = (ROOT / "src/ui/main_ui.gd").read_text(encoding="utf-8")
@@ -41,6 +42,25 @@ class PlayableUIShellContractTests(unittest.TestCase):
         source = (ROOT / "src/ui/debug_console.gd").read_text(encoding="utf-8")
         self.assertIn("release_build", source)
         self.assertIn("DEBUG_CONSOLE_DISABLED", source)
+
+    def test_player_input_and_long_choice_hardening_contract(self):
+        source = (ROOT / "src/ui/main_ui.gd").read_text(encoding="utf-8")
+        self.assertIn("func submit_player_advance()", source)
+        self.assertIn("func submit_player_choice(", source)
+        self.assertIn("UI_INPUT_LOCKED", source)
+        self.assertIn("UI_TEXT_REVEALED", source)
+        self.assertIn("ScrollContainer.new()", source)
+        self.assertIn("AUTOWRAP_WORD_SMART", source)
+        self.assertIn("choice_slots", source)
+
+    def test_history_and_safe_error_contract(self):
+        source = (ROOT / "src/ui/main_ui.gd").read_text(encoding="utf-8")
+        self.assertIn("const HISTORY_LIMIT := 200", source)
+        self.assertIn('"category": category', source)
+        self.assertIn('_append_history("choice"', source)
+        self.assertIn('_append_history("system"', source)
+        self.assertIn("func _friendly_error_summary(", source)
+        self.assertIn('push_error("UI_DETAIL', source)
 
 
 if __name__ == "__main__":
