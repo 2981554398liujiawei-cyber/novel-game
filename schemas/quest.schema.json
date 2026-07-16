@@ -569,7 +569,64 @@
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object"
+        "type": "object",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "reward_id"
+            ],
+            "properties": {
+              "type": {
+                "const": "signal_only"
+              },
+              "reward_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "reward_id",
+              "items"
+            ],
+            "properties": {
+              "type": {
+                "const": "items"
+              },
+              "reward_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "item_id",
+                    "quantity"
+                  ],
+                  "properties": {
+                    "item_id": {
+                      "type": "string",
+                      "pattern": "^[A-Z][A-Z0-9_]+$"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "world_changes": {
@@ -653,6 +710,343 @@
           }
         },
         "additionalProperties": false
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status_state_key",
+        "reward_granted_state_key",
+        "availability",
+        "objectives",
+        "completion_mode",
+        "failure"
+      ],
+      "properties": {
+        "status_state_key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.]+$"
+        },
+        "reward_granted_state_key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.]+$"
+        },
+        "availability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "all",
+            "any"
+          ],
+          "properties": {
+            "all": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "op",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "state",
+                      "quest"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_.]+$"
+                  },
+                  "quest_id": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]+$"
+                  },
+                  "op": {
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "neq",
+                      "gte",
+                      "lte",
+                      "gt",
+                      "lt",
+                      "in",
+                      "not_in"
+                    ]
+                  },
+                  "value": {}
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "state"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "key"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "quest"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "quest_id"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "any": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "op",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "state",
+                      "quest"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_.]+$"
+                  },
+                  "quest_id": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]+$"
+                  },
+                  "op": {
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "neq",
+                      "gte",
+                      "lte",
+                      "gt",
+                      "lt",
+                      "in",
+                      "not_in"
+                    ]
+                  },
+                  "value": {}
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "state"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "key"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "quest"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "quest_id"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "objective_id",
+              "type",
+              "required"
+            ],
+            "properties": {
+              "objective_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{1,63}$"
+              },
+              "type": {
+                "enum": [
+                  "boolean",
+                  "counter",
+                  "collection",
+                  "combat_result",
+                  "state_condition"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "progress_state_key": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.]+$"
+              },
+              "target": {},
+              "allowed_results": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              },
+              "condition": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key",
+                  "op",
+                  "value"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_.]+$"
+                  },
+                  "op": {
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "neq",
+                      "gte",
+                      "lte",
+                      "gt",
+                      "lt",
+                      "in",
+                      "not_in"
+                    ]
+                  },
+                  "value": {}
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "state_condition"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "condition"
+                  ]
+                },
+                "else": {
+                  "required": [
+                    "progress_state_key",
+                    "target"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "qualification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "objective_ids",
+            "required_count"
+          ],
+          "properties": {
+            "objective_ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "required_count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "completion_mode": {
+          "enum": [
+            "automatic",
+            "manual"
+          ]
+        },
+        "failure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "continuation_state_key",
+            "allowed_continuations",
+            "resume_from_failed",
+            "resume_from_suspended",
+            "reopen_allowed"
+          ],
+          "properties": {
+            "continuation_state_key": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.]+$"
+            },
+            "allowed_continuations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "resume_from_failed": {
+              "enum": [
+                "available",
+                "active"
+              ]
+            },
+            "resume_from_suspended": {
+              "enum": [
+                "available",
+                "active"
+              ]
+            },
+            "reopen_allowed": {
+              "type": "boolean"
+            }
+          }
+        }
       }
     }
   }

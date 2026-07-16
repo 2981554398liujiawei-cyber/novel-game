@@ -16,6 +16,7 @@ var last_error: Dictionary = {}
 
 var _content_loader: RefCounted
 var _game_state: RefCounted
+var _quest_manager: RefCounted
 var _story: Dictionary = {}
 var _nodes: Dictionary = {}
 var _story_id := ""
@@ -27,14 +28,23 @@ var _completion_result: Dictionary = {}
 var _running := false
 
 
-func initialize(content_loader: RefCounted, game_state: RefCounted) -> bool:
+func initialize(content_loader: RefCounted, game_state: RefCounted, quest_manager: RefCounted = null) -> bool:
     last_error = {}
+    _quest_manager = null
     if content_loader == null or not content_loader.has_method("get_story"):
         return _fail("STORY_CONTENT_LOADER_INVALID", "ContentLoader does not provide get_story")
     if game_state == null or not game_state.has_method("evaluate_condition") or not game_state.has_method("apply_effects"):
         return _fail("STORY_GAME_STATE_INVALID", "GameState does not provide condition and effect interfaces")
+    if quest_manager != null:
+        for method_name: String in [
+            "get_quest_status", "activate_quest", "update_objective", "set_qualified",
+            "complete_quest", "fail_quest", "suspend_quest", "resume_quest", "reopen_quest",
+        ]:
+            if not quest_manager.has_method(method_name):
+                return _fail("STORY_QUEST_MANAGER_INVALID", "QuestManager does not provide '%s'" % method_name)
     _content_loader = content_loader
     _game_state = game_state
+    _quest_manager = quest_manager
     return true
 
 
@@ -221,6 +231,42 @@ func get_completion_result() -> Dictionary:
 
 func is_running() -> bool:
     return _running
+
+
+func get_quest_status(quest_id: String) -> Dictionary:
+    return _call_quest_manager("get_quest_status", [quest_id])
+
+
+func activate_quest(quest_id: String) -> Dictionary:
+    return _call_quest_manager("activate_quest", [quest_id, "story"])
+
+
+func update_quest_objective(quest_id: String, objective_id: String, update: Dictionary) -> Dictionary:
+    return _call_quest_manager("update_objective", [quest_id, objective_id, update, "story"])
+
+
+func set_quest_qualified(quest_id: String) -> Dictionary:
+    return _call_quest_manager("set_qualified", [quest_id, "story"])
+
+
+func complete_quest(quest_id: String) -> Dictionary:
+    return _call_quest_manager("complete_quest", [quest_id, "story"])
+
+
+func fail_quest(quest_id: String, continuation_id: String) -> Dictionary:
+    return _call_quest_manager("fail_quest", [quest_id, continuation_id, "story"])
+
+
+func suspend_quest(quest_id: String, continuation_id: String = "") -> Dictionary:
+    return _call_quest_manager("suspend_quest", [quest_id, continuation_id, "story"])
+
+
+func resume_quest(quest_id: String) -> Dictionary:
+    return _call_quest_manager("resume_quest", [quest_id, "story"])
+
+
+func reopen_quest(quest_id: String) -> Dictionary:
+    return _call_quest_manager("reopen_quest", [quest_id, "story"])
 
 
 func _build_node_index() -> bool:
@@ -427,6 +473,41 @@ func _require_running() -> bool:
     if not _running:
         return _fail("STORY_NOT_RUNNING", "No story is currently running", _current_node_id)
     return true
+
+
+func _call_quest_manager(method_name: String, arguments: Array) -> Dictionary:
+    if _quest_manager == null:
+        return _quest_call_failed("STORY_QUEST_MANAGER_UNAVAILABLE", "StoryRunner has no QuestManager binding")
+    var raw_result: Variant = _quest_manager.callv(method_name, arguments)
+    if not raw_result is Dictionary:
+        return _quest_call_failed("STORY_QUEST_RESULT_INVALID", "QuestManager returned an invalid result")
+    var result: Dictionary = raw_result
+    if not bool(result.get("ok", false)):
+        last_error = {
+            "code": str(result.get("code", "STORY_QUEST_ACTION_FAILED")),
+            "message": str(result.get("message", "Quest action failed")),
+            "story_id": _story_id,
+            "node_id": _current_node_id,
+            "choice_id": "",
+            "details": result.duplicate(true),
+        }
+        story_error.emit(last_error.duplicate(true))
+    else:
+        last_error = {}
+    return result.duplicate(true)
+
+
+func _quest_call_failed(code: String, message: String) -> Dictionary:
+    last_error = {
+        "code": code,
+        "message": message,
+        "story_id": _story_id,
+        "node_id": _current_node_id,
+        "choice_id": "",
+        "details": {},
+    }
+    story_error.emit(last_error.duplicate(true))
+    return {"ok": false, "code": code, "message": message}
 
 
 func _clear_runtime() -> void:

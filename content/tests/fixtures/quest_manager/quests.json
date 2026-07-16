@@ -1,0 +1,439 @@
+{
+  "schema_version": "1.0.0",
+  "quests": [
+    {
+      "schema_version": "1.5.0",
+      "quest_id": "TEST_QUEST_PARALLEL",
+      "content_status": "data_ready",
+      "title": "Synthetic parallel objective fixture",
+      "region_id": "TEST_REGION",
+      "category": "encounter",
+      "source_refs": ["synthetic_test_fixture"],
+      "design": {
+        "purpose": "QuestManager lifecycle test",
+        "theme": "synthetic",
+        "emotion_curve": "none",
+        "source_basis": "fixture",
+        "adaptation_notes": "tests only",
+        "recommended_level": 1,
+        "duration_minutes": 1,
+        "target_experience": "deterministic",
+        "scope": "tests_only",
+        "limitations": "never load from the formal manifest"
+      },
+      "prerequisites": [],
+      "mutual_exclusions": [],
+      "trigger": {
+        "method": "test_only",
+        "location_id": "TEST_LOCATION",
+        "conditions": [],
+        "opening_presentation": {}
+      },
+      "scenes": [
+        {
+          "scene_id": "test_scene",
+          "title": "Synthetic scene",
+          "entry_nodes": ["start"],
+          "exit_nodes": ["finish"],
+          "participant_ids": [],
+          "objective": "Exercise the task runtime contract",
+          "optional_interactions": []
+        }
+      ],
+      "entry_node": "start",
+      "nodes": [
+        {
+          "node_id": "start",
+          "type": "narrative",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture entry",
+          "text": ["Synthetic QuestManager fixture."],
+          "next": "finish"
+        },
+        {
+          "node_id": "finish",
+          "type": "complete",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture terminal",
+          "terminal": true,
+          "outcome": "fixture_complete"
+        }
+      ],
+      "mechanics": [{"type": "quest_manager_fixture"}],
+      "branch_summary": [{"type": "none"}],
+      "continuations": [{"continuation_id": "retry_route", "tests_only": true}],
+      "rewards": [
+        {
+          "type": "items",
+          "reward_id": "parallel_reward",
+          "items": [
+            {"item_id": "TEST_ITEM_CRITICAL_REWARD", "quantity": 1}
+          ]
+        }
+      ],
+      "world_changes": [{"scope": "test_states_only"}],
+      "post_quest_feedback": [{"type": "none"}],
+      "implementation": {
+        "manager": "QuestManager",
+        "state": "GameState fixture",
+        "content": "fixture only",
+        "ui": "none",
+        "scope": "automated tests"
+      },
+      "allowed_loops": [],
+      "test_cases": [
+        {
+          "test_id": "two_of_three",
+          "initial_state": {},
+          "steps": ["activate", "finish_a", "finish_b"],
+          "expected": ["qualified"]
+        },
+        {
+          "test_id": "three_of_three",
+          "initial_state": {},
+          "steps": ["activate", "finish_a", "finish_b", "finish_c"],
+          "expected": ["completed", "reward_once"]
+        },
+        {
+          "test_id": "repeat_update",
+          "initial_state": {},
+          "steps": ["activate", "finish_a", "finish_a"],
+          "expected": ["monotonic_progress"]
+        }
+      ],
+      "runtime": {
+        "status_state_key": "quest.test.parallel.status",
+        "reward_granted_state_key": "quest.test.parallel.reward_granted",
+        "availability": {
+          "all": [
+            {"kind": "state", "key": "test.flag", "op": "eq", "value": true}
+          ],
+          "any": [
+            {"kind": "state", "key": "test.counter", "op": "gte", "value": 2},
+            {"kind": "state", "key": "test.mode", "op": "eq", "value": "active"}
+          ]
+        },
+        "objectives": [
+          {
+            "objective_id": "commission_a",
+            "type": "boolean",
+            "required": true,
+            "progress_state_key": "quest.test.parallel.commission_a",
+            "target": true
+          },
+          {
+            "objective_id": "commission_b",
+            "type": "boolean",
+            "required": true,
+            "progress_state_key": "quest.test.parallel.commission_b",
+            "target": true
+          },
+          {
+            "objective_id": "commission_c",
+            "type": "boolean",
+            "required": true,
+            "progress_state_key": "quest.test.parallel.commission_c",
+            "target": true
+          }
+        ],
+        "qualification": {
+          "objective_ids": ["commission_a", "commission_b", "commission_c"],
+          "required_count": 2
+        },
+        "completion_mode": "automatic",
+        "failure": {
+          "continuation_state_key": "quest.test.parallel.continuation",
+          "allowed_continuations": ["retry_route"],
+          "resume_from_failed": "active",
+          "resume_from_suspended": "active",
+          "reopen_allowed": true
+        }
+      }
+    },
+    {
+      "schema_version": "1.5.0",
+      "quest_id": "TEST_QUEST_UNLOCKED",
+      "content_status": "data_ready",
+      "title": "Synthetic unlocked objective fixture",
+      "region_id": "TEST_REGION",
+      "category": "encounter",
+      "source_refs": ["synthetic_test_fixture"],
+      "design": {
+        "purpose": "QuestManager objective type test",
+        "theme": "synthetic",
+        "emotion_curve": "none",
+        "source_basis": "fixture",
+        "adaptation_notes": "tests only",
+        "recommended_level": 1,
+        "duration_minutes": 1,
+        "target_experience": "deterministic",
+        "scope": "tests_only",
+        "limitations": "never load from the formal manifest"
+      },
+      "prerequisites": [],
+      "mutual_exclusions": [],
+      "trigger": {
+        "method": "test_only",
+        "location_id": "TEST_LOCATION",
+        "conditions": [],
+        "opening_presentation": {}
+      },
+      "scenes": [
+        {
+          "scene_id": "test_scene",
+          "title": "Synthetic scene",
+          "entry_nodes": ["start"],
+          "exit_nodes": ["finish"],
+          "participant_ids": [],
+          "objective": "Exercise every supported objective type",
+          "optional_interactions": []
+        }
+      ],
+      "entry_node": "start",
+      "nodes": [
+        {
+          "node_id": "start",
+          "type": "narrative",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture entry",
+          "text": ["Synthetic QuestManager fixture."],
+          "next": "finish"
+        },
+        {
+          "node_id": "finish",
+          "type": "complete",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture terminal",
+          "terminal": true,
+          "outcome": "fixture_complete"
+        }
+      ],
+      "mechanics": [{"type": "quest_manager_fixture"}],
+      "branch_summary": [{"type": "none"}],
+      "continuations": [{"continuation_id": "retry_route", "tests_only": true}],
+      "rewards": [{"type": "signal_only", "reward_id": "unlocked_reward"}],
+      "world_changes": [{"scope": "test_states_only"}],
+      "post_quest_feedback": [{"type": "none"}],
+      "implementation": {
+        "manager": "QuestManager",
+        "state": "GameState fixture",
+        "content": "fixture only",
+        "ui": "none",
+        "scope": "automated tests"
+      },
+      "allowed_loops": [],
+      "test_cases": [
+        {
+          "test_id": "qualified_unlock",
+          "initial_state": {},
+          "steps": ["qualify_parallel", "refresh"],
+          "expected": ["available"]
+        },
+        {
+          "test_id": "objective_types",
+          "initial_state": {},
+          "steps": ["activate", "update_each_type"],
+          "expected": ["bounded_monotonic_progress"]
+        },
+        {
+          "test_id": "completed_unlock",
+          "initial_state": {},
+          "steps": ["complete_parallel", "refresh"],
+          "expected": ["available"]
+        }
+      ],
+      "runtime": {
+        "status_state_key": "quest.test.unlocked.status",
+        "reward_granted_state_key": "quest.test.unlocked.reward_granted",
+        "availability": {
+          "all": [
+            {
+              "kind": "quest",
+              "quest_id": "TEST_QUEST_PARALLEL",
+              "op": "in",
+              "value": ["qualified", "completed"]
+            }
+          ],
+          "any": []
+        },
+        "objectives": [
+          {
+            "objective_id": "boolean_task",
+            "type": "boolean",
+            "required": true,
+            "progress_state_key": "quest.test.unlocked.boolean_progress",
+            "target": true
+          },
+          {
+            "objective_id": "counter_task",
+            "type": "counter",
+            "required": true,
+            "progress_state_key": "quest.test.unlocked.counter_progress",
+            "target": 3
+          },
+          {
+            "objective_id": "collection_task",
+            "type": "collection",
+            "required": true,
+            "progress_state_key": "quest.test.unlocked.collection_progress",
+            "target": 2
+          },
+          {
+            "objective_id": "combat_task",
+            "type": "combat_result",
+            "required": true,
+            "progress_state_key": "quest.test.unlocked.combat_result",
+            "target": "victory",
+            "allowed_results": ["victory", "retreat"]
+          },
+          {
+            "objective_id": "state_gate_task",
+            "type": "state_condition",
+            "required": true,
+            "condition": {"key": "test.mode", "op": "in", "value": ["active", "paused"]}
+          }
+        ],
+        "completion_mode": "automatic",
+        "failure": {
+          "continuation_state_key": "quest.test.unlocked.continuation",
+          "allowed_continuations": ["retry_route"],
+          "resume_from_failed": "active",
+          "resume_from_suspended": "active",
+          "reopen_allowed": true
+        }
+      }
+    },
+    {
+      "schema_version": "1.5.0",
+      "quest_id": "TEST_QUEST_RECOVERY",
+      "content_status": "data_ready",
+      "title": "Synthetic failure recovery fixture",
+      "region_id": "TEST_REGION",
+      "category": "encounter",
+      "source_refs": ["synthetic_test_fixture"],
+      "design": {
+        "purpose": "QuestManager recovery test",
+        "theme": "synthetic",
+        "emotion_curve": "none",
+        "source_basis": "fixture",
+        "adaptation_notes": "tests only",
+        "recommended_level": 1,
+        "duration_minutes": 1,
+        "target_experience": "deterministic",
+        "scope": "tests_only",
+        "limitations": "never load from the formal manifest"
+      },
+      "prerequisites": [],
+      "mutual_exclusions": ["TEST_QUEST_UNLOCKED"],
+      "trigger": {
+        "method": "test_only",
+        "location_id": "TEST_LOCATION",
+        "conditions": [],
+        "opening_presentation": {}
+      },
+      "scenes": [
+        {
+          "scene_id": "test_scene",
+          "title": "Synthetic scene",
+          "entry_nodes": ["start"],
+          "exit_nodes": ["finish"],
+          "participant_ids": [],
+          "objective": "Exercise failed and suspended recovery",
+          "optional_interactions": []
+        }
+      ],
+      "entry_node": "start",
+      "nodes": [
+        {
+          "node_id": "start",
+          "type": "narrative",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture entry",
+          "text": ["Synthetic QuestManager fixture."],
+          "next": "finish"
+        },
+        {
+          "node_id": "finish",
+          "type": "complete",
+          "location_id": "TEST_LOCATION",
+          "scene_id": "test_scene",
+          "purpose": "Synthetic fixture terminal",
+          "terminal": true,
+          "outcome": "fixture_complete"
+        }
+      ],
+      "mechanics": [{"type": "quest_manager_fixture"}],
+      "branch_summary": [{"type": "failure_recovery"}],
+      "continuations": [
+        {"continuation_id": "retry_route", "tests_only": true},
+        {"continuation_id": "alternate_route", "tests_only": true}
+      ],
+      "rewards": [{"type": "signal_only", "reward_id": "recovery_reward"}],
+      "world_changes": [{"scope": "test_states_only"}],
+      "post_quest_feedback": [{"type": "none"}],
+      "implementation": {
+        "manager": "QuestManager",
+        "state": "GameState fixture",
+        "content": "fixture only",
+        "ui": "none",
+        "scope": "automated tests"
+      },
+      "allowed_loops": [],
+      "test_cases": [
+        {
+          "test_id": "failed_resume",
+          "initial_state": {},
+          "steps": ["activate", "fail_retry_route", "resume"],
+          "expected": ["active", "progress_preserved"]
+        },
+        {
+          "test_id": "suspended_resume",
+          "initial_state": {},
+          "steps": ["activate", "suspend_retry_route", "resume"],
+          "expected": ["active", "progress_preserved"]
+        },
+        {
+          "test_id": "failed_reopen",
+          "initial_state": {},
+          "steps": ["activate", "fail_alternate_route", "reopen"],
+          "expected": ["available"]
+        }
+      ],
+      "runtime": {
+        "status_state_key": "quest.test.recovery.status",
+        "reward_granted_state_key": "quest.test.recovery.reward_granted",
+        "availability": {
+          "all": [
+            {"kind": "state", "key": "test.flag", "op": "eq", "value": true}
+          ],
+          "any": [
+            {"kind": "state", "key": "test.counter", "op": "gte", "value": 2},
+            {"kind": "state", "key": "test.mode", "op": "eq", "value": "active"}
+          ]
+        },
+        "objectives": [
+          {
+            "objective_id": "recovery_goal",
+            "type": "boolean",
+            "required": true,
+            "progress_state_key": "quest.test.recovery.goal",
+            "target": true
+          }
+        ],
+        "completion_mode": "automatic",
+        "failure": {
+          "continuation_state_key": "quest.test.recovery.continuation",
+          "allowed_continuations": ["retry_route", "alternate_route"],
+          "resume_from_failed": "active",
+          "resume_from_suspended": "active",
+          "reopen_allowed": true
+        }
+      }
+    }
+  ]
+}

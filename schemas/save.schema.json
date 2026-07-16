@@ -19,7 +19,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "1.0.0"
+      "enum": [
+        "1.0.0",
+        "1.1.0"
+      ]
     },
     "save_version": {
       "type": "integer",
@@ -63,6 +66,86 @@
     },
     "game_state": {
       "type": "object"
+    },
+    "inventory_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_version",
+        "capacity",
+        "backpack",
+        "quest_items",
+        "equipment",
+        "custody"
+      ],
+      "properties": {
+        "snapshot_version": {
+          "const": 1
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "backpack": {
+          "type": "array"
+        },
+        "quest_items": {
+          "type": "array"
+        },
+        "equipment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "weapon",
+            "off_hand",
+            "head",
+            "body",
+            "accessory_1",
+            "accessory_2"
+          ],
+          "properties": {
+            "weapon": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "off_hand": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "head": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "body": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "accessory_1": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "accessory_2": {
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          }
+        },
+        "custody": {
+          "type": "array"
+        }
+      }
     },
     "random_state": {
       "type": "object",

@@ -2,9 +2,13 @@ extends Control
 
 const ContentLoaderClass = preload("res://src/core/content_loader.gd")
 const GameStateClass = preload("res://src/core/game_state.gd")
+const InventoryManagerClass = preload("res://src/core/inventory_manager.gd")
+const QuestManagerClass = preload("res://src/core/quest_manager.gd")
 
 var _content_loader := ContentLoaderClass.new()
 var _game_state := GameStateClass.new()
+var _inventory_manager := InventoryManagerClass.new()
+var _quest_manager := QuestManagerClass.new()
 var _content_ready := false
 
 
@@ -39,6 +43,20 @@ func _ready() -> void:
             get_tree().quit(1)
         return
 
+    _inventory_manager.inventory_error.connect(_on_inventory_error)
+    if not _inventory_manager.initialize(_content_loader, _game_state):
+        _show_inventory_error(_inventory_manager.last_error)
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
+    _quest_manager.quest_error.connect(_on_quest_error)
+    if not _quest_manager.initialize(_content_loader, _game_state):
+        _show_quest_error(_quest_manager.last_error)
+        if "--smoke-test" in args:
+            get_tree().quit(1)
+        return
+
     _content_ready = true
     if not expected_content_id.is_empty():
         if not _content_loader.has_id(expected_content_id) or _content_loader.get_by_id(expected_content_id) == null:
@@ -56,6 +74,8 @@ func _ready() -> void:
     if "--smoke-test" in args:
         print("CONTENT_LOADER_OK:%d" % _content_loader.get_index_size())
         print("GAME_STATE_OK:%d" % _game_state.get_state_count())
+        print("INVENTORY_MANAGER_OK:%d" % _inventory_manager.get_capacity())
+        print("QUEST_MANAGER_OK:%d" % _quest_manager.list_quests().get("quests", []).size())
         print("SMOKE_TEST_OK")
         get_tree().quit(0)
 
@@ -82,6 +102,36 @@ func _show_game_state_error(error: Dictionary) -> void:
         error.get("code", "UNKNOWN_STATE_ERROR"),
         error.get("message", "未知状态错误"),
         error.get("key", ""),
+    ]
+
+
+func _on_quest_error(error: Dictionary) -> void:
+    if not _content_ready:
+        _show_quest_error(error)
+
+
+func _on_inventory_error(error: Dictionary) -> void:
+    if not _content_ready:
+        _show_inventory_error(error)
+
+
+func _show_inventory_error(error: Dictionary) -> void:
+    _content_ready = false
+    $Center/VBox/Title.text = "物品系统初始化失败"
+    $Center/VBox/Status.text = "%s\n%s\n%s" % [
+        error.get("code", "UNKNOWN_INVENTORY_ERROR"),
+        error.get("message", "未知物品系统错误"),
+        error.get("item_id", ""),
+    ]
+
+
+func _show_quest_error(error: Dictionary) -> void:
+    _content_ready = false
+    $Center/VBox/Title.text = "任务系统初始化失败"
+    $Center/VBox/Status.text = "%s\n%s\n%s" % [
+        error.get("code", "UNKNOWN_QUEST_ERROR"),
+        error.get("message", "未知任务系统错误"),
+        error.get("quest_id", ""),
     ]
 
 

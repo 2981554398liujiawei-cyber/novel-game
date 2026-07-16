@@ -45,6 +45,19 @@ class SaveManagerContractTests(unittest.TestCase):
             schema["properties"]["slot_id"]["enum"],
         )
         self.assertIn("seed", schema["properties"]["random_state"]["required"])
+        self.assertIn("inventory_state", schema["properties"])
+        self.assertEqual(["1.0.0", "1.1.0"], schema["properties"]["schema_version"]["enum"])
+        self.assertEqual(
+            {
+                "snapshot_version",
+                "capacity",
+                "backpack",
+                "quest_items",
+                "equipment",
+                "custody",
+            },
+            set(schema["properties"]["inventory_state"]["required"]),
+        )
         self.assertFalse(schema["additionalProperties"])
 
     def test_save_fixture_is_test_only_and_excluded_from_exports(self):
@@ -80,6 +93,7 @@ class SaveManagerContractTests(unittest.TestCase):
             "SAVE_SCHEMA_INVALID",
             "SAVE_VERSION_UNSUPPORTED",
             "SAVE_STATE_INVALID",
+            "SAVE_INVENTORY_INVALID",
             "SAVE_STORY_INVALID",
             "SAVE_WRITE_FAILED",
             "SAVE_RESTORE_FAILED",

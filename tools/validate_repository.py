@@ -111,6 +111,176 @@ def check_states(errors: list[str]) -> None:
         errors.append("Production default must not pre-complete NV_MAIN_001")
 
 
+ITEM_EQUIPMENT_SLOTS = {
+    "weapon",
+    "off_hand",
+    "head",
+    "body",
+    "accessory_1",
+    "accessory_2",
+}
+ITEM_STATE_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_.]+$")
+
+
+def validate_item_registry(document: Any, state_registry: Any | None = None) -> list[str]:
+    """Return deterministic cross-field errors for an item registry.
+
+    JSON Schema owns the field shapes. This helper owns compatibility between
+    the legacy item fields and the optional InventoryManager runtime contract.
+    It is side-effect free so fixture tests and conversion tools can reuse it.
+    """
+    errors: list[str] = []
+    state_by_key = {
+        state.get("key"): state
+        for state in state_registry.get("states", [])
+        if isinstance(state, dict) and isinstance(state.get("key"), str)
+    } if isinstance(state_registry, dict) else None
+    state_keys = set(state_by_key) if state_by_key is not None else None
+    seen_item_ids: set[str] = set()
+    items = document.get("items", []) if isinstance(document, dict) else []
+    ownership_keys: dict[str, str] = {}
+    for raw_item in items:
+        if not isinstance(raw_item, dict) or not isinstance(raw_item.get("runtime"), dict):
+            continue
+        ownership_key = raw_item["runtime"].get("ownership_state_key")
+        if not isinstance(ownership_key, str) or not ownership_key:
+            continue
+        item_id = str(raw_item.get("item_id", ""))
+        if ownership_key in ownership_keys:
+            errors.append(
+                f"Item ownership state '{ownership_key}' is shared by '{ownership_keys[ownership_key]}' and '{item_id}'"
+            )
+        else:
+            ownership_keys[ownership_key] = item_id
+
+    def allows_inventory_write(state_key: str) -> bool:
+        if state_by_key is None or state_key not in state_by_key:
+            return False
+        definition = state_by_key[state_key]
+        write_sources = definition.get("write_sources", [])
+        return (
+            definition.get("read_only") is not True
+            and isinstance(write_sources, list)
+            and (not write_sources or "inventory" in write_sources)
+        )
+
+    for raw_item in items:
+        if not isinstance(raw_item, dict):
+            continue
+        item_id = raw_item.get("item_id")
+        if not isinstance(item_id, str):
+            continue
+        if item_id in seen_item_ids:
+            errors.append(f"Duplicate item ID: {item_id}")
+        seen_item_ids.add(item_id)
+
+        runtime = raw_item.get("runtime")
+        if runtime is None:
+            continue
+        if not isinstance(runtime, dict):
+            continue
+
+        runtime_type = runtime.get("type")
+        max_stack = runtime.get("max_stack")
+        legacy_stack = raw_item.get("stack_limit")
+        stackable = runtime.get("stackable")
+        unique = runtime.get("unique")
+        quest_critical = runtime.get("quest_critical")
+        equipment_slot = runtime.get("equipment_slot")
+        compatible_slots = runtime.get("compatible_slots", [])
+        occupies_slots = runtime.get("occupies_slots", [])
+
+        expected_kind = {
+            "consumable": "consumable",
+            "equipment": "equipment",
+            "quest": "quest",
+            "material": "material",
+            "key_item": "quest",
+        }.get(runtime_type)
+        if expected_kind is not None and raw_item.get("kind") != expected_kind:
+            errors.append(
+                f"Item '{item_id}' runtime type '{runtime_type}' conflicts with legacy kind '{raw_item.get('kind')}'"
+            )
+        if isinstance(max_stack, int) and isinstance(legacy_stack, int) and max_stack != legacy_stack:
+            errors.append(f"Item '{item_id}' max_stack must equal legacy stack_limit")
+        if stackable is False and max_stack != 1:
+            errors.append(f"Item '{item_id}' non-stackable runtime must use max_stack=1")
+        if unique is True and max_stack != 1:
+            errors.append(f"Item '{item_id}' unique runtime must use max_stack=1")
+
+        if runtime_type == "consumable" and isinstance(max_stack, int) and max_stack > 20:
+            errors.append(f"Item '{item_id}' consumable max_stack exceeds 20")
+        if runtime_type == "material" and isinstance(max_stack, int) and max_stack > 99:
+            errors.append(f"Item '{item_id}' material max_stack exceeds 99")
+
+        if runtime_type == "equipment":
+            if raw_item.get("stack_limit") != 1:
+                errors.append(f"Item '{item_id}' equipment must use legacy stack_limit=1")
+            if equipment_slot not in ITEM_EQUIPMENT_SLOTS:
+                errors.append(f"Item '{item_id}' equipment_slot is invalid")
+            if raw_item.get("equip_slot") != equipment_slot:
+                errors.append(f"Item '{item_id}' legacy equip_slot must match runtime equipment_slot")
+            if not isinstance(compatible_slots, list) or equipment_slot not in compatible_slots:
+                errors.append(f"Item '{item_id}' compatible_slots must include its primary equipment_slot")
+            if not isinstance(occupies_slots, list) or equipment_slot not in occupies_slots:
+                errors.append(f"Item '{item_id}' occupies_slots must include its primary equipment_slot")
+            if isinstance(occupies_slots, list) and len(occupies_slots) > 1:
+                if set(occupies_slots) != {"weapon", "off_hand"}:
+                    errors.append(f"Item '{item_id}' multi-slot equipment may only occupy weapon and off_hand")
+        else:
+            if equipment_slot is not None:
+                errors.append(f"Item '{item_id}' non-equipment runtime must use equipment_slot=null")
+            if compatible_slots != [] or occupies_slots != []:
+                errors.append(f"Item '{item_id}' non-equipment runtime must not declare equipment slots")
+            if raw_item.get("equip_slot") is not None:
+                errors.append(f"Item '{item_id}' non-equipment legacy equip_slot must be null")
+
+        if runtime_type == "quest" and runtime.get("storage") != "quest":
+            errors.append(f"Item '{item_id}' quest runtime must use quest storage")
+        if runtime_type == "key_item" and raw_item.get("key_item") is not True:
+            errors.append(f"Item '{item_id}' key_item runtime must set legacy key_item=true")
+        if quest_critical is True:
+            if raw_item.get("key_item") is not True:
+                errors.append(f"Item '{item_id}' quest-critical runtime must set legacy key_item=true")
+            if runtime.get("sellable") is not False or runtime.get("discardable") is not False:
+                errors.append(f"Item '{item_id}' quest-critical runtime cannot be sold or discarded")
+            if runtime.get("overflow_policy") != "custody":
+                errors.append(f"Item '{item_id}' quest-critical runtime must overflow to custody")
+
+        ownership_key = runtime.get("ownership_state_key")
+        if ownership_key is not None:
+            if not isinstance(ownership_key, str) or not ITEM_STATE_KEY_PATTERN.fullmatch(ownership_key):
+                errors.append(f"Item '{item_id}' ownership_state_key format is invalid")
+            elif state_keys is not None and ownership_key not in state_keys:
+                errors.append(f"Item '{item_id}' references unknown ownership state '{ownership_key}'")
+            elif state_by_key is not None and state_by_key[ownership_key].get("type") != "boolean":
+                errors.append(f"Item '{item_id}' ownership state '{ownership_key}' must be boolean")
+            elif state_by_key is not None and not allows_inventory_write(ownership_key):
+                errors.append(f"Item '{item_id}' ownership state '{ownership_key}' does not allow inventory writes")
+
+        if state_keys is not None:
+            for effect in runtime.get("use_effects", []):
+                if not isinstance(effect, dict):
+                    continue
+                effect_key = effect.get("key")
+                if effect_key not in state_keys:
+                    errors.append(f"Item '{item_id}' use effect references unknown state '{effect_key}'")
+                elif not allows_inventory_write(effect_key):
+                    errors.append(f"Item '{item_id}' use effect state '{effect_key}' does not allow inventory writes")
+                if effect_key in ownership_keys:
+                    errors.append(
+                        f"Item '{item_id}' use effect cannot modify ownership state '{effect_key}'"
+                    )
+    return errors
+
+
+def check_items(errors: list[str]) -> None:
+    item_path = CONTENT / "items/items.json"
+    state_path = CONTENT / "states/state_registry.json"
+    if item_path.exists() and state_path.exists():
+        errors.extend(validate_item_registry(load_json(item_path), load_json(state_path)))
+
+
 def check_portraits(errors: list[str]) -> None:
     data = load_json(CONTENT / "npcs/npcs.json")
     for npc in data.get("npcs", []):
@@ -189,6 +359,76 @@ def check_current_commission_contract(errors: list[str]) -> None:
             errors.append(f"Stale commission state must not remain in runtime registry: {stale}")
 
 
+def validate_quest_dependency_graph(document: Any) -> list[str]:
+    """Return deterministic semantic errors for a quest dependency document.
+
+    JSON Schema validates the shape of the document; this function owns graph
+    invariants that Schema cannot express, and is intentionally side-effect free
+    so tests and future conversion tools can call it directly.
+    """
+    errors: list[str] = []
+    graph: dict[str, list[str]] = {}
+    seen_owners: set[str] = set()
+
+    quests = document.get("quests", []) if isinstance(document, dict) else []
+    for raw_entry in quests:
+        if not isinstance(raw_entry, dict):
+            continue
+        owner = raw_entry.get("quest_id")
+        if not isinstance(owner, str):
+            continue
+        if owner in seen_owners:
+            errors.append(f"Duplicate quest dependency owner: {owner}")
+        else:
+            seen_owners.add(owner)
+            graph[owner] = []
+
+        seen_edges: set[str] = set()
+        for dependency in raw_entry.get("depends_on", []):
+            if not isinstance(dependency, str):
+                continue
+            if dependency in seen_edges:
+                errors.append(f"Quest '{owner}' repeats dependency '{dependency}'")
+                continue
+            seen_edges.add(dependency)
+            if dependency == owner:
+                errors.append(f"Quest dependency self-cycle: {owner}")
+                continue
+            graph.setdefault(owner, []).append(dependency)
+            graph.setdefault(dependency, [])
+
+    visit_state: dict[str, int] = {}
+    active_path: list[str] = []
+    reported_cycles: set[tuple[str, ...]] = set()
+
+    def visit(node: str) -> None:
+        visit_state[node] = 1
+        active_path.append(node)
+        for dependency in graph.get(node, []):
+            state = visit_state.get(dependency, 0)
+            if state == 0:
+                visit(dependency)
+            elif state == 1:
+                start = active_path.index(dependency)
+                cycle = tuple(active_path[start:] + [dependency])
+                if cycle not in reported_cycles:
+                    reported_cycles.add(cycle)
+                    errors.append(f"Quest dependency cycle: {' -> '.join(cycle)}")
+        active_path.pop()
+        visit_state[node] = 2
+
+    for quest_id in graph:
+        if visit_state.get(quest_id, 0) == 0:
+            visit(quest_id)
+    return errors
+
+
+def check_quest_dependencies(errors: list[str]) -> None:
+    path = CONTENT / "quest_dependencies.json"
+    if path.exists():
+        errors.extend(validate_quest_dependency_graph(load_json(path)))
+
+
 def check_offline_runtime(errors: list[str]) -> None:
     for path in (ROOT / "src").rglob("*.gd"):
         text = path.read_text(encoding="utf-8")
@@ -249,11 +489,13 @@ def main() -> int:
             errors.append(f"Missing schema: {schema_name}")
     check_manifest(errors)
     check_states(errors)
+    check_items(errors)
     check_portraits(errors)
     check_asset_counts(errors)
     check_no_formal_quests(errors)
     check_story_sources(errors)
     check_current_commission_contract(errors)
+    check_quest_dependencies(errors)
     check_offline_runtime(errors)
     check_agents(errors)
     check_agents_chain_sizes(errors)
@@ -270,6 +512,8 @@ def main() -> int:
     print("- portraits/backgrounds/audio placeholders: ok")
     print("- story source governance: ok")
     print("- current commission contract: ok")
+    print("- item runtime semantics: ok")
+    print("- quest dependency graph: ok")
     print("- offline runtime scan: ok")
     print("- AGENTS critical rules: ok")
     print("- AGENTS instruction-chain budget: ok")

@@ -67,8 +67,380 @@
               "string",
               "null"
             ]
+          },
+          "runtime": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "stackable",
+              "max_stack",
+              "sellable",
+              "discardable",
+              "unique",
+              "quest_critical",
+              "storage",
+              "overflow_policy",
+              "equipment_slot",
+              "compatible_slots",
+              "occupies_slots",
+              "stat_modifiers",
+              "use_effects",
+              "use_context"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "consumable",
+                  "equipment",
+                  "quest",
+                  "material",
+                  "key_item"
+                ]
+              },
+              "stackable": {
+                "type": "boolean"
+              },
+              "max_stack": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "sellable": {
+                "type": "boolean"
+              },
+              "discardable": {
+                "type": "boolean"
+              },
+              "unique": {
+                "type": "boolean"
+              },
+              "quest_critical": {
+                "type": "boolean"
+              },
+              "storage": {
+                "enum": [
+                  "normal",
+                  "quest"
+                ]
+              },
+              "overflow_policy": {
+                "enum": [
+                  "reject",
+                  "custody"
+                ]
+              },
+              "equipment_slot": {
+                "enum": [
+                  null,
+                  "weapon",
+                  "off_hand",
+                  "head",
+                  "body",
+                  "accessory_1",
+                  "accessory_2"
+                ]
+              },
+              "compatible_slots": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "weapon",
+                    "off_hand",
+                    "head",
+                    "body",
+                    "accessory_1",
+                    "accessory_2"
+                  ]
+                }
+              },
+              "occupies_slots": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "weapon",
+                    "off_hand",
+                    "head",
+                    "body",
+                    "accessory_1",
+                    "accessory_2"
+                  ]
+                }
+              },
+              "stat_modifiers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "stat",
+                    "value"
+                  ],
+                  "properties": {
+                    "stat": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.]+$"
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "use_effects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "op",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.]+$"
+                    },
+                    "op": {
+                      "enum": [
+                        "set",
+                        "inc",
+                        "dec"
+                      ]
+                    },
+                    "value": {}
+                  }
+                }
+              },
+              "use_context": {
+                "enum": [
+                  "battle_only",
+                  "field_only",
+                  "both"
+                ]
+              },
+              "ownership_state_key": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.]+$"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "stackable": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "stackable"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "max_stack": {
+                      "const": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "unique": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "unique"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "max_stack": {
+                      "const": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "quest_critical": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "quest_critical"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "sellable": {
+                      "const": false
+                    },
+                    "discardable": {
+                      "const": false
+                    },
+                    "overflow_policy": {
+                      "const": "custody"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "equipment"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "equipment_slot": {
+                      "type": "string"
+                    },
+                    "compatible_slots": {
+                      "minItems": 1
+                    },
+                    "occupies_slots": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "equipment_slot": {
+                      "const": null
+                    },
+                    "compatible_slots": {
+                      "maxItems": 0
+                    },
+                    "occupies_slots": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "consumable"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "max_stack": {
+                      "maximum": 20
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "material"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "max_stack": {
+                      "maximum": 99
+                    }
+                  }
+                }
+              }
+            ]
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "runtime"
+              ],
+              "properties": {
+                "runtime": {
+                  "properties": {
+                    "type": {
+                      "const": "equipment"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "kind": {
+                  "const": "equipment"
+                },
+                "stack_limit": {
+                  "const": 1
+                },
+                "equip_slot": {
+                  "enum": [
+                    "weapon",
+                    "off_hand",
+                    "head",
+                    "body",
+                    "accessory_1",
+                    "accessory_2"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "runtime"
+              ],
+              "properties": {
+                "runtime": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "consumable",
+                        "quest",
+                        "material",
+                        "key_item"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "equip_slot": {
+                  "const": null
+                }
+              }
+            }
+          }
+        ]
       }
     }
   }
