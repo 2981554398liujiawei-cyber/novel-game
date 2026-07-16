@@ -1,0 +1,20 @@
+{
+  "package": "王者_新手村返修_R1.1_v1.4.1.zip",
+  "sha256": "684cb468a2ad385a74f4a20234cb581a0ab4fa2670a01b3572a1f183be3d289b",
+  "checked_at": "2026-07-16T11:38:22.659533+00:00",
+  "file_count": 9,
+  "markdown_count": 8,
+  "complete_script_count": 4,
+  "pipeline_metadata_ready_count": 0,
+  "manifest_files": [
+    "王者_新手村返修_R1.1_v1.4.1/manifest_increment.json"
+  ],
+  "unsafe_paths": [],
+  "issues": [
+    {
+      "code": "STORY_NOT_DATA_READY",
+      "message": "4份完整剧本尚未采用story-meta/story-node结构"
+    }
+  ],
+  "release_ready": false
+}

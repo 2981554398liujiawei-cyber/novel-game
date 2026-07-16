@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "region_id": "NV7",
+  "title": "第七新手村",
+  "runtime_status": "EMPTY_SHELL",
+  "tasks": [
+    {"task_id": "NV_MAIN_001", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_002", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_003", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_004", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_005", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_006", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_007", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null},
+    {"task_id": "NV_MAIN_008", "status": "SOURCE_ONLY", "script_path": null, "runtime_path": null}
+  ]
+}

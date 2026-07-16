@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryApproval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["approval_version", "story_id", "status", "reviewer", "approved_at", "source_sha256", "canonical_sha256", "notes"],
+  "properties": {
+    "approval_version": {"const": "1.0.0"},
+    "story_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "status": {"enum": ["pending", "changes_requested", "approved", "revoked"]},
+    "reviewer": {"type": "string", "minLength": 1},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "canonical_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "notes": {"type": "string"}
+  }
+}

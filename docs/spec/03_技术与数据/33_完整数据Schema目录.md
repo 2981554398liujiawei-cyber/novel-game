@@ -16,6 +16,12 @@
 | `save.schema.json` | 存档结构 | 版本、GameState、可选InventoryManager结构化快照、随机种子、当前节点 |
 | `content_manifest.schema.json` | 运行内容清单 | 文件类型、哈希、加载顺序、禁止夹具 |
 | `relationship.schema.json` | 关系运行注册表 | 四维关系、五级阶段、状态键映射、边界、拒绝续接、冲突与文本版本标签 |
+| `story_ir.schema.json` | Normalized Story Model | 源哈希、完整任务模型、节点指标、Manager所有权与结构哈希 |
+| `story_approval.schema.json` | 人工批准记录 | 任务ID、审阅者、时间、源哈希与结构哈希 |
+| `story_package_manifest.schema.json` | 原始剧情包登记 | incoming文件、权限状态、哈希与预检报告 |
+| `story_region_manifest.schema.json` | 区域接入状态 | SOURCE_ONLY至VERIFIED状态、剧本与运行路径 |
+| `story_chapter_mapping.schema.json` | 原著章节映射 | KEEP/MERGE/MIGRATE/DROP完整且不重复 |
+| `foreshadowing_registry.schema.json` | 伏笔登记 | 首次出现、强化、误导、揭示、回收与状态 |
 
 ## 2. 演出注册表
 

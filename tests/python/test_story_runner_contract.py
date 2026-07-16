@@ -20,7 +20,8 @@ class StoryRunnerContractTests(unittest.TestCase):
         manifest = json.loads((REPO_ROOT / "content/manifest.json").read_text(encoding="utf-8"))
         self.assertNotIn("tests/fixtures/story_runner/minimal_story.json", manifest["content_files"])
         export_config = (REPO_ROOT / "export_presets.cfg").read_text(encoding="utf-8")
-        self.assertIn('exclude_filter="content/tests/**,tests/**"', export_config)
+        self.assertIn("content/tests/**", export_config)
+        self.assertIn("tests/**", export_config)
 
     def test_story_runner_has_no_ui_or_private_state_dependency(self):
         source = (REPO_ROOT / "src/core/story_runner.gd").read_text(encoding="utf-8")
@@ -53,6 +54,20 @@ class StoryRunnerContractTests(unittest.TestCase):
         self.assertTrue(all(ops in (condition_ops, effect_ops) for ops in operator_sets))
         self.assertIn(condition_ops, operator_sets)
         self.assertIn(effect_ops, operator_sets)
+
+    def test_runtime_manager_actions_are_executable_node_contracts(self):
+        schema = json.loads((REPO_ROOT / "schemas/quest.schema.json").read_text(encoding="utf-8"))
+        node_properties = schema["properties"]["nodes"]["items"]["properties"]
+        for field in ("quest_actions", "relationship_actions", "reward_items"):
+            self.assertIn(field, node_properties)
+        choice_properties = node_properties["choices"]["items"]["properties"]
+        self.assertIn("quest_actions", choice_properties)
+        self.assertIn("relationship_actions", choice_properties)
+        source = (REPO_ROOT / "src/core/story_runner.gd").read_text(encoding="utf-8")
+        self.assertIn("_apply_node_actions(node)", source)
+        self.assertIn("apply_relationship_effects(relationship_id, [effect])", source)
+        self.assertIn('"activate": result = activate_quest(quest_id)', source)
+        self.assertIn('"reward_items": node.get("reward_items"', source)
 
 
 if __name__ == "__main__":

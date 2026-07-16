@@ -216,7 +216,7 @@ func choose_choice(choice_id: String) -> bool:
         return _fail("STORY_TARGET_MISSING", "Choice does not declare a target", _current_node_id, choice_id)
     if not _nodes.has(target):
         return _fail("STORY_NODE_NOT_FOUND", "Choice jump target does not exist", target, choice_id)
-    if not _apply_effects(choice.get("effects", [])):
+    if not _apply_node_actions(choice):
         return false
     return _enter_node(target, 0)
 
@@ -358,7 +358,7 @@ func _enter_node(node_id: String, automatic_transitions: int, apply_entry_effect
             return _fail("STORY_CONDITION_NO_FALLBACK", "A hidden node has no next target", node_id)
         return _enter_node(skip_target, automatic_transitions + 1, apply_entry_effects)
 
-    if apply_entry_effects and not _apply_effects(node.get("effects", [])):
+    if apply_entry_effects and not _apply_node_actions(node):
         return false
 
     match node_type:
@@ -504,6 +504,59 @@ func _apply_effects(raw_effects: Variant) -> bool:
     return true
 
 
+func _apply_node_actions(node: Dictionary) -> bool:
+    if not _apply_effects(node.get("effects", [])):
+        return false
+    var raw_quest_actions: Variant = node.get("quest_actions", [])
+    if not raw_quest_actions is Array:
+        return _fail("STORY_DATA_INVALID", "Story quest_actions must be an array", _current_node_id)
+    for raw_action: Variant in raw_quest_actions:
+        if not raw_action is Dictionary:
+            return _fail("STORY_DATA_INVALID", "Every quest action must be an object", _current_node_id)
+        if not _apply_quest_action(raw_action):
+            return false
+    var raw_relationship_actions: Variant = node.get("relationship_actions", [])
+    if not raw_relationship_actions is Array:
+        return _fail("STORY_DATA_INVALID", "Story relationship_actions must be an array", _current_node_id)
+    for raw_action: Variant in raw_relationship_actions:
+        if not raw_action is Dictionary:
+            return _fail("STORY_DATA_INVALID", "Every relationship action must be an object", _current_node_id)
+        var relationship_id := str(raw_action.get("relationship_id", ""))
+        if relationship_id.is_empty():
+            return _fail("STORY_DATA_INVALID", "Relationship action is missing relationship_id", _current_node_id)
+        var effect: Dictionary = raw_action.duplicate(true)
+        effect.erase("relationship_id")
+        effect["dimension_id"] = effect.get("dimension", "")
+        effect.erase("dimension")
+        var relationship_result := apply_relationship_effects(relationship_id, [effect])
+        if not bool(relationship_result.get("ok", false)):
+            return _fail(
+                "STORY_RELATIONSHIP_ACTION_FAILED",
+                str(relationship_result.get("message", "RelationshipManager rejected story action")),
+                _current_node_id, "", relationship_result
+            )
+    return true
+
+
+func _apply_quest_action(action: Dictionary) -> bool:
+    var action_type := str(action.get("action", ""))
+    var quest_id := str(action.get("quest_id", ""))
+    var result: Dictionary
+    match action_type:
+        "activate": result = activate_quest(quest_id)
+        "update_objective":
+            result = update_quest_objective(quest_id, str(action.get("objective_id", "")), action.get("update", {}))
+        "set_qualified": result = set_quest_qualified(quest_id)
+        "complete": result = complete_quest(quest_id)
+        "fail": result = fail_quest(quest_id, str(action.get("continuation_id", "")))
+        "suspend": result = suspend_quest(quest_id, str(action.get("continuation_id", "")))
+        "resume": result = resume_quest(quest_id)
+        "reopen": result = reopen_quest(quest_id)
+        _:
+            return _fail("STORY_QUEST_ACTION_INVALID", "Unknown story quest action '%s'" % action_type, _current_node_id)
+    return bool(result.get("ok", false))
+
+
 func _presentation_payload(node: Dictionary) -> Dictionary:
     return {
         "story_id": _story_id,
@@ -518,6 +571,7 @@ func _presentation_payload(node: Dictionary) -> Dictionary:
         "portrait_action": str(node.get("portrait_action", "")),
         "combat_ref": str(node.get("combat_ref", "")),
         "reward_item_ids": node.get("reward_item_ids", []).duplicate(true),
+        "reward_items": node.get("reward_items", []).duplicate(true),
     }
 
 

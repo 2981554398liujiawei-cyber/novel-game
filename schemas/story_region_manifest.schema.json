@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryRegionManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "region_id", "title", "runtime_status", "tasks"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "region_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "title": {"type": "string", "minLength": 1},
+    "runtime_status": {"enum": ["EMPTY_SHELL", "PARTIAL", "READY", "VERIFIED"]},
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "status", "script_path", "runtime_path"],
+        "properties": {
+          "task_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "status": {"enum": ["SOURCE_ONLY", "DRAFT", "COMPLETE_SCRIPT", "PARSED", "DATA_READY", "VERIFIED"]},
+          "script_path": {"type": ["string", "null"]},
+          "runtime_path": {"type": ["string", "null"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "SOURCE_ONLY"}}},
+            "then": {"properties": {"script_path": {"type": "null"}, "runtime_path": {"type": "null"}}}
+          },
+          {
+            "if": {"properties": {"status": {"enum": ["DRAFT", "COMPLETE_SCRIPT", "PARSED"]}}},
+            "then": {"properties": {"script_path": {"type": "string", "minLength": 1}, "runtime_path": {"type": "null"}}}
+          },
+          {
+            "if": {"properties": {"status": {"enum": ["DATA_READY", "VERIFIED"]}}},
+            "then": {"properties": {"script_path": {"type": "string", "minLength": 1}, "runtime_path": {"type": "string", "minLength": 1}}}
+          }
+        ]
+      }
+    }
+  }
+}

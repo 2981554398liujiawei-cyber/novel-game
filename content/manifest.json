@@ -13,9 +13,21 @@
     "presentation_tags.json",
     "quest_dependencies.json"
   ],
+  "planned_content": [
+    {"content_id": "NV_MAIN_001", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_002", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_003", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_004", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_005", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_006", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_007", "region_id": "NV7", "status": "not_loaded", "path": null},
+    {"content_id": "NV_MAIN_008", "region_id": "NV7", "status": "not_loaded", "path": null}
+  ],
   "forbidden_path_fragments": [
     "tests/fixtures",
     "content/tests",
-    "fixtures/"
+    "fixtures/",
+    "docs/story",
+    "raw_sources"
   ]
 }

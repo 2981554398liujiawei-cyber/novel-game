@@ -28,6 +28,50 @@
     "allowed_loops",
     "test_cases"
   ],
+  "$defs": {
+    "questAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "quest_id"],
+      "properties": {
+        "action": {"enum": ["activate", "update_objective", "set_qualified", "complete", "fail", "suspend", "resume", "reopen"]},
+        "quest_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "objective_id": {"type": "string", "minLength": 1},
+        "update": {"type": "object"},
+        "continuation_id": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"action": {"const": "update_objective"}}, "required": ["action"]},
+          "then": {"required": ["objective_id", "update"]}
+        },
+        {
+          "if": {"properties": {"action": {"const": "fail"}}, "required": ["action"]},
+          "then": {"required": ["continuation_id"]}
+        }
+      ]
+    },
+    "relationshipAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relationship_id", "dimension", "op", "value"],
+      "properties": {
+        "relationship_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "dimension": {"enum": ["trust", "affection", "respect", "tension"]},
+        "op": {"enum": ["set", "inc", "dec"]},
+        "value": {"type": "number"}
+      }
+    },
+    "rewardItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "quantity"],
+      "properties": {
+        "item_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "quantity": {"type": "integer", "minimum": 1}
+      }
+    }
+  },
   "properties": {
     "schema_version": {
       "type": "string"
@@ -449,6 +493,14 @@
                     }
                   }
                 },
+                "quest_actions": {
+                  "type": "array",
+                  "items": {"$ref": "#/$defs/questAction"}
+                },
+                "relationship_actions": {
+                  "type": "array",
+                  "items": {"$ref": "#/$defs/relationshipAction"}
+                },
                 "hidden_when_locked": {
                   "type": "boolean"
                 }
@@ -463,6 +515,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "reward_items": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/rewardItem"}
+          },
+          "quest_actions": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/questAction"}
+          },
+          "relationship_actions": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/relationshipAction"}
           },
           "terminal": {
             "type": "boolean"

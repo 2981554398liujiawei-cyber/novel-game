@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import sys
 from collections import Counter
@@ -39,6 +40,18 @@ REQUIRED_FILES = [
     "docs/story/AGENTS.md",
     "docs/story/source_manifest.json",
     "docs/story/active/00_第七新手村剧情源接入索引.md",
+    "docs/story/FORMAT.md",
+    "docs/story/CONTRACT.md",
+    "docs/story/story_package_manifest.json",
+    "docs/story/scripts/nv7/region_manifest.json",
+    "docs/story/chapter_mapping_nv7.json",
+    "docs/story/foreshadowing_registry.json",
+    "docs/story/reviews/README.md",
+    "docs/story/generated_reviews/README.md",
+    "docs/story/scripts/nv7/R1/README.md",
+    "docs/story/scripts/nv7/R2/README.md",
+    "content/quests/nv7/README.md",
+    "content/story/README.md",
 ]
 
 SCHEMA_MAP = {
@@ -53,6 +66,10 @@ SCHEMA_MAP = {
     "content/presentation_tags.json": "presentation_tags.schema.json",
     "content/manifest.json": "content_manifest.schema.json",
     "docs/story/source_manifest.json": "story_source_manifest.schema.json",
+    "docs/story/story_package_manifest.json": "story_package_manifest.schema.json",
+    "docs/story/scripts/nv7/region_manifest.json": "story_region_manifest.schema.json",
+    "docs/story/chapter_mapping_nv7.json": "story_chapter_mapping.schema.json",
+    "docs/story/foreshadowing_registry.json": "foreshadowing_registry.schema.json",
 }
 
 FORBIDDEN_RUNTIME_TOKENS = [
@@ -88,14 +105,51 @@ def check_manifest(errors: list[str]) -> None:
     manifest = load_json(manifest_path)
     listed = manifest.get("content_files", [])
     forbidden = manifest.get("forbidden_path_fragments", [])
+    normalized_forbidden = [str(fragment).replace("\\", "/").lower() for fragment in forbidden]
+    required_forbidden = {"tests/fixtures", "content/tests", "fixtures/", "docs/story", "raw_sources"}
+    for missing in sorted(required_forbidden - set(normalized_forbidden)):
+        errors.append(f"Manifest is missing required forbidden path protection: {missing}")
+    if len(listed) != len(set(listed)):
+        errors.append("Manifest repeats a content file")
     for rel in listed:
-        if any(fragment in rel for fragment in forbidden):
+        normalized = str(rel).replace("\\", "/").lower()
+        if any(fragment in normalized for fragment in normalized_forbidden):
             errors.append(f"Manifest references forbidden path: {rel}")
         if not (CONTENT / rel).exists():
             errors.append(f"Manifest references missing file: {rel}")
     for rel in listed:
         if rel.startswith("quests/") and not rel.endswith(".json"):
             errors.append(f"Quest manifest entry must be JSON: {rel}")
+        if rel.startswith("quests/") and (CONTENT / rel).exists():
+            try:
+                status = load_json(CONTENT / rel).get("content_status")
+            except Exception:  # JSON/schema validation reports the precise error.
+                continue
+            if status not in {"data_ready", "implemented", "verified"}:
+                errors.append(f"Manifest cannot load non-runtime quest status '{status}': {rel}")
+
+    planned = manifest.get("planned_content", [])
+    planned_ids = [entry.get("content_id") for entry in planned if isinstance(entry, dict)]
+    expected_nv7 = {f"NV_MAIN_{index:03d}" for index in range(1, 9)}
+    if set(planned_ids) != expected_nv7 or len(planned_ids) != len(expected_nv7):
+        errors.append("Manifest planned_content must contain exactly NV_MAIN_001 through NV_MAIN_008")
+    for entry in planned:
+        if not isinstance(entry, dict):
+            continue
+        status = entry.get("status")
+        path = entry.get("path")
+        if status == "not_loaded":
+            if path is not None:
+                errors.append(f"Unloaded planned content must use a null path: {entry.get('content_id')}")
+            continue
+        if not isinstance(path, str) or path not in listed:
+            errors.append(f"Loaded planned content must reference a manifest quest path: {entry.get('content_id')}")
+            continue
+        document_path = CONTENT / path
+        if document_path.exists():
+            document = load_json(document_path)
+            if document.get("quest_id") != entry.get("content_id") or document.get("content_status") != status:
+                errors.append(f"Loaded planned content metadata does not match runtime quest: {entry.get('content_id')}")
 
 
 def check_states(errors: list[str]) -> None:
@@ -447,12 +501,127 @@ def check_asset_counts(errors: list[str]) -> None:
         errors.append(f"Expected 3 music placeholders, found {len(music_files)}")
 
 
-def check_no_formal_quests(errors: list[str]) -> None:
-    quest_files = list((CONTENT / "quests").glob("*.json"))
-    if quest_files:
-        quest_schema = SCHEMAS / "quest.schema.json"
-        for quest in quest_files:
-            validate_schema(quest, quest_schema, errors)
+def check_formal_quests(errors: list[str]) -> None:
+    manifest = load_json(CONTENT / "manifest.json")
+    listed = {str(path).replace("\\", "/") for path in manifest.get("content_files", [])}
+    quest_schema = SCHEMAS / "quest.schema.json"
+    for quest in sorted((CONTENT / "quests").rglob("*.json")):
+        relative = quest.relative_to(CONTENT).as_posix()
+        validate_schema(quest, quest_schema, errors)
+        try:
+            status = load_json(quest).get("content_status")
+        except Exception:
+            continue
+        if status not in {"data_ready", "implemented", "verified"}:
+            errors.append(f"Runtime quest directory contains non-runtime status '{status}': {relative}")
+        if relative not in listed:
+            errors.append(f"Runtime quest is not registered in content manifest: {relative}")
+
+
+def check_story_governance(errors: list[str]) -> None:
+    region = load_json(ROOT / "docs/story/scripts/nv7/region_manifest.json")
+    region_ids = [entry.get("task_id") for entry in region.get("tasks", [])]
+    expected = [f"NV_MAIN_{index:03d}" for index in range(1, 9)]
+    if region_ids != expected:
+        errors.append("NV7 region manifest must list NV_MAIN_001 through NV_MAIN_008 in order")
+    for entry in region.get("tasks", []):
+        status = entry.get("status")
+        script_path = entry.get("script_path")
+        runtime_path = entry.get("runtime_path")
+        if status == "SOURCE_ONLY" and (script_path is not None or runtime_path is not None):
+            errors.append(f"SOURCE_ONLY NV7 task must not declare paths: {entry.get('task_id')}")
+        elif status in {"DRAFT", "COMPLETE_SCRIPT", "PARSED"} and (
+            not isinstance(script_path, str) or runtime_path is not None
+        ):
+            errors.append(f"Script-stage NV7 task must declare only script_path: {entry.get('task_id')}")
+        elif status in {"DATA_READY", "VERIFIED"} and (
+            not isinstance(script_path, str) or not isinstance(runtime_path, str)
+        ):
+            errors.append(f"Runtime-stage NV7 task must declare script and runtime paths: {entry.get('task_id')}")
+
+    root_manifest = load_json(CONTENT / "manifest.json")
+    root_entries = root_manifest.get("planned_content", [])
+    root_ids = [entry.get("content_id") for entry in root_entries]
+    if root_ids != region_ids:
+        errors.append("NV7 region manifest and runtime planned_content disagree")
+    root_by_id = {entry.get("content_id"): entry for entry in root_entries}
+    for entry in region.get("tasks", []):
+        root_entry = root_by_id.get(entry.get("task_id"), {})
+        if entry.get("status") == "SOURCE_ONLY" and root_entry.get("status") != "not_loaded":
+            errors.append(f"SOURCE_ONLY region task must remain unloaded at runtime: {entry.get('task_id')}")
+        if entry.get("status") in {"DATA_READY", "VERIFIED"} and root_entry.get("status") not in {"data_ready", "implemented", "verified"}:
+            errors.append(f"Runtime-ready region task is not loaded by content manifest: {entry.get('task_id')}")
+    task_statuses = {entry.get("status") for entry in region.get("tasks", [])}
+    expected_runtime_status = (
+        "EMPTY_SHELL" if task_statuses == {"SOURCE_ONLY"}
+        else "VERIFIED" if task_statuses == {"VERIFIED"}
+        else "READY" if task_statuses <= {"DATA_READY", "VERIFIED"}
+        else "PARTIAL"
+    )
+    if region.get("runtime_status") != expected_runtime_status:
+        errors.append(f"NV7 runtime_status must be {expected_runtime_status} for its task states")
+
+    chapter_map = load_json(ROOT / "docs/story/chapter_mapping_nv7.json")
+    chapters = chapter_map.get("source_chapters", [])
+    mapped = [entry.get("chapter_id") for entry in chapter_map.get("mappings", [])]
+    if len(mapped) != len(set(mapped)):
+        errors.append("Chapter mapping repeats a source chapter")
+    unknown = sorted(set(mapped) - set(chapters))
+    for chapter_id in unknown:
+        errors.append(f"Chapter mapping references undeclared chapter: {chapter_id}")
+    if chapter_map.get("coverage_status") == "COMPLETE":
+        if not chapters:
+            errors.append("Complete chapter mapping must declare at least one source chapter")
+        if set(mapped) != set(chapters):
+            errors.append("Complete chapter mapping must classify every source chapter exactly once")
+        for mapping in chapter_map.get("mappings", []):
+            for task_id in mapping.get("task_ids", []):
+                if task_id not in region_ids:
+                    errors.append(f"Chapter mapping references unknown NV7 task: {task_id}")
+
+    registry = load_json(ROOT / "docs/story/foreshadowing_registry.json")
+    ids = [entry.get("foreshadowing_id") for entry in registry.get("entries", [])]
+    expected_foreshadowing = {
+        "RETURN_CHANNEL", "EXTERNAL_AUTHORITY", "PLAYERS_TRAPPED", "WORLD_REALITY",
+        "LIVE_CREATURE_PURCHASE", "SILVER_BLACK_SYSTEM_MATERIAL", "GREED_RING",
+        "LANYIN_CHARACTER_ARC",
+    }
+    if set(ids) != expected_foreshadowing or len(ids) != len(expected_foreshadowing):
+        errors.append("Foreshadowing registry must contain the eight reserved canonical IDs exactly once")
+
+    package_manifest = load_json(ROOT / "docs/story/story_package_manifest.json")
+    packages = package_manifest.get("packages", [])
+    registered_files = {entry.get("file") for entry in packages if isinstance(entry, dict)}
+    incoming_root = ROOT / "docs/story/raw_sources/incoming"
+    actual_files = {
+        path.relative_to(ROOT).as_posix()
+        for path in incoming_root.glob("*.zip")
+    }
+    if registered_files != actual_files or len(packages) != len(actual_files):
+        errors.append("Incoming story ZIP files and story package manifest disagree")
+    for package in packages:
+        if not isinstance(package, dict):
+            continue
+        package_path = ROOT / str(package.get("file", ""))
+        report_path = ROOT / str(package.get("preflight_report", ""))
+        if not package_path.exists() or not report_path.exists():
+            errors.append(f"Story package source or preflight report is missing: {package.get('package_id')}")
+            continue
+        digest = hashlib.sha256(package_path.read_bytes()).hexdigest()
+        report = load_json(report_path)
+        if digest != package.get("sha256") or report.get("sha256") != digest:
+            errors.append(f"Story package hash chain is invalid: {package.get('package_id')}")
+        if report.get("package") != package_path.name:
+            errors.append(f"Story preflight report names the wrong package: {package.get('package_id')}")
+
+
+def check_export_exclusions(errors: list[str]) -> None:
+    preset = (ROOT / "export_presets.cfg").read_text(encoding="utf-8")
+    match = re.search(r'^exclude_filter="([^"]*)"', preset, re.MULTILINE)
+    filters = set(match.group(1).split(",")) if match else set()
+    required = {"content/tests/**", "tests/**", "docs/story/raw_sources/**", "docs/story/**/fixtures/**"}
+    for missing in sorted(required - filters):
+        errors.append(f"Windows export does not exclude development content: {missing}")
 
 
 def check_story_sources(errors: list[str]) -> None:
@@ -989,8 +1158,10 @@ def main() -> int:
     check_combat_registries(errors)
     check_portraits(errors)
     check_asset_counts(errors)
-    check_no_formal_quests(errors)
+    check_formal_quests(errors)
     check_story_sources(errors)
+    check_story_governance(errors)
+    check_export_exclusions(errors)
     check_current_commission_contract(errors)
     check_quest_dependencies(errors)
     check_offline_runtime(errors)
@@ -1008,6 +1179,8 @@ def main() -> int:
     print("- manifest: ok")
     print("- portraits/backgrounds/audio placeholders: ok")
     print("- story source governance: ok")
+    print("- story region/chapter/foreshadowing governance: ok")
+    print("- export development-content exclusions: ok")
     print("- current commission contract: ok")
     print("- item runtime semantics: ok")
     print("- combat registry semantics: ok")

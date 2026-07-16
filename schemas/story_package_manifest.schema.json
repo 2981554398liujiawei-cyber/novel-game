@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryPackageManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "packages"],
+  "properties": {
+    "manifest_version": {"const": "1.0.0"},
+    "packages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["package_id", "file", "scope", "intake_status", "authority", "sha256", "preflight_report"],
+        "properties": {
+          "package_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"},
+          "file": {"type": "string", "pattern": "^docs/story/raw_sources/incoming/"},
+          "scope": {"type": "string", "minLength": 1},
+          "intake_status": {"enum": ["received", "preflight_failed", "preflight_passed", "human_approved", "revoked"]},
+          "authority": {"const": "incoming_unapproved"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "preflight_report": {"type": "string", "pattern": "^docs/story/preflight/"}
+        }
+      }
+    }
+  }
+}
