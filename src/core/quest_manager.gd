@@ -28,6 +28,7 @@ var last_error: Dictionary = {}
 
 var _content_loader: RefCounted
 var _game_state: RefCounted
+var _relationship_manager: RefCounted
 var _definitions: Dictionary = {}
 var _objectives: Dictionary = {}
 var _dependency_map: Dictionary = {}
@@ -97,6 +98,30 @@ func initialize(content_loader: RefCounted, game_state: RefCounted) -> bool:
 
 func is_initialized() -> bool:
     return _initialized
+
+
+func bind_relationship_manager(relationship_manager: RefCounted = null) -> Dictionary:
+    if not _require_initialized():
+        return last_error.duplicate(true)
+    if relationship_manager != null and (
+        not relationship_manager.has_method("evaluate_condition")
+        or not relationship_manager.has_method("apply_effects")
+    ):
+        return _set_error(QUEST_DEFINITION_INVALID, "RelationshipManager binding does not expose the required interface")
+    _relationship_manager = relationship_manager
+    return _result(true, "OK", "Quest relationship interface updated", "", {"bound": relationship_manager != null})
+
+
+func evaluate_relationship_condition(relationship_id: String, condition: Dictionary) -> Dictionary:
+    if _relationship_manager == null:
+        return _set_error(QUEST_DEFINITION_INVALID, "RelationshipManager is not bound", "", {"relationship_id": relationship_id})
+    return _relationship_manager.call("evaluate_condition", relationship_id, condition)
+
+
+func apply_relationship_effects(relationship_id: String, effects: Array) -> Dictionary:
+    if _relationship_manager == null:
+        return _set_error(QUEST_DEFINITION_INVALID, "RelationshipManager is not bound", "", {"relationship_id": relationship_id})
+    return _relationship_manager.call("apply_effects", relationship_id, effects, "quest")
 
 
 func has_quest(quest_id: String) -> bool:
@@ -1002,6 +1027,7 @@ func _clear_runtime() -> void:
     last_error = {}
     _content_loader = null
     _game_state = null
+    _relationship_manager = null
     _definitions = {}
     _objectives = {}
     _dependency_map = {}

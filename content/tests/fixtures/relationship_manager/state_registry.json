@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "states": [
+    {"key": "test.relationship.story_gate", "type": "boolean", "default": true, "persistent": true, "writers": [], "readers": [], "write_sources": ["story", "debug"]},
+
+    {"key": "test.relationship.alpha.trust", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.affection", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.respect", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.tension", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.stage", "type": "string", "default": "stranger", "allowed": ["stranger", "acquaintance", "trusted", "close", "intimate"], "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.flag.mutual_interest", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.flag.flirt_rejected", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.flag.contact_rejected", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.flag.romance_rejected", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.flag.quest_access", "type": "boolean", "default": true, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha.boundary.romance_allowed", "type": "boolean", "default": true, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.boundary.physical_contact_allowed", "type": "boolean", "default": true, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.boundary.trust_sensitive", "type": "boolean", "default": true, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.boundary.conflict_active", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.boundary.romance_rejected", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.conflict.active", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.conflict.reason", "type": "string", "default": "", "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha.conflict.repair_progress", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+
+    {"key": "test.relationship.beta.trust", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.beta.affection", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.beta.respect", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.beta.tension", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.beta.stage", "type": "string", "default": "stranger", "allowed": ["stranger", "acquaintance", "trusted", "close", "intimate"], "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.beta.conflict.active", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.beta.conflict.reason", "type": "string", "default": "", "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.beta.conflict.repair_progress", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+
+    {"key": "test.relationship.alpha_beta.trust", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha_beta.affection", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha_beta.respect", "type": "integer", "default": 1, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha_beta.tension", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship", "quest"]},
+    {"key": "test.relationship.alpha_beta.stage", "type": "string", "default": "stranger", "allowed": ["stranger", "acquaintance", "trusted", "close", "intimate"], "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha_beta.conflict.active", "type": "boolean", "default": false, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha_beta.conflict.reason", "type": "string", "default": "", "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]},
+    {"key": "test.relationship.alpha_beta.conflict.repair_progress", "type": "integer", "default": 0, "min": 0, "max": 10, "persistent": true, "writers": [], "readers": [], "write_sources": ["relationship"]}
+  ]
+}

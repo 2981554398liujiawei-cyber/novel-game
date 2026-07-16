@@ -15,6 +15,7 @@ const SCHEMA_FILES := {
     "enemies/enemies.json": "enemy.schema.json",
     "skills/skills.json": "skill.schema.json",
     "combats/combats.json": "combat.schema.json",
+    "relationships/relationships.json": "relationship.schema.json",
     "presentation_tags.json": "presentation_tags.schema.json",
     "quest_dependencies.json": "quest_dependency.schema.json",
 }
@@ -26,6 +27,7 @@ const COLLECTION_IDS := {
     "enemies": ["enemy_id", "enemy"],
     "skills": ["skill_id", "skill"],
     "combats": ["combat_id", "combat"],
+    "relationships": ["relationship_id", "relationship"],
 }
 
 var content_root := ""
@@ -166,6 +168,24 @@ func get_quest_definitions() -> Array:
 func get_quest_dependencies() -> Dictionary:
     var dependencies: Variant = loaded_files.get("quest_dependencies.json", {})
     return dependencies.duplicate(true) if dependencies is Dictionary else {}
+
+
+func get_relationship(relationship_id: String) -> Variant:
+    return _get_typed_definition(relationship_id, "relationship")
+
+
+func get_relationship_definitions() -> Array:
+    return _get_definitions_by_type("relationship")
+
+
+func get_relationship_registry() -> Dictionary:
+    var document: Variant = loaded_files.get("relationships/relationships.json", {})
+    return document.duplicate(true) if document is Dictionary else {
+        "schema_version": "1.0.0",
+        "dimension_definitions": [],
+        "stage_definitions": [],
+        "relationships": [],
+    }
 
 
 func get_index_size() -> int:
@@ -391,6 +411,12 @@ func _validate_references() -> bool:
                 for excluded_quest: Variant in data.get("mutual_exclusions", []):
                     if not _require_global_reference(str(excluded_quest), "quest", source, "mutually exclusive quest"):
                         return false
+            "relationship":
+                pass
+
+    var relationship_registry: Variant = loaded_files.get("relationships/relationships.json")
+    if relationship_registry is Dictionary and not _validate_relationship_registry(relationship_registry, "relationships/relationships.json"):
+        return false
 
     var dependencies: Variant = loaded_files.get("quest_dependencies.json")
     if dependencies is Dictionary:
@@ -746,6 +772,112 @@ func _inventory_state_write_allowed(state_key: String, source: String) -> bool:
     return true
 
 
+func _validate_relationship_registry(registry: Dictionary, source: String) -> bool:
+    var dimensions := {}
+    for raw_dimension: Variant in registry.get("dimension_definitions", []):
+        var dimension_id := str(raw_dimension.get("dimension_id", ""))
+        if dimensions.has(dimension_id):
+            return _set_error("DUPLICATE_CONTENT_ID", "Duplicate relationship dimension '%s'" % dimension_id, source)
+        dimensions[dimension_id] = true
+    var stages := {}
+    for raw_stage: Variant in registry.get("stage_definitions", []):
+        var stage_id := str(raw_stage.get("stage_id", ""))
+        if stages.has(stage_id):
+            return _set_error("DUPLICATE_CONTENT_ID", "Duplicate relationship stage '%s'" % stage_id, source)
+        stages[stage_id] = true
+    var actor_pairs := {}
+    for raw_relationship: Variant in registry.get("relationships", []):
+        var relationship: Dictionary = raw_relationship
+        var relationship_id := str(relationship.get("relationship_id", ""))
+        var pair_key := "%s>%s" % [relationship.get("actor_id", ""), relationship.get("target_id", "")]
+        if actor_pairs.has(pair_key):
+            return _set_error("DUPLICATE_CONTENT_ID", "Duplicate directed relationship actor/target pair", source)
+        actor_pairs[pair_key] = relationship_id
+        var flag_ids := {}
+        var boundary_ids := {}
+        for dimension_id: Variant in relationship.get("dimensions", {}).keys():
+            if not dimensions.has(str(dimension_id)):
+                return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship dimension '%s'" % dimension_id, source)
+            if not _relationship_state_write_allowed(str(relationship["dimensions"][dimension_id]), ["integer", "number"], source):
+                return false
+        if not _relationship_state_write_allowed(str(relationship.get("stage_state_key", "")), ["string"], source):
+            return false
+        for raw_flag: Variant in relationship.get("flags", []):
+            var flag_id := str(raw_flag.get("id", ""))
+            if flag_ids.has(flag_id):
+                return _set_error("DUPLICATE_CONTENT_ID", "Duplicate relationship flag '%s'" % flag_id, source)
+            flag_ids[flag_id] = true
+            if not _relationship_state_write_allowed(str(raw_flag.get("state_key", "")), ["boolean"], source):
+                return false
+        for raw_boundary: Variant in relationship.get("boundaries", []):
+            var boundary_id := str(raw_boundary.get("id", ""))
+            if boundary_ids.has(boundary_id):
+                return _set_error("DUPLICATE_CONTENT_ID", "Duplicate relationship boundary '%s'" % boundary_id, source)
+            boundary_ids[boundary_id] = true
+            if not _relationship_state_write_allowed(str(raw_boundary.get("state_key", "")), ["boolean"], source):
+                return false
+        var conflict: Dictionary = relationship.get("conflict", {})
+        if not _relationship_state_write_allowed(str(conflict.get("active_state_key", "")), ["boolean"], source):
+            return false
+        if not _relationship_state_write_allowed(str(conflict.get("reason_state_key", "")), ["string"], source):
+            return false
+        if not _relationship_state_write_allowed(str(conflict.get("repair_progress_state_key", "")), ["integer", "number"], source):
+            return false
+        for raw_rule: Variant in relationship.get("stage_rules", []):
+            if not stages.has(str(raw_rule.get("stage_id", ""))):
+                return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship stage in rule", source)
+            if not _validate_relationship_conditions(raw_rule.get("conditions", {}), dimensions, stages, flag_ids, boundary_ids, source):
+                return false
+        for raw_rule: Variant in relationship.get("action_rules", []):
+            if not _validate_relationship_conditions(raw_rule.get("conditions", {}), dimensions, stages, flag_ids, boundary_ids, source):
+                return false
+        for raw_rule: Variant in relationship.get("rejection_rules", []):
+            if not flag_ids.has(str(raw_rule.get("rejection_flag_id", ""))):
+                return _set_error("INVALID_CONTENT_REFERENCE", "Unknown rejection relationship flag", source)
+            for boundary_id: Variant in raw_rule.get("boundary_updates", {}).keys():
+                if not boundary_ids.has(str(boundary_id)):
+                    return _set_error("INVALID_CONTENT_REFERENCE", "Unknown rejection relationship boundary", source)
+        for raw_version: Variant in relationship.get("text_versions", []):
+            if not _validate_relationship_conditions(raw_version.get("conditions", {}), dimensions, stages, flag_ids, boundary_ids, source):
+                return false
+    return true
+
+
+func _validate_relationship_conditions(group: Dictionary, dimensions: Dictionary, stages: Dictionary, flags: Dictionary, boundaries: Dictionary, source: String) -> bool:
+    for group_name: String in ["all", "any"]:
+        for raw_condition: Variant in group.get(group_name, []):
+            var condition: Dictionary = raw_condition
+            match str(condition.get("kind", "")):
+                "dimension":
+                    if not dimensions.has(str(condition.get("dimension_id", ""))):
+                        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship condition dimension", source)
+                "stage":
+                    if not stages.has(str(condition.get("stage_id", ""))):
+                        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship condition stage", source)
+                "flag":
+                    if not flags.has(str(condition.get("flag_id", ""))):
+                        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship condition flag", source)
+                "boundary":
+                    if not boundaries.has(str(condition.get("boundary_id", ""))):
+                        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship condition boundary", source)
+                "state":
+                    if not state_index.has(str(condition.get("key", ""))):
+                        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship GameState condition key", source)
+    return true
+
+
+func _relationship_state_write_allowed(state_key: String, expected_types: Array, source: String) -> bool:
+    if not state_index.has(state_key):
+        return _set_error("INVALID_CONTENT_REFERENCE", "Unknown relationship state key '%s'" % state_key, source)
+    var definition: Dictionary = state_index[state_key]
+    if str(definition.get("type", "")) not in expected_types:
+        return _set_error("INVALID_CONTENT_REFERENCE", "Relationship state key '%s' has the wrong type" % state_key, source)
+    var write_sources: Variant = definition.get("write_sources", [])
+    if bool(definition.get("read_only", false)) or (write_sources is Array and not write_sources.is_empty() and "relationship" not in write_sources):
+        return _set_error("INVALID_CONTENT_REFERENCE", "Relationship state key '%s' does not allow relationship writes" % state_key, source)
+    return true
+
+
 func _require_global_reference(global_id: String, expected_type: String, source: String, label: String) -> bool:
     if not global_index.has(global_id):
         return _set_error("INVALID_CONTENT_REFERENCE", "Unknown %s ID '%s'" % [label, global_id], source)
@@ -791,6 +923,8 @@ func _schema_path_for(relative_path: String) -> String:
         return "res://schemas/%s" % SCHEMA_FILES[relative_path]
     if relative_path.begins_with("quests/") and relative_path.ends_with(".json"):
         return "res://schemas/quest.schema.json"
+    if relative_path.begins_with("relationships/") and relative_path.ends_with(".json"):
+        return "res://schemas/relationship.schema.json"
     return ""
 
 

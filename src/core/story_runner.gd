@@ -17,6 +17,7 @@ var last_error: Dictionary = {}
 var _content_loader: RefCounted
 var _game_state: RefCounted
 var _quest_manager: RefCounted
+var _relationship_manager: RefCounted
 var _story: Dictionary = {}
 var _nodes: Dictionary = {}
 var _story_id := ""
@@ -31,6 +32,7 @@ var _running := false
 func initialize(content_loader: RefCounted, game_state: RefCounted, quest_manager: RefCounted = null) -> bool:
     last_error = {}
     _quest_manager = null
+    _relationship_manager = null
     if content_loader == null or not content_loader.has_method("get_story"):
         return _fail("STORY_CONTENT_LOADER_INVALID", "ContentLoader does not provide get_story")
     if game_state == null or not game_state.has_method("evaluate_condition") or not game_state.has_method("apply_effects"):
@@ -231,6 +233,28 @@ func get_completion_result() -> Dictionary:
 
 func is_running() -> bool:
     return _running
+
+
+func bind_relationship_manager(relationship_manager: RefCounted = null) -> Dictionary:
+    if relationship_manager != null and (
+        not relationship_manager.has_method("evaluate_condition")
+        or not relationship_manager.has_method("apply_effects")
+    ):
+        return _quest_call_failed("STORY_RELATIONSHIP_INTERFACE_INVALID", "RelationshipManager binding does not expose the required interface")
+    _relationship_manager = relationship_manager
+    return {"ok": true, "code": "OK", "message": "Story relationship interface updated", "bound": relationship_manager != null}
+
+
+func evaluate_relationship_condition(relationship_id: String, condition: Dictionary) -> Dictionary:
+    if _relationship_manager == null:
+        return _quest_call_failed("STORY_RELATIONSHIP_NOT_BOUND", "RelationshipManager is not bound")
+    return _relationship_manager.call("evaluate_condition", relationship_id, condition)
+
+
+func apply_relationship_effects(relationship_id: String, effects: Array) -> Dictionary:
+    if _relationship_manager == null:
+        return _quest_call_failed("STORY_RELATIONSHIP_NOT_BOUND", "RelationshipManager is not bound")
+    return _relationship_manager.call("apply_effects", relationship_id, effects, "story")
 
 
 func get_quest_status(quest_id: String) -> Dictionary:
