@@ -83,6 +83,46 @@
         "use_effects": [],
         "use_context": "field_only"
       }
+    },
+    {
+      "item_id": "NV7_ITEM_NOVICE_SWORD", "name": "薄刃短剑", "kind": "equipment", "quality": "common",
+      "key_item": false, "stack_limit": 1, "base_price": 18, "equip_slot": "weapon",
+      "runtime": {"type": "equipment", "stackable": false, "max_stack": 1, "sellable": true, "discardable": true, "unique": true, "quest_critical": false, "storage": "normal", "overflow_policy": "reject", "equipment_slot": "weapon", "compatible_slots": ["weapon"], "occupies_slots": ["weapon"], "stat_modifiers": [{"stat": "attack", "value": 2}], "use_effects": [], "use_context": "both"}
+    },
+    {
+      "item_id": "NV7_ITEM_NOVICE_SHIELD", "name": "包铁木盾", "kind": "equipment", "quality": "common",
+      "key_item": false, "stack_limit": 1, "base_price": 18, "equip_slot": "off_hand",
+      "runtime": {"type": "equipment", "stackable": false, "max_stack": 1, "sellable": true, "discardable": true, "unique": true, "quest_critical": false, "storage": "normal", "overflow_policy": "reject", "equipment_slot": "off_hand", "compatible_slots": ["off_hand"], "occupies_slots": ["off_hand"], "stat_modifiers": [{"stat": "defense", "value": 2}], "use_effects": [], "use_context": "both"}
+    },
+    {
+      "item_id": "NV7_ITEM_NOVICE_HOOK_STAFF", "name": "猎钩短杖", "kind": "equipment", "quality": "common",
+      "key_item": false, "stack_limit": 1, "base_price": 18, "equip_slot": "weapon",
+      "runtime": {"type": "equipment", "stackable": false, "max_stack": 1, "sellable": true, "discardable": true, "unique": true, "quest_critical": false, "storage": "normal", "overflow_policy": "reject", "equipment_slot": "weapon", "compatible_slots": ["weapon"], "occupies_slots": ["weapon"], "stat_modifiers": [{"stat": "attack", "value": 1}, {"stat": "agility", "value": 1}], "use_effects": [], "use_context": "both"}
+    },
+    {
+      "item_id": "NV7_ITEM_BLUE_POWDER_SAMPLE", "name": "蓝色驱兽粉样本", "kind": "quest", "quality": "common",
+      "key_item": true, "stack_limit": 1, "base_price": 0, "equip_slot": null,
+      "runtime": {"type": "quest", "stackable": false, "max_stack": 1, "sellable": false, "discardable": false, "unique": true, "quest_critical": true, "storage": "quest", "overflow_policy": "custody", "equipment_slot": null, "compatible_slots": [], "occupies_slots": [], "stat_modifiers": [], "use_effects": [], "use_context": "field_only"}
+    },
+    {
+      "item_id": "NV7_ITEM_BOUNDARY_RUBBING", "name": "旧界石拓片", "kind": "quest", "quality": "fine",
+      "key_item": true, "stack_limit": 1, "base_price": 0, "equip_slot": null,
+      "runtime": {"type": "quest", "stackable": false, "max_stack": 1, "sellable": false, "discardable": false, "unique": true, "quest_critical": true, "storage": "quest", "overflow_policy": "custody", "equipment_slot": null, "compatible_slots": [], "occupies_slots": [], "stat_modifiers": [], "use_effects": [], "use_context": "field_only"}
+    },
+    {
+      "item_id": "NV7_ITEM_NOVICE_MEDKIT", "name": "完整新手药包", "kind": "consumable", "quality": "common",
+      "key_item": false, "stack_limit": 5, "base_price": 12, "equip_slot": null,
+      "runtime": {"type": "consumable", "stackable": true, "max_stack": 5, "sellable": true, "discardable": true, "unique": false, "quest_critical": false, "storage": "normal", "overflow_policy": "reject", "equipment_slot": null, "compatible_slots": [], "occupies_slots": [], "stat_modifiers": [], "use_effects": [], "combat_effects": [{"effect": "heal", "value": 30}], "use_context": "both"}
+    },
+    {
+      "item_id": "NV7_ITEM_TREASURE_MAP_FRAGMENT", "name": "藏宝图残片", "kind": "quest", "quality": "fine",
+      "key_item": true, "stack_limit": 1, "base_price": 0, "equip_slot": null,
+      "runtime": {"type": "quest", "stackable": false, "max_stack": 1, "sellable": false, "discardable": false, "unique": true, "quest_critical": true, "storage": "quest", "overflow_policy": "custody", "equipment_slot": null, "compatible_slots": [], "occupies_slots": [], "stat_modifiers": [], "use_effects": [], "use_context": "field_only"}
+    },
+    {
+      "item_id": "NV7_ITEM_SILVERBLACK_FRAGMENT", "name": "银黑材料残片", "kind": "quest", "quality": "fine",
+      "key_item": true, "stack_limit": 1, "base_price": 0, "equip_slot": null,
+      "runtime": {"type": "quest", "stackable": false, "max_stack": 1, "sellable": false, "discardable": false, "unique": true, "quest_critical": true, "storage": "quest", "overflow_policy": "custody", "equipment_slot": null, "compatible_slots": [], "occupies_slots": [], "stat_modifiers": [], "use_effects": [], "use_context": "field_only"}
     }
   ]
 }

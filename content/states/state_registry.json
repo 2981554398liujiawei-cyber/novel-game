@@ -7,8 +7,12 @@
       "default": "not_started",
       "allowed": [
         "not_started",
+        "available",
         "active",
-        "completed"
+        "qualified",
+        "completed",
+        "failed",
+        "suspended"
       ],
       "persistent": true,
       "writers": [],
@@ -20,8 +24,12 @@
       "default": "not_started",
       "allowed": [
         "not_started",
+        "available",
         "active",
-        "completed"
+        "qualified",
+        "completed",
+        "failed",
+        "suspended"
       ],
       "persistent": true,
       "writers": [],
@@ -152,9 +160,12 @@
       "default": "not_started",
       "allowed": [
         "not_started",
+        "available",
         "active",
         "qualified",
-        "completed"
+        "completed",
+        "failed",
+        "suspended"
       ],
       "persistent": true,
       "writers": [
@@ -311,6 +322,777 @@
         "NV_MAIN_006",
         "NV_MAIN_008"
       ]
+    },
+    {
+      "key": "quest.nv_main_001.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_001.continuation",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "altar_boundary_retry"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_001.objective.arrival",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.continuation",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "hanshi_recovery",
+        "suzhi_recovery",
+        "boundary_recovery"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.objective.hanshi",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.objective.suzhi",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_002.objective.guchangchuan",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_003.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_003.continuation",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "apothecary_recovery"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_003.objective.resolve_rabbit_event",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_004.status",
+      "type": "string",
+      "default": "not_started",
+      "allowed": [
+        "not_started",
+        "available",
+        "active",
+        "qualified",
+        "completed",
+        "failed",
+        "suspended"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_004.reward_granted",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_004.continuation",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "wolf_path_recovery"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "quest.nv_main_004.objective.resolve_wolf_event",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "quest"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.rabbit_king_outcome",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "alive",
+        "injured",
+        "dead"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.rabbit_herd_outcome",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "escaped",
+        "scattered",
+        "displaced"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.live_capture_evidence",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "confirmed_local_operation",
+        "ledger_partial",
+        "ledger_full"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.wolf_king_outcome",
+      "type": "string",
+      "default": "unknown",
+      "allowed": [
+        "unknown",
+        "controlled",
+        "escaped",
+        "dead"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.wangwu_injury_stage",
+      "type": "string",
+      "default": "none",
+      "allowed": [
+        "none",
+        "light",
+        "medium"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.fengyun_relation_stage",
+      "type": "string",
+      "default": "wary",
+      "allowed": [
+        "hostile",
+        "wary",
+        "temporary_coop"
+      ],
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "world.nv7.adventurers_trapped_confirmed",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.trust",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.affection",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.respect",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.tension",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.stage",
+      "type": "string",
+      "default": "stranger",
+      "allowed": [
+        "stranger",
+        "acquaintance",
+        "trusted",
+        "close",
+        "intimate"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.flag.cautious_about_fengyue",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.conflict.active",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.conflict.reason",
+      "type": "string",
+      "default": "none",
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_lanyin.conflict.repair",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.trust",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.respect",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.tension",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.stage",
+      "type": "string",
+      "default": "stranger",
+      "allowed": [
+        "stranger",
+        "acquaintance",
+        "trusted",
+        "close",
+        "intimate"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.flag.remembers_fengyue_candor",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.flag.cautious_about_fengyue",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.flag.values_fengyue_pragmatism",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.conflict.active",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.conflict.reason",
+      "type": "string",
+      "default": "none",
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_guchangchuan.conflict.repair",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_hanshi.respect",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_hanshi.stage",
+      "type": "string",
+      "default": "stranger",
+      "allowed": [
+        "stranger",
+        "acquaintance",
+        "trusted",
+        "close",
+        "intimate"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_hanshi.conflict.active",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_hanshi.conflict.reason",
+      "type": "string",
+      "default": "none",
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_hanshi.conflict.repair",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.trust",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.respect",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.stage",
+      "type": "string",
+      "default": "stranger",
+      "allowed": [
+        "stranger",
+        "acquaintance",
+        "trusted",
+        "close",
+        "intimate"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.conflict.active",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.conflict.reason",
+      "type": "string",
+      "default": "none",
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_suzhi.conflict.repair",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.trust",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.respect",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.tension",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.stage",
+      "type": "string",
+      "default": "stranger",
+      "allowed": [
+        "stranger",
+        "acquaintance",
+        "trusted",
+        "close",
+        "intimate"
+      ],
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.flag.owes_fengyue_rescue",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.conflict.active",
+      "type": "boolean",
+      "default": false,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.conflict.reason",
+      "type": "string",
+      "default": "none",
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
+    },
+    {
+      "key": "relation.nv7.fengyue_tianhuolenghun.conflict.repair",
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "persistent": true,
+      "write_sources": [
+        "relationship"
+      ],
+      "writers": [],
+      "readers": []
     }
   ]
 }

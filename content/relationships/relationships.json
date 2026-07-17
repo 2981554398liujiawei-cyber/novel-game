@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "dimension_definitions": [
+    {"dimension_id":"trust","default":0,"min":0,"max":10},
+    {"dimension_id":"affection","default":0,"min":0,"max":10},
+    {"dimension_id":"respect","default":0,"min":0,"max":10},
+    {"dimension_id":"tension","default":0,"min":0,"max":10}
+  ],
+  "stage_definitions": [
+    {"stage_id":"stranger","rank":0}, {"stage_id":"acquaintance","rank":1},
+    {"stage_id":"trusted","rank":2}, {"stage_id":"close","rank":3},
+    {"stage_id":"intimate","rank":4}
+  ],
+  "relationships": [
+    {
+      "relationship_id":"NV7_REL_FENGYUE_LANYIN","actor_id":"PROTAGONIST_FENGYUE","target_id":"NV7_NPC_LANYIN",
+      "dimensions":{"trust":"relation.nv7.fengyue_lanyin.trust","affection":"relation.nv7.fengyue_lanyin.affection","respect":"relation.nv7.fengyue_lanyin.respect","tension":"relation.nv7.fengyue_lanyin.tension"},
+      "stage_state_key":"relation.nv7.fengyue_lanyin.stage",
+      "stage_rules":[
+        {"stage_id":"close","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":6},{"kind":"dimension","dimension_id":"affection","op":"gte","value":4}]}},
+        {"stage_id":"trusted","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":4},{"kind":"dimension","dimension_id":"tension","op":"lte","value":5}]}},
+        {"stage_id":"acquaintance","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":1}]}},
+        {"stage_id":"stranger","conditions":{"all":[]}}
+      ],
+      "flags":[{"id":"cautious_about_fengyue","state_key":"relation.nv7.fengyue_lanyin.flag.cautious_about_fengyue"}],
+      "boundaries":[],"action_rules":[],"rejection_rules":[],
+      "conflict":{"active_state_key":"relation.nv7.fengyue_lanyin.conflict.active","reason_state_key":"relation.nv7.fengyue_lanyin.conflict.reason","repair_progress_state_key":"relation.nv7.fengyue_lanyin.conflict.repair","repair_threshold":5},
+      "text_versions":[{"tag":"trusted","priority":10,"conditions":{"all":[{"kind":"stage","stage_id":"trusted","op":"gte"}]}},{"tag":"neutral","priority":0,"conditions":{"all":[]}}],
+      "metadata":{"relationship_kind":"player_system_npc","source_tasks":["NV_MAIN_003","NV_MAIN_004"]}
+    },
+    {
+      "relationship_id":"NV7_REL_FENGYUE_GUCHANGCHUAN","actor_id":"PROTAGONIST_FENGYUE","target_id":"NV7_NPC_CHIEF",
+      "dimensions":{"trust":"relation.nv7.fengyue_guchangchuan.trust","respect":"relation.nv7.fengyue_guchangchuan.respect","tension":"relation.nv7.fengyue_guchangchuan.tension"},
+      "stage_state_key":"relation.nv7.fengyue_guchangchuan.stage",
+      "stage_rules":[{"stage_id":"trusted","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":4},{"kind":"dimension","dimension_id":"respect","op":"gte","value":3}]}},{"stage_id":"acquaintance","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":1}]}},{"stage_id":"stranger","conditions":{"all":[]}}],
+      "flags":[
+        {"id":"remembers_fengyue_candor","state_key":"relation.nv7.fengyue_guchangchuan.flag.remembers_fengyue_candor"},
+        {"id":"cautious_about_fengyue","state_key":"relation.nv7.fengyue_guchangchuan.flag.cautious_about_fengyue"},
+        {"id":"values_fengyue_pragmatism","state_key":"relation.nv7.fengyue_guchangchuan.flag.values_fengyue_pragmatism"}
+      ],
+      "boundaries":[],"action_rules":[],"rejection_rules":[],
+      "conflict":{"active_state_key":"relation.nv7.fengyue_guchangchuan.conflict.active","reason_state_key":"relation.nv7.fengyue_guchangchuan.conflict.reason","repair_progress_state_key":"relation.nv7.fengyue_guchangchuan.conflict.repair","repair_threshold":5},
+      "text_versions":[{"tag":"neutral","priority":0,"conditions":{"all":[]}}],
+      "metadata":{"relationship_kind":"player_system_npc","source_tasks":["NV_MAIN_001","NV_MAIN_002"]}
+    },
+    {
+      "relationship_id":"NV7_REL_FENGYUE_HANSHI","actor_id":"PROTAGONIST_FENGYUE","target_id":"NV7_NPC_HANSHI",
+      "dimensions":{"respect":"relation.nv7.fengyue_hanshi.respect"},"stage_state_key":"relation.nv7.fengyue_hanshi.stage",
+      "stage_rules":[{"stage_id":"trusted","conditions":{"all":[{"kind":"dimension","dimension_id":"respect","op":"gte","value":4}]}},{"stage_id":"acquaintance","conditions":{"all":[{"kind":"dimension","dimension_id":"respect","op":"gte","value":1}]}},{"stage_id":"stranger","conditions":{"all":[]}}],
+      "flags":[],"boundaries":[],"action_rules":[],"rejection_rules":[],
+      "conflict":{"active_state_key":"relation.nv7.fengyue_hanshi.conflict.active","reason_state_key":"relation.nv7.fengyue_hanshi.conflict.reason","repair_progress_state_key":"relation.nv7.fengyue_hanshi.conflict.repair","repair_threshold":5},
+      "text_versions":[{"tag":"neutral","priority":0,"conditions":{"all":[]}}],
+      "metadata":{"relationship_kind":"player_system_npc","source_tasks":["NV_MAIN_002"]}
+    },
+    {
+      "relationship_id":"NV7_REL_FENGYUE_SUZHI","actor_id":"PROTAGONIST_FENGYUE","target_id":"NV7_NPC_SUZHI",
+      "dimensions":{"trust":"relation.nv7.fengyue_suzhi.trust","respect":"relation.nv7.fengyue_suzhi.respect"},"stage_state_key":"relation.nv7.fengyue_suzhi.stage",
+      "stage_rules":[{"stage_id":"trusted","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":4},{"kind":"dimension","dimension_id":"respect","op":"gte","value":3}]}},{"stage_id":"acquaintance","conditions":{"all":[{"kind":"dimension","dimension_id":"respect","op":"gte","value":1}]}},{"stage_id":"stranger","conditions":{"all":[]}}],
+      "flags":[],"boundaries":[],"action_rules":[],"rejection_rules":[],
+      "conflict":{"active_state_key":"relation.nv7.fengyue_suzhi.conflict.active","reason_state_key":"relation.nv7.fengyue_suzhi.conflict.reason","repair_progress_state_key":"relation.nv7.fengyue_suzhi.conflict.repair","repair_threshold":5},
+      "text_versions":[{"tag":"neutral","priority":0,"conditions":{"all":[]}}],
+      "metadata":{"relationship_kind":"player_system_npc","source_tasks":["NV_MAIN_002","NV_MAIN_003"]}
+    },
+    {
+      "relationship_id":"NV7_REL_FENGYUE_TIANHUOLENGHUN","actor_id":"PROTAGONIST_FENGYUE","target_id":"NV7_NPC_TIANHUOLENGHUN",
+      "dimensions":{"trust":"relation.nv7.fengyue_tianhuolenghun.trust","respect":"relation.nv7.fengyue_tianhuolenghun.respect","tension":"relation.nv7.fengyue_tianhuolenghun.tension"},"stage_state_key":"relation.nv7.fengyue_tianhuolenghun.stage",
+      "stage_rules":[{"stage_id":"trusted","conditions":{"all":[{"kind":"dimension","dimension_id":"trust","op":"gte","value":4},{"kind":"dimension","dimension_id":"respect","op":"gte","value":3}]}},{"stage_id":"acquaintance","conditions":{"all":[{"kind":"dimension","dimension_id":"respect","op":"gte","value":1}]}},{"stage_id":"stranger","conditions":{"all":[]}}],
+      "flags":[{"id":"owes_fengyue_rescue","state_key":"relation.nv7.fengyue_tianhuolenghun.flag.owes_fengyue_rescue"}],
+      "boundaries":[],"action_rules":[],"rejection_rules":[],
+      "conflict":{"active_state_key":"relation.nv7.fengyue_tianhuolenghun.conflict.active","reason_state_key":"relation.nv7.fengyue_tianhuolenghun.conflict.reason","repair_progress_state_key":"relation.nv7.fengyue_tianhuolenghun.conflict.repair","repair_threshold":5},
+      "text_versions":[{"tag":"neutral","priority":0,"conditions":{"all":[]}}],
+      "metadata":{"relationship_kind":"player_player_npc","source_tasks":["NV_MAIN_004"]}
+    }
+  ]
+}

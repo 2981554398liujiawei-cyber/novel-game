@@ -1,5 +1,66 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
+  "runtime": {
+    "rules": {
+      "initiative_random_min": 0,
+      "initiative_random_max": 3,
+      "damage_variance_min": 0.85,
+      "damage_variance_max": 1.15,
+      "defense_multiplier": 0.6,
+      "minimum_damage": 1,
+      "critical_multiplier": 1.5,
+      "guard_status_id": "guard",
+      "max_rounds": 100,
+      "tie_breaker": "player_then_stable_id",
+      "retreat_base_chance": 0.5,
+      "retreat_agility_factor": 0.05,
+      "retreat_boss_penalty": 0.25,
+      "retreat_min_chance": 0.1,
+      "retreat_max_chance": 0.9
+    },
+    "status_definitions": [
+      {
+        "status_id": "guard",
+        "behavior": "damage_reduction",
+        "default_duration": 1,
+        "duration_tick": "action_start",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": false,
+        "stat_modifiers": [],
+        "direct_damage_reduction": 0.4,
+        "expiry": "next_action"
+      },
+      {
+        "status_id": "stun",
+        "behavior": "skip_action",
+        "default_duration": 1,
+        "duration_tick": "action_start",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": true,
+        "stat_modifiers": [],
+        "expiry": "duration"
+      },
+      {
+        "status_id": "marked",
+        "behavior": "stat_modifier",
+        "default_duration": 2,
+        "duration_tick": "round_end",
+        "stack_policy": "refresh",
+        "max_stacks": 1,
+        "block_action": false,
+        "stat_modifiers": [
+          {
+            "stat": "defense",
+            "operation": "add_percent",
+            "value": -0.15
+          }
+        ],
+        "expiry": "duration"
+      }
+    ]
+  },
   "combats": [
     {
       "combat_id": "NV7_COMBAT_RABBIT_GUARDS",
@@ -12,24 +73,134 @@
         "NV7_NPC_LANYIN"
       ],
       "victory": {
-        "type": "drive_away",
-        "target_count": 2
+        "type": "all_enemies_defeated"
       },
       "defeat": {
         "type": "player_down"
       },
       "retreat": {
         "allowed": true,
-        "continuation_id": "rescue_recovery"
+        "continuation_id": "rabbit_protect_retreat"
       },
-      "unique_mechanic": "兔群只攻击挡路目标，胜利以驱散计",
+      "unique_mechanic": "观察与防御可降低战斗压力",
       "phases": [
         {
-          "phase_id": "default",
+          "phase_id": "opening",
           "trigger": "combat_start",
-          "ai_profile": "escape_first"
+          "ai_profile": "direct_pressure"
         }
-      ]
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_RABBIT_GUARDS_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 3,
+          "max_hp": 124,
+          "attack": 21,
+          "defense": 10,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "NV7_COMBAT_RABBIT_GUARDS_LANYIN",
+            "name": "岚音",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 105,
+            "attack": 18,
+            "defense": 9,
+            "agility": 13,
+            "skill_ids": [
+              "NV7_SKILL_LANYIN_MARK"
+            ],
+            "ai_actions": [
+              {
+                "action_id": "lanyin_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 7,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {
+                  "offensive": 2.0,
+                  "defensive": 0.7,
+                  "support": 0.7
+                }
+              },
+              {
+                "action_id": "lanyin_mark",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "NV7_SKILL_LANYIN_MARK",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {
+                  "offensive": 1.1,
+                  "defensive": 0.5,
+                  "support": 2.0
+                }
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_RABBIT_GUARDS_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_RABBIT_GUARD"
+          },
+          {
+            "unit_id": "NV7_COMBAT_RABBIT_GUARDS_ENEMY_2",
+            "enemy_id": "NV7_ENEMY_RABBIT_GUARD"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "rabbit_protect_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_RABBIT_GUARDS_ENEMY_2",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "rabbit_protect_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "rabbit_protect_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_RABBIT_GUARDS_ENEMY_2",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "rabbit_protect_opening"
+          }
+        ]
+      }
     },
     {
       "combat_id": "NV7_COMBAT_POACHERS",
@@ -42,24 +213,134 @@
         "NV7_NPC_LANYIN"
       ],
       "victory": {
-        "type": "surrender_below_hp",
-        "threshold_percent": 25
+        "type": "all_enemies_defeated"
       },
       "defeat": {
         "type": "player_down"
       },
       "retreat": {
         "allowed": true,
-        "continuation_id": "rescue_recovery"
+        "continuation_id": "poacher_retreat"
       },
-      "unique_mechanic": "低生命投降且不可继续攻击",
+      "unique_mechanic": "观察与防御可降低战斗压力",
       "phases": [
         {
-          "phase_id": "default",
+          "phase_id": "opening",
           "trigger": "combat_start",
-          "ai_profile": "poacher_duo"
+          "ai_profile": "direct_pressure"
         }
-      ]
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_POACHERS_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 3,
+          "max_hp": 124,
+          "attack": 21,
+          "defense": 10,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "NV7_COMBAT_POACHERS_LANYIN",
+            "name": "岚音",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 105,
+            "attack": 18,
+            "defense": 9,
+            "agility": 13,
+            "skill_ids": [
+              "NV7_SKILL_LANYIN_MARK"
+            ],
+            "ai_actions": [
+              {
+                "action_id": "lanyin_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 7,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {
+                  "offensive": 2.0,
+                  "defensive": 0.7,
+                  "support": 0.7
+                }
+              },
+              {
+                "action_id": "lanyin_mark",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "NV7_SKILL_LANYIN_MARK",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {
+                  "offensive": 1.1,
+                  "defensive": 0.5,
+                  "support": 2.0
+                }
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_POACHERS_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_POACHER"
+          },
+          {
+            "unit_id": "NV7_COMBAT_POACHERS_ENEMY_2",
+            "enemy_id": "NV7_ENEMY_POACHER"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "poacher_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_POACHERS_ENEMY_2",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "poacher_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "poacher_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_POACHERS_ENEMY_2",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "poacher_opening"
+          }
+        ]
+      }
     },
     {
       "combat_id": "NV7_COMBAT_DUDU_RABBIT",
@@ -71,29 +352,649 @@
         "NV7_NPC_LANYIN"
       ],
       "victory": {
-        "type": "hp_or_spare_choice",
-        "threshold_percent": 20
+        "type": "all_enemies_defeated"
       },
       "defeat": {
         "type": "player_down"
       },
       "retreat": {
         "allowed": true,
-        "continuation_id": "rescue_recovery"
+        "continuation_id": "rabbit_king_retreat"
       },
-      "unique_mechanic": "观察萝卜攻击前摇并决定收手或击杀",
+      "unique_mechanic": "观察前摇、处理环境压力并保留失败续接",
       "phases": [
         {
-          "phase_id": "p1",
+          "phase_id": "opening",
           "trigger": "combat_start",
-          "ai_profile": "rabbit_boss_normal"
+          "ai_profile": "direct_pressure"
         },
         {
-          "phase_id": "p2",
-          "trigger": "hp_lte_40",
-          "ai_profile": "rabbit_boss_enraged"
+          "phase_id": "pressure",
+          "trigger": "hp_lte_45",
+          "ai_profile": "direct_pressure"
         }
-      ]
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_DUDU_RABBIT_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 6,
+          "max_hp": 148,
+          "attack": 24,
+          "defense": 13,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "NV7_COMBAT_DUDU_RABBIT_LANYIN",
+            "name": "岚音",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 105,
+            "attack": 18,
+            "defense": 9,
+            "agility": 13,
+            "skill_ids": [
+              "NV7_SKILL_LANYIN_MARK"
+            ],
+            "ai_actions": [
+              {
+                "action_id": "lanyin_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 7,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {
+                  "offensive": 2.0,
+                  "defensive": 0.7,
+                  "support": 0.7
+                }
+              },
+              {
+                "action_id": "lanyin_mark",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "NV7_SKILL_LANYIN_MARK",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {
+                  "offensive": 1.1,
+                  "defensive": 0.5,
+                  "support": 2.0
+                }
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_DUDU_RABBIT_ENEMY_1",
+            "enemy_id": "NV7_BOSS_DUDU_RABBIT"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": -0.1,
+          "continuation_tag": "rabbit_king_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_DUDU_RABBIT_ENEMY_1",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "rabbit_king_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "rabbit_king_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_DUDU_RABBIT_ENEMY_1",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "rabbit_king_opening"
+          },
+          {
+            "phase_id": "pressure",
+            "target_unit_id": "NV7_COMBAT_DUDU_RABBIT_ENEMY_1",
+            "trigger": {
+              "type": "hp_threshold",
+              "unit_id": "NV7_COMBAT_DUDU_RABBIT_ENEMY_1",
+              "op": "lte",
+              "value": 0.45
+            },
+            "skill_ids": [],
+            "stat_modifiers": [
+              {
+                "stat": "attack",
+                "operation": "add_percent",
+                "value": 0.12
+              }
+            ],
+            "ai_weight_modifiers": {
+              "basic_attack": 1.4
+            },
+            "event_tag": "rabbit_king_pressure"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "NV7_COMBAT_TRAINING_DUMMY",
+      "location_id": "NV7_LOC_FORGE",
+      "enemy_ids": [
+        "NV7_ENEMY_TRAINING_DUMMY"
+      ],
+      "ally_ids": [],
+      "victory": {
+        "type": "all_enemies_defeated"
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "training_retreat"
+      },
+      "unique_mechanic": "观察与防御可降低战斗压力",
+      "phases": [
+        {
+          "phase_id": "opening",
+          "trigger": "combat_start",
+          "ai_profile": "direct_pressure"
+        }
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_TRAINING_DUMMY_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 3,
+          "max_hp": 124,
+          "attack": 21,
+          "defense": 10,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_TRAINING_DUMMY_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_TRAINING_DUMMY"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "training_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_TRAINING_DUMMY_ENEMY_1",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "training_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "training_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_TRAINING_DUMMY_ENEMY_1",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "training_opening"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "NV7_COMBAT_GREY_BADGERS",
+      "location_id": "NV7_LOC_FIELDS",
+      "enemy_ids": [
+        "NV7_ENEMY_GREY_BADGER",
+        "NV7_ENEMY_GREY_BADGER"
+      ],
+      "ally_ids": [],
+      "victory": {
+        "type": "all_enemies_defeated"
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "badger_retreat"
+      },
+      "unique_mechanic": "观察与防御可降低战斗压力",
+      "phases": [
+        {
+          "phase_id": "opening",
+          "trigger": "combat_start",
+          "ai_profile": "direct_pressure"
+        }
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_GREY_BADGERS_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 3,
+          "max_hp": 124,
+          "attack": 21,
+          "defense": 10,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_GREY_BADGERS_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_GREY_BADGER"
+          },
+          {
+            "unit_id": "NV7_COMBAT_GREY_BADGERS_ENEMY_2",
+            "enemy_id": "NV7_ENEMY_GREY_BADGER"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "badger_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_GREY_BADGERS_ENEMY_2",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "badger_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "badger_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_GREY_BADGERS_ENEMY_2",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "badger_opening"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "NV7_COMBAT_SPINE_RESCUE",
+      "location_id": "NV7_LOC_WOLF_PATH",
+      "enemy_ids": [
+        "NV7_ENEMY_SPINE_KING"
+      ],
+      "ally_ids": [
+        "NV7_NPC_LANYIN"
+      ],
+      "victory": {
+        "type": "all_enemies_defeated"
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "spine_rescue_retreat"
+      },
+      "unique_mechanic": "观察与防御可降低战斗压力",
+      "phases": [
+        {
+          "phase_id": "opening",
+          "trigger": "combat_start",
+          "ai_profile": "direct_pressure"
+        }
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_SPINE_RESCUE_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 3,
+          "max_hp": 124,
+          "attack": 21,
+          "defense": 10,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "NV7_COMBAT_SPINE_RESCUE_LANYIN",
+            "name": "岚音",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 105,
+            "attack": 18,
+            "defense": 9,
+            "agility": 13,
+            "skill_ids": [
+              "NV7_SKILL_LANYIN_MARK"
+            ],
+            "ai_actions": [
+              {
+                "action_id": "lanyin_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 7,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {
+                  "offensive": 2.0,
+                  "defensive": 0.7,
+                  "support": 0.7
+                }
+              },
+              {
+                "action_id": "lanyin_mark",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "NV7_SKILL_LANYIN_MARK",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {
+                  "offensive": 1.1,
+                  "defensive": 0.5,
+                  "support": 2.0
+                }
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_SPINE_RESCUE_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_SPINE_KING"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": 0.0,
+          "continuation_tag": "spine_rescue_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_SPINE_RESCUE_ENEMY_1",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "spine_rescue_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "spine_rescue_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_SPINE_RESCUE_ENEMY_1",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "spine_rescue_opening"
+          }
+        ]
+      }
+    },
+    {
+      "combat_id": "NV7_COMBAT_WOLF_KING",
+      "location_id": "NV7_LOC_WOLF_PATH",
+      "enemy_ids": [
+        "NV7_ENEMY_GREY_WOLF",
+        "NV7_ENEMY_GREY_WOLF",
+        "NV7_BOSS_WOLF_KING"
+      ],
+      "ally_ids": [
+        "NV7_NPC_LANYIN"
+      ],
+      "victory": {
+        "type": "all_enemies_defeated"
+      },
+      "defeat": {
+        "type": "player_down"
+      },
+      "retreat": {
+        "allowed": true,
+        "continuation_id": "wolf_king_retreat"
+      },
+      "unique_mechanic": "观察前摇、处理环境压力并保留失败续接",
+      "phases": [
+        {
+          "phase_id": "opening",
+          "trigger": "combat_start",
+          "ai_profile": "direct_pressure"
+        },
+        {
+          "phase_id": "pressure",
+          "trigger": "hp_lte_45",
+          "ai_profile": "direct_pressure"
+        }
+      ],
+      "runtime": {
+        "player_unit": {
+          "unit_id": "NV7_COMBAT_WOLF_KING_PLAYER",
+          "name": "枫月",
+          "role": "player",
+          "level": 6,
+          "max_hp": 148,
+          "attack": 24,
+          "defense": 13,
+          "agility": 10,
+          "skill_ids": [
+            "NV7_SKILL_SLASH",
+            "NV7_SKILL_INSIGHT"
+          ],
+          "use_equipment_modifiers": true
+        },
+        "companion_units": [
+          {
+            "unit_id": "NV7_COMBAT_WOLF_KING_LANYIN",
+            "name": "岚音",
+            "role": "companion",
+            "level": 5,
+            "max_hp": 105,
+            "attack": 18,
+            "defense": 9,
+            "agility": 13,
+            "skill_ids": [
+              "NV7_SKILL_LANYIN_MARK"
+            ],
+            "ai_actions": [
+              {
+                "action_id": "lanyin_attack",
+                "mode": "weighted_action",
+                "action_type": "attack",
+                "weight": 7,
+                "conditions": [],
+                "target_priority": "lowest_hp",
+                "tendency_weights": {
+                  "offensive": 2.0,
+                  "defensive": 0.7,
+                  "support": 0.7
+                }
+              },
+              {
+                "action_id": "lanyin_mark",
+                "mode": "weighted_action",
+                "action_type": "skill",
+                "weight": 3,
+                "skill_id": "NV7_SKILL_LANYIN_MARK",
+                "conditions": [],
+                "target_priority": "highest_hp",
+                "tendency_weights": {
+                  "offensive": 1.1,
+                  "defensive": 0.5,
+                  "support": 2.0
+                }
+              }
+            ]
+          }
+        ],
+        "enemy_instances": [
+          {
+            "unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_1",
+            "enemy_id": "NV7_ENEMY_GREY_WOLF"
+          },
+          {
+            "unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_2",
+            "enemy_id": "NV7_ENEMY_GREY_WOLF"
+          },
+          {
+            "unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_3",
+            "enemy_id": "NV7_BOSS_WOLF_KING"
+          }
+        ],
+        "retreat": {
+          "allowed": true,
+          "mode": "formula",
+          "chance_modifier": -0.1,
+          "continuation_tag": "wolf_king_retreat"
+        },
+        "inspect_rules": [
+          {
+            "inspect_id": "mechanic",
+            "target_unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_3",
+            "conditions": [],
+            "outcome": "success",
+            "reveal": "observe_before_attack",
+            "seeded": false,
+            "difficulty": 0
+          }
+        ],
+        "result_rules": {
+          "victory": {
+            "result_type": "victory",
+            "continuation_tag": "wolf_king_victory"
+          },
+          "defeat": {
+            "result_type": "defeat",
+            "continuation_tag": "wolf_king_defeat"
+          }
+        },
+        "phases": [
+          {
+            "phase_id": "opening",
+            "target_unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_3",
+            "trigger": {
+              "type": "combat_start"
+            },
+            "skill_ids": [],
+            "stat_modifiers": [],
+            "ai_weight_modifiers": {},
+            "event_tag": "wolf_king_opening"
+          },
+          {
+            "phase_id": "pressure",
+            "target_unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_3",
+            "trigger": {
+              "type": "hp_threshold",
+              "unit_id": "NV7_COMBAT_WOLF_KING_ENEMY_3",
+              "op": "lte",
+              "value": 0.45
+            },
+            "skill_ids": [],
+            "stat_modifiers": [
+              {
+                "stat": "attack",
+                "operation": "add_percent",
+                "value": 0.12
+              }
+            ],
+            "ai_weight_modifiers": {
+              "basic_attack": 1.4
+            },
+            "event_tag": "wolf_king_pressure"
+          }
+        ]
+      }
     }
   ]
 }
