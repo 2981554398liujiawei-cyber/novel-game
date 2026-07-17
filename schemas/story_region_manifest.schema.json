@@ -17,7 +17,7 @@
         "required": ["task_id", "status", "script_path", "runtime_path"],
         "properties": {
           "task_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
-          "status": {"enum": ["SOURCE_ONLY", "DRAFT", "COMPLETE_SCRIPT", "PARSED", "DATA_READY", "VERIFIED"]},
+          "status": {"enum": ["SOURCE_ONLY", "DRAFT", "COMPLETE_SCRIPT", "PARSED", "DATA_READY", "READY_FOR_MANUAL_VERIFICATION", "VERIFIED"]},
           "script_path": {"type": ["string", "null"]},
           "runtime_path": {"type": ["string", "null"]}
         },
@@ -31,7 +31,7 @@
             "then": {"properties": {"script_path": {"type": "string", "minLength": 1}, "runtime_path": {"type": "null"}}}
           },
           {
-            "if": {"properties": {"status": {"enum": ["DATA_READY", "VERIFIED"]}}},
+            "if": {"properties": {"status": {"enum": ["DATA_READY", "READY_FOR_MANUAL_VERIFICATION", "VERIFIED"]}}},
             "then": {"properties": {"script_path": {"type": "string", "minLength": 1}, "runtime_path": {"type": "string", "minLength": 1}}}
           }
         ]
