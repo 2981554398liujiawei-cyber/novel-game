@@ -36,6 +36,9 @@ func _init() -> void:
         _finish()
         return
     _run_primary_route()
+    _verify_third_commission_completion()
+    _verify_repeated_restore_is_idempotent()
+    _verify_r2_entry_snapshot()
     _verify_new_game_reset()
     _route_variant = 1
     _defeat_mode = true
@@ -241,6 +244,54 @@ func _verify_qualified_save_round_trip() -> void:
     _expect(_state.get_state("quest.nv_main_002.objective.guchangchuan") == false, "third commission leaked across load")
     _expect(_item_quantity("NV7_ITEM_RABBIT_HIDE") == 0, "inventory mutation leaked across load")
     _expect(str(_story.get_current_position().get("story_id", "")) == "NV_MAIN_002", "StoryRunner position was not restored")
+
+
+func _verify_third_commission_completion() -> void:
+    _expect_status("NV_MAIN_002", "qualified")
+    var incomplete_objective := ""
+    for objective_id: String in ["hanshi", "suzhi", "guchangchuan"]:
+        var progress: Dictionary = _quests.get_objective_progress("NV_MAIN_002", objective_id)
+        if bool(progress.get("ok", false)) and not bool(progress.get("completed", false)):
+            incomplete_objective = objective_id
+            break
+    _expect(not incomplete_objective.is_empty(), "qualified commission set did not retain a third objective")
+    if incomplete_objective.is_empty():
+        return
+    var completed: Dictionary = _quests.update_objective("NV_MAIN_002", incomplete_objective, {"value": true}, "story")
+    _expect(bool(completed.get("ok", false)), "third commission could not be completed after qualified")
+    _expect_status("NV_MAIN_002", "completed")
+    _expect(_state.get_state("quest.nv_main_002.reward_granted") == true, "full commission reward marker was not set")
+    var repeated: Dictionary = _quests.update_objective("NV_MAIN_002", incomplete_objective, {"value": true}, "story")
+    _expect(bool(repeated.get("ok", false)), "repeating an already complete objective returned an error")
+    _expect(not bool(repeated.get("changed", true)), "repeating the third objective changed completed quest state")
+
+
+func _verify_repeated_restore_is_idempotent() -> void:
+    var equipment_before := _item_quantity("NV7_ITEM_NOVICE_SWORD")
+    var trust_before: Dictionary = _relationships.get_dimension("NV7_REL_FENGYUE_GUCHANGCHUAN", "trust")
+    var saved: Dictionary = _save.save("manual_2")
+    _expect(bool(saved.get("ok", false)), "completed R1 checkpoint could not be saved")
+    var first_load: Dictionary = _save.load("manual_2")
+    var second_load: Dictionary = _save.load("manual_2")
+    _expect(bool(first_load.get("ok", false)) and bool(second_load.get("ok", false)), "repeated R1 restore failed")
+    _expect(_item_quantity("NV7_ITEM_NOVICE_SWORD") == equipment_before, "repeated restore duplicated equipment reward")
+    var trust_after: Dictionary = _relationships.get_dimension("NV7_REL_FENGYUE_GUCHANGCHUAN", "trust")
+    _expect(trust_after.get("value") == trust_before.get("value"), "repeated restore duplicated relationship effects")
+    _expect(_state.get_state("quest.nv_main_002.reward_granted") == true, "repeated restore cleared reward idempotency marker")
+
+
+func _verify_r2_entry_snapshot() -> void:
+    _expect_status("NV_MAIN_001", "completed")
+    _expect_status("NV_MAIN_002", "completed")
+    _expect_status("NV_MAIN_003", "completed")
+    _expect_status("NV_MAIN_004", "completed")
+    for objective_id: String in ["hanshi", "suzhi", "guchangchuan"]:
+        var progress: Dictionary = _quests.get_objective_progress("NV_MAIN_002", objective_id)
+        _expect(bool(progress.get("ok", false)) and bool(progress.get("completed", false)), "R2 snapshot lost commission %s" % objective_id)
+    _expect(_state.get_state("world.nv7.rabbit_king_outcome") == "alive", "R2 snapshot lost protected rabbit outcome")
+    _expect(_state.get_state("world.nv7.wolf_king_outcome") == "controlled", "R2 snapshot lost wolf outcome")
+    _expect(_state.get_state("world.nv7.adventurers_trapped_confirmed") == true, "R2 snapshot lost trapped-player fact")
+    _expect(_item_quantity("NV7_ITEM_NOVICE_SWORD") == 1, "R2 snapshot lost selected starter item")
 
 
 func _verify_new_game_reset() -> void:
