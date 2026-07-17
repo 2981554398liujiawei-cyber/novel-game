@@ -50,7 +50,7 @@ class RepositoryContractTests(unittest.TestCase):
     def test_story_governance_shells_are_registered(self) -> None:
         region = json.loads((ROOT / "docs/story/scripts/nv7/region_manifest.json").read_text(encoding="utf-8"))
         self.assertEqual("PARTIAL", region["runtime_status"])
-        self.assertTrue(all(entry["status"] == "DATA_READY" for entry in region["tasks"][:4]))
+        self.assertTrue(all(entry["status"] == "READY_FOR_MANUAL_VERIFICATION" for entry in region["tasks"][:4]))
         self.assertTrue(all(entry["status"] == "SOURCE_ONLY" for entry in region["tasks"][4:]))
         chapter_map = json.loads((ROOT / "docs/story/chapter_mapping_nv7.json").read_text(encoding="utf-8"))
         self.assertEqual("COMPLETE", chapter_map["coverage_status"])
