@@ -14,6 +14,7 @@ const DEFAULTS := {
     "fullscreen": false,
     "resolution": "1280x720",
     "autoplay": false,
+    "key_bindings": {},
 }
 
 var last_result: Dictionary = {}
@@ -32,10 +33,12 @@ func initialize(path: String = DEFAULT_PATH) -> Dictionary:
     var parsed: Variant = JSON.parse_string(file.get_as_text())
     if not parsed is Dictionary:
         return _result(false, "SETTINGS_JSON_INVALID", "Settings file is not valid JSON")
-    var validation := validate_settings(parsed)
+    var merged := DEFAULTS.duplicate(true)
+    merged.merge(parsed, true)
+    var validation := validate_settings(merged)
     if not bool(validation.get("ok", false)):
         return validation
-    _settings = parsed.duplicate(true)
+    _settings = merged
     settings_changed.emit(get_settings())
     return _result(true, "OK", "Settings loaded")
 
@@ -111,6 +114,8 @@ func validate_settings(candidate: Dictionary) -> Dictionary:
             return _result(false, "SETTINGS_TYPE_INVALID", "Setting '%s' must be boolean" % key)
     if str(candidate["resolution"]) not in ["1280x720", "1920x1080"]:
         return _result(false, "SETTINGS_RESOLUTION_INVALID", "Unsupported resolution")
+    if not candidate["key_bindings"] is Dictionary:
+        return _result(false, "SETTINGS_TYPE_INVALID", "Key bindings must be a dictionary")
     return _result(true, "OK", "Settings are valid")
 
 

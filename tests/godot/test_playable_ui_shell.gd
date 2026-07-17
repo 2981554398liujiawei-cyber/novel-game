@@ -123,6 +123,16 @@ func _run() -> void:
     _case("narrative is presented")
     _expect("Synthetic technical narrative" in str(ui.get_ui_snapshot().get("text", "")), "narrative text was not shown")
 
+    _case("Space advances story without activating focused navigation")
+    var navigation: Control = ui.find_child("BottomNavigation", true, false)
+    (navigation.get_child(0) as Button).grab_focus()
+    var space_event := InputEventKey.new()
+    space_event.keycode = KEY_SPACE
+    space_event.pressed = true
+    ui.call("_input", space_event)
+    _expect(str(ui.get_ui_snapshot().get("page", "")).is_empty(), "Space activated the focused bottom navigation button")
+    ui.call("_release_player_input")
+
     _case("typewriter input reveals text before advancing and locks reentry")
     ui.call("_apply_settings", {"font_size": 22, "typewriter_enabled": true, "text_speed": 1.0, "autoplay": false, "master_volume": 1.0, "music_volume": 0.8, "sfx_volume": 0.8})
     ui.call("_render_text", {"text": "Synthetic typewriter protection text.", "location_id": ""}, false)
@@ -155,14 +165,14 @@ func _run() -> void:
     _case("task page refreshes from QuestManager")
     _expect(quest.activate_quest(QUEST_ID, "debug").get("ok", false), "fixture quest did not activate")
     _expect(ui.show_page("quest").get("ok", false), "task page did not open")
-    _expect("active" in str(ui.get_ui_snapshot().get("page_text", "")), "active task status was not displayed")
+    _expect("进行中" in str(ui.get_ui_snapshot().get("page_text", "")), "localized active task status was not displayed")
     ui.close_page()
 
     _case("qualified is distinct from completed")
     quest.update_objective(QUEST_ID, "commission_a", {"value": true, "event_id": "ui_a"}, "debug")
     quest.update_objective(QUEST_ID, "commission_b", {"value": true, "event_id": "ui_b"}, "debug")
     ui.show_page("quest")
-    _expect("qualified" in str(ui.get_ui_snapshot().get("page_text", "")) and "completed" not in str(ui.get_ui_snapshot().get("page_text", "")), "qualified status was not displayed distinctly")
+    _expect("已满足推进条件" in str(ui.get_ui_snapshot().get("page_text", "")) and "已完成" not in str(ui.get_ui_snapshot().get("page_text", "")), "qualified status was not displayed distinctly")
     ui.close_page()
 
     _case("inventory changes refresh the page")
@@ -170,7 +180,7 @@ func _run() -> void:
     inventory.add_item(FIELD_TONIC, 2, "debug")
     inventory.add_item(BATTLE_TONIC, 2, "debug")
     inventory.add_item(SWORD, 1, "debug")
-    _expect(FIELD_TONIC in str(ui.get_ui_snapshot().get("page_text", "")), "inventory signal did not refresh the page")
+    _expect("Synthetic field tonic" in str(ui.get_ui_snapshot().get("page_text", "")), "inventory signal did not refresh the localized page")
 
     _case("equipment action uses InventoryManager public API")
     var equip_result: Dictionary = ui.inventory_action("equip", SWORD, "weapon")
@@ -182,8 +192,17 @@ func _run() -> void:
     ui.show_page("relationship")
     var relation_result: Dictionary = relationship.apply_effect(RELATIONSHIP_ID, {"op": "inc", "dimension_id": "trust", "value": 2}, "debug")
     _expect(relation_result.get("ok", false), "relationship public update failed")
-    _expect("trust 3" in str(ui.get_ui_snapshot().get("page_text", "")), "relationship page did not refresh trust")
+    _expect("信任 3" in str(ui.get_ui_snapshot().get("page_text", "")), "relationship page did not refresh localized trust")
     _expect("mutual_interest" not in str(ui.get_ui_snapshot().get("page_text", "")), "relationship page exposed an internal flag")
+    ui.close_page()
+
+    _case("player pages do not expose forbidden internal labels")
+    var visible_text := str(ui.get_ui_snapshot().get("location", ""))
+    for player_page: String in ["quest", "inventory", "relationship", "save", "settings", "history"]:
+        ui.show_page(player_page)
+        visible_text += "\n" + str(ui.get_ui_snapshot().get("page_text", ""))
+    for forbidden: String in ["NV7_", "TEST_", "trust", "affection", "respect", "tension", "stranger", "Page opened"]:
+        _expect(forbidden not in visible_text, "player UI exposed forbidden token: %s" % forbidden)
     ui.close_page()
 
     _case("choice enters CombatRunner-backed combat")
@@ -277,6 +296,31 @@ func _run() -> void:
     var bounded_history: Array = ui.get_ui_snapshot().get("history", [])
     _expect(bounded_history.size() == 200, "history capacity was not bounded")
     _expect(str(bounded_history.back().get("text", "")).ends_with("204"), "history did not retain the newest entry")
+
+    _case("dialogue review is view-only and can return to current")
+    var state_before_review: Dictionary = state.export_snapshot()
+    ui.review_previous()
+    _expect(ui.get_ui_snapshot().get("review_active", false), "previous dialogue did not enter review mode")
+    _expect(state.export_snapshot() == state_before_review, "dialogue review changed GameState")
+    ui.return_to_current()
+    _expect(not ui.get_ui_snapshot().get("review_active", true), "return current did not leave review mode")
+
+    _case("remappable input detects conflicts and restores defaults")
+    var rebind_start: Dictionary = ui.begin_rebind("open_inventory")
+    var key_event := InputEventKey.new(); key_event.keycode = KEY_K; key_event.pressed = true
+    var rebind_result: Dictionary = ui.capture_rebind_event(key_event)
+    _expect(rebind_start.get("ok", false) and rebind_result.get("ok", false), "new key binding failed")
+    ui.begin_rebind("open_quest")
+    var conflict_result: Dictionary = ui.capture_rebind_event(key_event)
+    _expect(conflict_result.get("code") == "INPUT_BINDING_CONFLICT", "key conflict was not reported")
+    _expect(ui.confirm_binding_replace().get("ok", false), "conflicting binding could not be replaced")
+    _expect(ui.reset_bindings().get("ok", false), "default bindings could not be restored")
+
+    _case("settings instructions reflect live bindings and mouse support")
+    ui.show_page("settings")
+    var instructions := str(ui.get_ui_snapshot().get("page_text", ""))
+    _expect("推进剧情：空格 / 回车" in instructions and "所有核心功能均可使用鼠标完成" in instructions, "settings did not show live operation instructions")
+    ui.close_page()
 
     _case("player error summary hides internal detail")
     var friendly_error: Dictionary = ui.call("_feedback", false, "SAVE_BLOCKED_COMBAT", "res://internal/file.json state.secret.key")
