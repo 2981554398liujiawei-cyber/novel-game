@@ -12,6 +12,22 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ContentLoaderIntegrationTests(unittest.TestCase):
+    def _disable_formal_quests(self, content_root: Path) -> None:
+        manifest_path = content_root / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["content_files"] = [
+            path for path in manifest["content_files"] if not path.startswith("quests/nv7/")
+        ]
+        manifest["entry_story_id"] = None
+        for entry in manifest.get("planned_content", [])[:4]:
+            entry["status"] = "not_loaded"
+            entry["path"] = None
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+        dependency_path = content_root / "quest_dependencies.json"
+        dependencies = json.loads(dependency_path.read_text(encoding="utf-8"))
+        dependencies["quests"] = []
+        dependency_path.write_text(json.dumps(dependencies, ensure_ascii=False), encoding="utf-8")
+
     @classmethod
     def setUpClass(cls) -> None:
         configured = os.environ.get("GODOT_BIN")
@@ -104,6 +120,7 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
     def test_combat_runtime_fixture_loads_through_content_loader(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)
+            self._disable_formal_quests(content_root)
             fixture_root = ROOT / "content/tests/fixtures/combat_runner"
             combats = json.loads((fixture_root / "combats.json").read_text(encoding="utf-8"))
             enemies = json.loads((fixture_root / "enemies.json").read_text(encoding="utf-8"))
@@ -143,6 +160,7 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
     def test_combat_runtime_unknown_status_reference_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)
+            self._disable_formal_quests(content_root)
             fixture_root = ROOT / "content/tests/fixtures/combat_runner"
             combats = json.loads((fixture_root / "combats.json").read_text(encoding="utf-8"))
             enemies = json.loads((fixture_root / "enemies.json").read_text(encoding="utf-8"))
@@ -165,6 +183,7 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
     def test_relationship_fixture_loads_and_indexes_through_content_loader(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)
+            self._disable_formal_quests(content_root)
             fixture_root = ROOT / "content/tests/fixtures/relationship_manager"
             relationship_path = content_root / "relationships/relationships.json"
             relationship_path.parent.mkdir(parents=True, exist_ok=True)
@@ -178,7 +197,8 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
 
             manifest_path = content_root / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["content_files"].append("relationships/relationships.json")
+            if "relationships/relationships.json" not in manifest["content_files"]:
+                manifest["content_files"].append("relationships/relationships.json")
             manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
             output = self._run_loader(content_root, expected_content_id="TEST_REL_PLAYER_ALPHA")
             self.assertIn("RELATIONSHIP_MANAGER_OK:3", output)
@@ -186,6 +206,7 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
     def test_relationship_unknown_state_reference_fails_content_loading(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             content_root = self._copy_content(temp_dir)
+            self._disable_formal_quests(content_root)
             fixture_root = ROOT / "content/tests/fixtures/relationship_manager"
             relationships = json.loads((fixture_root / "relationships.json").read_text(encoding="utf-8"))
             relationships["relationships"][0]["dimensions"]["trust"] = "test.relationship.missing"
@@ -200,7 +221,8 @@ class ContentLoaderIntegrationTests(unittest.TestCase):
             state_path.write_text(json.dumps(states, ensure_ascii=False), encoding="utf-8")
             manifest_path = content_root / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["content_files"].append("relationships/relationships.json")
+            if "relationships/relationships.json" not in manifest["content_files"]:
+                manifest["content_files"].append("relationships/relationships.json")
             manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
             self._run_loader(content_root, "INVALID_CONTENT_REFERENCE")
 
