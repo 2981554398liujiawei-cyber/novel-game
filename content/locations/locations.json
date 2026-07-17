@@ -27,5 +27,9 @@
       ],
       "unlock_conditions": []
     }
+    ,{"location_id":"NV7_LOC_ALTAR","name":"回响祭坛","background_id":"BG_NV7_ALTAR","music_id":"MUS_NV7_VILLAGE","connections":["NV7_LOC_SQUARE"],"unlock_conditions":[]}
+    ,{"location_id":"NV7_LOC_FORGE","name":"韩石铁匠铺","background_id":"BG_NV7_FORGE","music_id":"MUS_NV7_VILLAGE","connections":["NV7_LOC_SQUARE"],"unlock_conditions":[]}
+    ,{"location_id":"NV7_LOC_APOTHECARY","name":"苏芷药棚","background_id":"BG_NV7_APOTHECARY","music_id":"MUS_NV7_VILLAGE","connections":["NV7_LOC_SQUARE","NV7_LOC_FIELDS"],"unlock_conditions":[]}
+    ,{"location_id":"NV7_LOC_WOLF_PATH","name":"狼径与旧猎棚","background_id":"BG_NV7_WOLF_PATH","music_id":"MUS_NV7_WILDERNESS","connections":["NV7_LOC_FIELDS"],"unlock_conditions":[{"key":"quest.nv_main_003.status","op":"eq","value":"completed"}]}
   ]
 }

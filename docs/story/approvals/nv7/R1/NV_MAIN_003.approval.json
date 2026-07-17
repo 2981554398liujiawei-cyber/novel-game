@@ -1,0 +1,10 @@
+{
+  "approval_version": "1.0.0",
+  "story_id": "NV_MAIN_003",
+  "status": "approved",
+  "reviewer": "R1.1 reviewed delivery and integration task authorization",
+  "approved_at": "2026-07-16T15:45:20.538150Z",
+  "source_sha256": "02fb23713233e5456f8eea8124ce50e78d485404420c3ace6aa3edd031dbc295",
+  "canonical_sha256": "c96858bd4a2c3fe6317933caed3b3d271ca492eab26123bbeef8886b03b21374",
+  "notes": "依据已审核的 R1.1 交付包进行机械结构化；核心对白未改写，系统引用已映射为正式 ID。"
+}

@@ -105,6 +105,8 @@ func new_game(story_id: String = "") -> Dictionary:
     _combat_log.clear()
     _show_game_shell("exploration")
     var selected := story_id if not story_id.is_empty() else _test_story_id
+    if selected.is_empty() and _services["content_loader"].has_method("get_default_story_id"):
+        selected = str(_services["content_loader"].call("get_default_story_id"))
     if selected.is_empty():
         _render_text({"text": "技术壳层已就绪；正式剧情数据尚未导入。", "location_id": ""}, false)
         return _feedback(true, "STORY_NOT_DATA_READY", "New runtime started without formal story data")
@@ -600,7 +602,12 @@ func _on_reward_requested(payload: Dictionary) -> void:
 
 
 func _on_story_completed(result: Dictionary) -> void:
-    _render_text({"text": "技术流程完成：%s" % result.get("outcome", "completed")}, false)
+    var next_story_id := str(result.get("next_story_id", ""))
+    if not next_story_id.is_empty():
+        if not bool(_services["story_runner"].call("start_story", next_story_id)):
+            _feedback_from_result(_services["story_runner"].last_error)
+        return
+    _render_text({"text": "当前剧情阶段已完成。", "location_id": ""}, false)
 
 
 func _on_story_position_restored(_position: Dictionary, presentation: Dictionary) -> void:

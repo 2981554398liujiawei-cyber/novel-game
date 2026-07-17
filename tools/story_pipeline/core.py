@@ -475,15 +475,19 @@ def check_ir(
                 if not isinstance(action, dict):
                     fail("RELATIONSHIP_ACTION_INVALID", "关系动作必须是对象")
                     continue
+                action_kind = action.get("action") or action.get("op")
                 if action.get("dimension") and action["dimension"] not in RELATIONSHIP_DIMENSIONS:
                     fail("RELATIONSHIP_DIMENSION_INVALID", f"未登记关系维度: {action['dimension']}")
                 if not action.get("relationship_id"):
                     fail("RELATIONSHIP_ACTION_INVALID", "关系动作必须指定relationship_id")
-                action_type = action.get("op")
-                if action_type not in {"set", "inc", "dec"}:
-                    fail("RELATIONSHIP_ACTION_INVALID", f"未知关系动作: {action_type}")
-                if action_type in {"set", "inc", "dec"} and action.get("dimension") not in RELATIONSHIP_DIMENSIONS:
+                if action_kind not in {"set", "inc", "dec", "set_flag", "set_boundary"}:
+                    fail("RELATIONSHIP_ACTION_INVALID", f"未知关系动作: {action_kind}")
+                if action_kind in {"set", "inc", "dec"} and action.get("dimension") not in RELATIONSHIP_DIMENSIONS:
                     fail("RELATIONSHIP_DIMENSION_INVALID", "数值关系动作必须指定正式维度")
+                if action_kind == "set_flag" and not action.get("flag_id"):
+                    fail("RELATIONSHIP_ACTION_INVALID", "set_flag必须指定flag_id")
+                if action_kind == "set_boundary" and not action.get("boundary_id"):
+                    fail("RELATIONSHIP_ACTION_INVALID", "set_boundary必须指定boundary_id")
             for action in owner.get("quest_actions", []):
                 allowed = {"activate", "update_objective", "set_qualified", "complete", "fail", "suspend", "resume", "reopen"}
                 if not isinstance(action, dict) or action.get("action") not in allowed or not action.get("quest_id"):
@@ -508,6 +512,11 @@ def check_ir(
         locations = _catalog_ids(catalogs.get("locations", {}), "locations", "location_id")
         items = _catalog_ids(catalogs.get("items", {}), "items", "item_id")
         combats = _catalog_ids(catalogs.get("combats", {}), "combats", "combat_id")
+        relationship_doc = catalogs.get("relationships", {}) if isinstance(catalogs.get("relationships", {}), dict) else {}
+        relationship_entries = {
+            value.get("relationship_id"): value
+            for value in relationship_doc.get("relationships", []) if isinstance(value, dict)
+        }
         presentation = catalogs.get("presentation", {}) if isinstance(catalogs.get("presentation", {}), dict) else {}
         for label, state_op in _objects_with_state_ops(quest):
             key = state_op.get("key")
@@ -546,6 +555,26 @@ def check_ir(
                 item_id = raw_item.get("item_id") if isinstance(raw_item, dict) else raw_item
                 if item_id not in items:
                     fail("CONTENT_REFERENCE_INVALID", f"物品未登记: {item_id}")
+            for owner in [node, *(choice for choice in node.get("choices", []) if isinstance(choice, dict))]:
+                for action in owner.get("relationship_actions", []):
+                    if not isinstance(action, dict):
+                        continue
+                    relationship_id = action.get("relationship_id")
+                    definition = relationship_entries.get(relationship_id)
+                    if "relationships" in catalogs and definition is None:
+                        fail("CONTENT_REFERENCE_INVALID", f"关系未登记: {relationship_id}")
+                        continue
+                    if definition is None:
+                        continue
+                    dimension = action.get("dimension")
+                    if dimension and dimension not in definition.get("dimensions", {}):
+                        fail("CONTENT_REFERENCE_INVALID", f"{relationship_id}未登记关系维度: {dimension}")
+                    flag_id = action.get("flag_id")
+                    if flag_id and flag_id not in {value.get("id") for value in definition.get("flags", []) if isinstance(value, dict)}:
+                        fail("CONTENT_REFERENCE_INVALID", f"{relationship_id}未登记关系flag: {flag_id}")
+                    boundary_id = action.get("boundary_id")
+                    if boundary_id and boundary_id not in {value.get("id") for value in definition.get("boundaries", []) if isinstance(value, dict)}:
+                        fail("CONTENT_REFERENCE_INVALID", f"{relationship_id}未登记关系boundary: {boundary_id}")
             mapping = {
                 "portrait_action": "portrait_actions", "camera": "cameras", "delivery": "deliveries",
                 "gesture": "gestures", "audio_cue": "audio_cues", "sfx_id": "audio_cues",
@@ -598,12 +627,16 @@ def _validate_approval(ir: dict[str, Any], approval: dict[str, Any]) -> None:
 
 def _runtime_projection(document: dict[str, Any]) -> dict[str, Any]:
     runtime = copy.deepcopy(document)
+    if runtime.get("content_status") == "complete_script":
+        runtime["content_status"] = "data_ready"
+    runtime.pop("source_chapters", None)
+    runtime.pop("source_refs", None)
     extensions: dict[str, Any] = {}
     allowed_node = {
         "node_id", "type", "location_id", "scene_id", "purpose", "text", "next", "effects", "conditions",
         "speaker_id", "expression", "portrait_action", "gesture", "target", "camera", "delivery", "choices",
         "combat_ref", "reward_item_ids", "reward_items", "quest_actions", "relationship_actions",
-        "terminal", "outcome", "next_on_win", "next_on_loss",
+        "terminal", "outcome", "next_on_win", "next_on_loss", "next_story_id",
     }
     for node in runtime.get("nodes", []):
         if not isinstance(node, dict):
@@ -627,8 +660,6 @@ def _runtime_projection(document: dict[str, Any]) -> dict[str, Any]:
     if extensions:
         implementation = runtime.setdefault("implementation", {})
         implementation["story_pipeline_extensions"] = extensions
-    if runtime.get("content_status") == "complete_script":
-        runtime["content_status"] = "data_ready"
     return runtime
 
 
@@ -676,9 +707,9 @@ def diff_ir_runtime(ir: dict[str, Any], runtime: dict[str, Any]) -> dict[str, An
 def story_status_report(
     story_id: str, *, script_status: str, parsed: bool = False, references_ok: bool = False,
     ownership_ok: bool = False, runtime_generated: bool = False, runtime_valid: bool = False,
-    playable: bool = False,
+    playable: bool = False, verified: bool = False,
 ) -> dict[str, Any]:
-    if playable and runtime_valid:
+    if verified and playable and runtime_valid:
         status = "VERIFIED"
     elif runtime_generated and runtime_valid:
         status = "DATA_READY"

@@ -19,12 +19,14 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertNotIn("fixture", rel.lower())
             self.assertNotIn("content/tests", rel.lower())
 
-    def test_nv7_planned_content_is_an_unloaded_shell(self) -> None:
+    def test_nv7_r1_is_loaded_and_r2_remains_an_unloaded_shell(self) -> None:
         manifest = json.loads((ROOT / "content/manifest.json").read_text(encoding="utf-8"))
         planned = manifest["planned_content"]
         self.assertEqual([f"NV_MAIN_{index:03d}" for index in range(1, 9)], [x["content_id"] for x in planned])
         self.assertTrue(all(x["region_id"] == "NV7" for x in planned))
-        self.assertTrue(all(x["status"] == "not_loaded" and x["path"] is None for x in planned))
+        self.assertTrue(all(x["status"] == "data_ready" and x["path"] for x in planned[:4]))
+        self.assertTrue(all(x["status"] == "not_loaded" and x["path"] is None for x in planned[4:]))
+        self.assertEqual("NV_MAIN_001", manifest["entry_story_id"])
 
     def test_runtime_quest_files_are_recursive_and_manifest_registered(self) -> None:
         manifest = json.loads((ROOT / "content/manifest.json").read_text(encoding="utf-8"))
@@ -47,10 +49,11 @@ class RepositoryContractTests(unittest.TestCase):
 
     def test_story_governance_shells_are_registered(self) -> None:
         region = json.loads((ROOT / "docs/story/scripts/nv7/region_manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual("EMPTY_SHELL", region["runtime_status"])
-        self.assertTrue(all(entry["status"] == "SOURCE_ONLY" for entry in region["tasks"]))
+        self.assertEqual("PARTIAL", region["runtime_status"])
+        self.assertTrue(all(entry["status"] == "DATA_READY" for entry in region["tasks"][:4]))
+        self.assertTrue(all(entry["status"] == "SOURCE_ONLY" for entry in region["tasks"][4:]))
         chapter_map = json.loads((ROOT / "docs/story/chapter_mapping_nv7.json").read_text(encoding="utf-8"))
-        self.assertEqual("FRAMEWORK_ONLY", chapter_map["coverage_status"])
+        self.assertEqual("COMPLETE", chapter_map["coverage_status"])
         registry = json.loads((ROOT / "docs/story/foreshadowing_registry.json").read_text(encoding="utf-8"))
         self.assertEqual(8, len({entry["foreshadowing_id"] for entry in registry["entries"]}))
         packages = json.loads((ROOT / "docs/story/story_package_manifest.json").read_text(encoding="utf-8"))["packages"]
@@ -58,8 +61,9 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual(incoming, {entry["file"] for entry in packages})
         self.assertTrue(all(entry["intake_status"] == "preflight_failed" for entry in packages))
 
-    def test_no_formal_quest_json_in_starter(self) -> None:
-        self.assertEqual([], list((ROOT / "content/quests").rglob("*.json")))
+    def test_only_r1_formal_quest_json_is_loaded(self) -> None:
+        quests = sorted(path.stem for path in (ROOT / "content/quests").rglob("*.json"))
+        self.assertEqual([f"nv_main_{index:03d}" for index in range(1, 5)], quests)
 
     def test_root_agents_contains_content_guardrail(self) -> None:
         text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")

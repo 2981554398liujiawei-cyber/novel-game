@@ -153,6 +153,11 @@ func get_story(story_id: String) -> Variant:
     return null
 
 
+func get_default_story_id() -> String:
+    var value: Variant = manifest.get("entry_story_id", "")
+    return value if value is String else ""
+
+
 func get_quest_definitions() -> Array:
     var definitions: Array = []
     for global_id: Variant in global_index.keys():
@@ -438,6 +443,10 @@ func _validate_references() -> bool:
                     return false
         if not _validate_quest_dependency_cycles(dependencies["quests"]):
             return false
+    var entry_story_value: Variant = manifest.get("entry_story_id", "")
+    var entry_story_id := str(entry_story_value) if entry_story_value is String else ""
+    if not entry_story_id.is_empty() and not _require_global_reference(entry_story_id, "quest", "manifest.json", "entry story"):
+        return false
     return true
 
 
@@ -629,10 +638,17 @@ func _validate_quest_references(quest: Dictionary, source: String) -> bool:
     for node: Variant in quest["nodes"]:
         if not _require_global_reference(str(node["location_id"]), "location", source, "quest node location"):
             return false
-        if node.has("speaker_id") and not _require_global_reference(str(node["speaker_id"]), "npc", source, "quest speaker"):
+        if node.has("speaker_id") and str(node["speaker_id"]) != "PROTAGONIST_FENGYUE" and not _require_global_reference(str(node["speaker_id"]), "npc", source, "quest speaker"):
             return false
         if node.has("combat_ref") and not _require_global_reference(str(node["combat_ref"]), "combat", source, "quest combat"):
             return false
+        if node.has("next_story_id") and not _require_global_reference(str(node["next_story_id"]), "quest", source, "quest continuation story"):
+            return false
+        for raw_relationship_action: Variant in node.get("relationship_actions", []):
+            if not raw_relationship_action is Dictionary:
+                return _set_error("CONTENT_SCHEMA_INVALID", "Quest relationship action must be an object", source)
+            if not _require_global_reference(str(raw_relationship_action.get("relationship_id", "")), "relationship", source, "quest relationship action"):
+                return false
         for item_id: Variant in node.get("reward_item_ids", []):
             if not _require_global_reference(str(item_id), "item", source, "quest reward"):
                 return false
@@ -650,6 +666,11 @@ func _validate_quest_references(quest: Dictionary, source: String) -> bool:
                 return false
             if not _validate_state_references(choice.get("effects", []), source):
                 return false
+            for raw_relationship_action: Variant in choice.get("relationship_actions", []):
+                if not raw_relationship_action is Dictionary:
+                    return _set_error("CONTENT_SCHEMA_INVALID", "Quest choice relationship action must be an object", source)
+                if not _require_global_reference(str(raw_relationship_action.get("relationship_id", "")), "relationship", source, "quest choice relationship action"):
+                    return false
     for raw_reward: Variant in quest.get("rewards", []):
         if not raw_reward is Dictionary:
             continue

@@ -52,15 +52,38 @@
       ]
     },
     "relationshipAction": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["relationship_id", "dimension", "op", "value"],
-      "properties": {
-        "relationship_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
-        "dimension": {"enum": ["trust", "affection", "respect", "tension"]},
-        "op": {"enum": ["set", "inc", "dec"]},
-        "value": {"type": "number"}
-      }
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["relationship_id", "dimension", "op", "value"],
+          "properties": {
+            "relationship_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+            "dimension": {"enum": ["trust", "affection", "respect", "tension"]},
+            "op": {"enum": ["set", "inc", "dec"]},
+            "value": {"type": "number"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["relationship_id", "action", "flag_id", "value"],
+          "properties": {
+            "relationship_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+            "action": {"const": "set_flag"},
+            "flag_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+            "value": {"type": "boolean"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["relationship_id", "action", "boundary_id", "value"],
+          "properties": {
+            "relationship_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+            "action": {"const": "set_boundary"},
+            "boundary_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+            "value": {"type": "boolean"}
+          }
+        }
+      ]
     },
     "rewardItem": {
       "type": "object",
@@ -539,6 +562,10 @@
           },
           "next_on_loss": {
             "type": "string"
+          },
+          "next_story_id": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
           }
         },
         "allOf": [

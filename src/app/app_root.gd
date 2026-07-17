@@ -154,7 +154,7 @@ func _ready() -> void:
             get_tree().quit(1)
             return
         print("STORY_QUERY_OK:%s" % expected_story_id)
-    $Center/VBox/Status.text = "内容索引加载完成\n技术骨架已就绪，正式剧情数据尚未导入"
+    $Center/VBox/Status.text = "内容索引加载完成\n第七新手村 R1 正式内容已就绪"
     if "--smoke-test" in args:
         print("CONTENT_LOADER_OK:%d" % _content_loader.get_index_size())
         print("GAME_STATE_OK:%d" % _game_state.get_state_count())

@@ -386,6 +386,7 @@ func _enter_node(node_id: String, automatic_transitions: int, apply_entry_effect
                 "story_id": _story_id,
                 "node_id": node_id,
                 "outcome": str(node.get("outcome", "completed")),
+                "next_story_id": str(node.get("next_story_id", "")),
             }
             story_completed.emit(_completion_result.duplicate(true))
             return true
@@ -422,6 +423,7 @@ func _restore_exact_node(node_id: String) -> bool:
                 "story_id": _story_id,
                 "node_id": node_id,
                 "outcome": str(node.get("outcome", "completed")),
+                "next_story_id": str(node.get("next_story_id", "")),
             }
             return true
     return _fail("STORY_NODE_TYPE_UNSUPPORTED", "Unsupported saved story node type '%s'" % node_type, node_id)
@@ -524,11 +526,24 @@ func _apply_node_actions(node: Dictionary) -> bool:
         var relationship_id := str(raw_action.get("relationship_id", ""))
         if relationship_id.is_empty():
             return _fail("STORY_DATA_INVALID", "Relationship action is missing relationship_id", _current_node_id)
-        var effect: Dictionary = raw_action.duplicate(true)
-        effect.erase("relationship_id")
-        effect["dimension_id"] = effect.get("dimension", "")
-        effect.erase("dimension")
-        var relationship_result := apply_relationship_effects(relationship_id, [effect])
+        var relationship_result: Dictionary
+        match str(raw_action.get("action", "")):
+            "set_flag":
+                relationship_result = _relationship_manager.call(
+                    "set_flag", relationship_id, str(raw_action.get("flag_id", "")),
+                    bool(raw_action.get("value", false)), "story",
+                )
+            "set_boundary":
+                relationship_result = _relationship_manager.call(
+                    "set_boundary", relationship_id, str(raw_action.get("boundary_id", "")),
+                    bool(raw_action.get("value", false)), "story",
+                )
+            _:
+                var effect: Dictionary = raw_action.duplicate(true)
+                effect.erase("relationship_id")
+                effect["dimension_id"] = effect.get("dimension", "")
+                effect.erase("dimension")
+                relationship_result = apply_relationship_effects(relationship_id, [effect])
         if not bool(relationship_result.get("ok", false)):
             return _fail(
                 "STORY_RELATIONSHIP_ACTION_FAILED",

@@ -211,7 +211,7 @@ class StoryPipelineTests(unittest.TestCase):
             build_runtime_json(self.ir, record, self.catalogs, TEST_POLICY)
 
     def test_20_status_report_states(self) -> None:
-        report = story_status_report("TEST", script_status="COMPLETE_SCRIPT", parsed=True, references_ok=True, ownership_ok=True, runtime_generated=True, runtime_valid=True, playable=True)
+        report = story_status_report("TEST", script_status="COMPLETE_SCRIPT", parsed=True, references_ok=True, ownership_ok=True, runtime_generated=True, runtime_valid=True, playable=True, verified=True)
         self.assertEqual("VERIFIED", report["status"])
         self.assertEqual("READY", report["playable"])
 

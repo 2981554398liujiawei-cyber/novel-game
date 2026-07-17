@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "reports": [
+    {
+      "story_id": "NV_MAIN_001",
+      "source": "01_NV_MAIN_001_没有退出键_COMPLETE_SCRIPT.md",
+      "source_status": "COMPLETE_SCRIPT_DRAFT",
+      "normalized_status": "COMPLETE_SCRIPT",
+      "dialogue_policy": "verbatim extraction",
+      "choice_policy": "explicit labelled groups preserved; R1.3 investigation headings promoted mechanically",
+      "manager_mapping": "registered IDs and typed public Manager actions only",
+      "core_rewrite": false,
+      "scene_count": 6,
+      "node_count": 131,
+      "choice_group_count": 3
+    },
+    {
+      "story_id": "NV_MAIN_002",
+      "source": "02_NV_MAIN_002_三份委托_COMPLETE_SCRIPT.md",
+      "source_status": "COMPLETE_SCRIPT_DRAFT",
+      "normalized_status": "COMPLETE_SCRIPT",
+      "dialogue_policy": "verbatim extraction",
+      "choice_policy": "explicit labelled groups preserved; R1.3 investigation headings promoted mechanically",
+      "manager_mapping": "registered IDs and typed public Manager actions only",
+      "core_rewrite": false,
+      "scene_count": 8,
+      "node_count": 223,
+      "choice_group_count": 5
+    },
+    {
+      "story_id": "NV_MAIN_003",
+      "source": "03_NV_MAIN_003_兔王不该出现_COMPLETE_SCRIPT.md",
+      "source_status": "COMPLETE_SCRIPT_DRAFT",
+      "normalized_status": "COMPLETE_SCRIPT",
+      "dialogue_policy": "verbatim extraction",
+      "choice_policy": "explicit labelled groups preserved; R1.3 investigation headings promoted mechanically",
+      "manager_mapping": "registered IDs and typed public Manager actions only",
+      "core_rewrite": false,
+      "scene_count": 5,
+      "node_count": 125,
+      "choice_group_count": 2
+    },
+    {
+      "story_id": "NV_MAIN_004",
+      "source": "04_NV_MAIN_004_狼影中的同伴_COMPLETE_SCRIPT.md",
+      "source_status": "COMPLETE_SCRIPT_DRAFT",
+      "normalized_status": "COMPLETE_SCRIPT",
+      "dialogue_policy": "verbatim extraction",
+      "choice_policy": "explicit labelled groups preserved; R1.3 investigation headings promoted mechanically",
+      "manager_mapping": "registered IDs and typed public Manager actions only",
+      "core_rewrite": false,
+      "scene_count": 8,
+      "node_count": 269,
+      "choice_group_count": 4
+    }
+  ]
+}

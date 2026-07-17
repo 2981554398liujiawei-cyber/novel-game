@@ -1,4 +1,9 @@
 {
   "schema_version": "1.0.0",
-  "quests": []
+  "quests": [
+    {"quest_id":"NV_MAIN_001","depends_on":[]},
+    {"quest_id":"NV_MAIN_002","depends_on":["NV_MAIN_001"]},
+    {"quest_id":"NV_MAIN_003","depends_on":[],"gate":{"operator":"or","conditions":[{"key":"quest.nv_main_002.status","op":"eq","value":"qualified"},{"key":"quest.nv_main_002.status","op":"eq","value":"completed"}]}},
+    {"quest_id":"NV_MAIN_004","depends_on":["NV_MAIN_003"]}
+  ]
 }

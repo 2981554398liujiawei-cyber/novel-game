@@ -25,6 +25,7 @@ def _catalogs(root: Path) -> dict:
         "locations": "content/locations/locations.json",
         "items": "content/items/items.json",
         "combats": "content/combats/combats.json",
+        "relationships": "content/relationships/relationships.json",
         "presentation": "content/presentation_tags.json",
     }
     return {name: load_json(root / relative) for name, relative in paths.items()}
@@ -118,6 +119,11 @@ def main(argv: list[str] | None = None) -> int:
             reports = []
             failed = False
             checked_count = 0
+            manifest = load_json(args.project_root / "content/manifest.json")
+            planned = {
+                entry.get("content_id"): entry
+                for entry in manifest.get("planned_content", []) if isinstance(entry, dict)
+            }
             for source in sources:
                 try:
                     ir = parse_markdown(source)
@@ -134,11 +140,26 @@ def main(argv: list[str] | None = None) -> int:
                         continue
                     checked_count += 1
                     errors = check_ir(ir, catalogs, chapter_mapping=chapter, foreshadowing_registry=foreshadowing)
+                    story_id = str(ir.get("quest", {}).get("quest_id", ""))
+                    plan_entry = planned.get(story_id, {})
+                    runtime_relative = plan_entry.get("path") if isinstance(plan_entry, dict) else None
+                    runtime_path = args.project_root / "content" / runtime_relative if isinstance(runtime_relative, str) else None
+                    runtime_generated = runtime_path is not None and runtime_path.is_file()
+                    runtime_valid = False
+                    if runtime_generated:
+                        runtime = load_json(runtime_path)
+                        round_trip = diff_ir_runtime(ir, runtime)
+                        runtime_valid = bool(round_trip.get("match")) and runtime.get("content_status") in {"data_ready", "implemented", "verified"}
+                        if not runtime_valid:
+                            errors.append({"code": "STORY_RUNTIME_DRIFT", "message": f"{story_id}运行JSON与正典IR不一致"})
                     failed = failed or bool(errors)
                     report = story_status_report(
-                        str(ir.get("quest", {}).get("quest_id", "")),
+                        story_id,
                         script_status="COMPLETE_SCRIPT", parsed=not errors,
                         references_ok=not errors, ownership_ok=not errors,
+                        runtime_generated=runtime_generated, runtime_valid=runtime_valid,
+                        playable=runtime_valid and plan_entry.get("status") in {"data_ready", "verified"},
+                        verified=plan_entry.get("status") == "verified",
                     )
                     report.update({"source": source.as_posix(), "ok": not errors, "errors": errors})
                     reports.append(report)

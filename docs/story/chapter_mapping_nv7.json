@@ -1,7 +1,15 @@
 {
   "schema_version": "1.0.0",
   "region_id": "NV7",
-  "coverage_status": "FRAMEWORK_ONLY",
-  "source_chapters": [],
-  "mappings": []
+  "coverage_status": "COMPLETE",
+  "source_chapters": ["2", "3", "4", "5", "6", "7", "8"],
+  "mappings": [
+    {"chapter_id":"2","classification":"KEEP_GAME","task_ids":["NV_MAIN_001"],"note":"保留进入游戏、新手落地、初识系统与异常感。"},
+    {"chapter_id":"3","classification":"MERGE_GAME","task_ids":["NV_MAIN_001","NV_MAIN_002"],"note":"合并新手说明、初始物品和基础规则，删除重复教程。"},
+    {"chapter_id":"4","classification":"KEEP_GAME","task_ids":["NV_MAIN_002"],"note":"保留采集、基础怪物与初期装备成长。"},
+    {"chapter_id":"5","classification":"MERGE_GAME","task_ids":["NV_MAIN_002","NV_MAIN_003"],"note":"合并早期刷怪与兔类首领事件。"},
+    {"chapter_id":"6","classification":"KEEP_GAME","task_ids":["NV_MAIN_003"],"note":"保留兔王辨识度与关键成长奖励。"},
+    {"chapter_id":"7","classification":"KEEP_GAME","task_ids":["NV_MAIN_004"],"note":"保留狼径、野外首领与玩家争夺事件。"},
+    {"chapter_id":"8","classification":"MERGE_GAME","task_ids":["NV_MAIN_004"],"note":"合并重复战斗与掉落争夺，指向藏宝洞。"}
+  ]
 }
